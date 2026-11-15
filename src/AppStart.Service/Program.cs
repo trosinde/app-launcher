@@ -43,8 +43,18 @@ if (!WindowsServiceHelpers.IsWindowsService())
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(sp => new SessionGate(sp.GetRequiredService<TimeProvider>(), SessionGate.DefaultCooldown));
 builder.Services.AddSingleton<IConfigSource, FileConfigSource>();
+builder.Services.AddSingleton<IChildProcessInspector, Win32ChildProcessInspector>();
+builder.Services.AddSingleton<ILearnRecorder>(_ => new FileLearnRecorder());
+builder.Services.AddSingleton<ILearnSource, FileLearnSource>();
 builder.Services.AddSingleton<IAppStarter, VerifyingAppStarter>();
-builder.Services.AddSingleton<LaunchRequestHandler>();
+builder.Services.AddSingleton(sp => new LaunchRequestHandler(
+    sp.GetRequiredService<IConfigSource>(),
+    sp.GetRequiredService<IAppStarter>(),
+    sp.GetRequiredService<SessionGate>(),
+    sp.GetRequiredService<ILogger<LaunchRequestHandler>>(),
+    incidentIds: null,
+    sp.GetRequiredService<ILearnSource>(),
+    sp.GetRequiredService<TimeProvider>()));
 builder.Services.AddHostedService<PipeServer>();
 
 var host = builder.Build();

@@ -9,10 +9,10 @@
 - [x] 2.4 Antwortdatei-Modell und strikter Serializer (design.md D5); Unit-Tests für jedes Validierungsfeld
 
 ## 3. Dienst
-- [ ] 3.1 SessionLauncher: Job je Modus (blocked wie bisher, allowlist mit Completion Port, KILL_ON_JOB_CLOSE, ohne Breakaway)
-- [ ] 3.2 JobMonitor: Meldungen lesen, Prozess öffnen, Pfad, Datei sperren und prüfen, beenden; fail-closed; Ende bei ACTIVE_PROCESS_ZERO
-- [ ] 3.3 Lernmodus: learn.json je Startanfrage lesen, aufzeichnen statt beenden, Ablauf auch in laufenden Instanzen
-- [ ] 3.4 Neue EventIds (Kindprozess erlaubt, beendet mit Grund, Lernmodus Start/Ende, Steuerdatei ungeschützt); Tests für LaunchRequestHandler und JobMonitor mit Fakes
+- [x] 3.1 SessionLauncher: Job je Modus (blocked wie bisher, allowlist mit Completion Port, KILL_ON_JOB_CLOSE, ohne Breakaway)
+- [x] 3.2 JobMonitor: Meldungen lesen, Prozess öffnen, Pfad, Datei sperren und prüfen, beenden; fail-closed; Ende bei ACTIVE_PROCESS_ZERO
+- [x] 3.3 Lernmodus: learn.json je Startanfrage lesen, aufzeichnen statt beenden, Ablauf auch in laufenden Instanzen
+- [x] 3.4 Neue EventIds (Kindprozess erlaubt, beendet mit Grund, Lernmodus Start/Ende, Steuerdatei ungeschützt); Tests für LaunchRequestHandler und JobMonitor mit Fakes
 
 ## 4. Setup
 - [ ] 4.1 SetupEngine: Modus und Positivliste setzen, Migration Version 1 → 2, Schutz der neuen Dateien in ProtectionService

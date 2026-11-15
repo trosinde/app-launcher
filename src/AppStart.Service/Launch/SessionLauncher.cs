@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using AppStart.Core;
 using AppStart.Core.Configuration;
 using AppStart.Core.Integrity;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32.SafeHandles;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -17,9 +18,13 @@ namespace AppStart.Service.Launch;
 /// Verifies the locked EXE and starts it as appstart-app in the requesting session (tasks 4.4, 4.5;
 /// design D1-D3, D7). The EXE stays locked from verification until the process exists.
 /// </summary>
-public sealed class VerifyingAppStarter : IAppStarter
+public sealed class VerifyingAppStarter(
+    IChildProcessInspector inspector,
+    ILearnRecorder recorder,
+    ILoggerFactory loggers,
+    TimeProvider time) : IAppStarter
 {
-    public StartResult Start(AppEntry app, uint sessionId)
+    public StartResult Start(AppEntry app, LaunchContext context)
     {
         LockedExecutable exe;
         try
@@ -41,7 +46,9 @@ public sealed class VerifyingAppStarter : IAppStarter
 
             try
             {
-                var pid = SessionLauncher.Launch(app, sessionId);
+                var log = loggers.CreateLogger("AppStart.Service.Launch.JobMonitor");
+                var pid = SessionLauncher.Launch(app, context,
+                    rootPid => new JobMonitor(app, context, rootPid, inspector, recorder, log, time), log);
                 return new StartResult(StartOutcome.Started, integrity.Detail, pid);
             }
             catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
@@ -56,9 +63,10 @@ internal static unsafe class SessionLauncher
 {
     private static int _privilegesEnabled;
 
-    /// <summary>Starts <paramref name="app"/> in <paramref name="sessionId"/> and returns the process id.</summary>
-    public static int Launch(AppEntry app, uint sessionId)
+    /// <summary>Starts <paramref name="app"/> in the requesting session and returns the process id.</summary>
+    public static int Launch(AppEntry app, LaunchContext context, Func<int, JobMonitor> monitorFor, ILogger log)
     {
+        var sessionId = context.SessionId;
         if (Interlocked.Exchange(ref _privilegesEnabled, 1) == 0)
         {
             Native.Privileges.EnableForLaunch();
@@ -122,16 +130,32 @@ internal static unsafe class SessionLauncher
             cleanup.Process = info.hProcess;
             try
             {
-                // D3: no child processes unless allowed. Assigned while suspended, so no code runs outside the job.
-                // Mode allowlist is started like blocked (fail-closed) until the monitored job exists
-                // (add-allowed-child-processes task 3.1).
-                if (app.ChildProcessMode != ChildProcessMode.All)
+                // D3 and add-allowed-child-processes D2: the job per mode, assigned while suspended so no
+                // code runs outside it. allowlist or learn mode: monitored job (KILL_ON_JOB_CLOSE, no
+                // breakaway); blocked: ActiveProcessLimit 1; all: no job.
+                if (JobMonitor.IsNeeded(app, context.Learn))
+                {
+                    cleanup.Monitored = MonitoredJob.Create();
+                    if (!PInvoke.AssignProcessToJobObject((HANDLE)cleanup.Monitored.Job, info.hProcess))
+                    {
+                        throw new Win32Exception(Marshal.GetLastWin32Error(), "AssignProcessToJobObject");
+                    }
+                }
+                else if (app.ChildProcessMode != ChildProcessMode.All)
                 {
                     cleanup.Job = CreateSingleProcessJob();
                     if (!PInvoke.AssignProcessToJobObject(cleanup.Job, info.hProcess))
                     {
                         throw new Win32Exception(Marshal.GetLastWin32Error(), "AssignProcessToJobObject");
                     }
+                }
+
+                // Watch before the first instruction runs: every NEW_PROCESS is checked.
+                if (cleanup.Monitored is { } job)
+                {
+                    var monitor = monitorFor((int)info.dwProcessId);
+                    job.Watch(monitor, cleanup.Dispose, ex => log.LogError(EventIds.JobMonitorFailed,
+                        "Überwachung der Applikation {AppId} ausgefallen, alle ihre Prozesse werden beendet: {Error}", app.Id, ex.Message));
                 }
 
                 if (PInvoke.ResumeThread(info.hThread) == uint.MaxValue)
@@ -150,7 +174,16 @@ internal static unsafe class SessionLauncher
             }
 
             // Profile, token and job stay until the application exits; then everything is released.
-            cleanup.ReleaseWhenProcessExits();
+            // A monitored job lives until it is empty (allowed helpers may outlive the application).
+            if (cleanup.Monitored is null)
+            {
+                cleanup.ReleaseWhenProcessExits();
+            }
+            else
+            {
+                cleanup.CloseProcessHandleWhenExits();
+            }
+
             return (int)info.dwProcessId;
         }
         catch
@@ -191,7 +224,32 @@ internal static unsafe class SessionLauncher
 
         public HANDLE Job { get; set; }
 
+        public MonitoredJob? Monitored { get; set; }
+
         public HANDLE Profile { get; set; }
+
+        private int _processClosed;
+
+        /// <summary>Monitored job: the application handle goes when it exits, the rest when the job is empty.</summary>
+        public void CloseProcessHandleWhenExits()
+        {
+            var wait = new ManualResetEvent(false) { SafeWaitHandle = new SafeWaitHandle((IntPtr)Process.Value, ownsHandle: false) };
+            RegisteredWaitHandle? registration = null;
+            registration = ThreadPool.RegisterWaitForSingleObject(wait, (_, _) =>
+            {
+                registration?.Unregister(null);
+                wait.Dispose();
+                CloseProcess();
+            }, null, Timeout.Infinite, executeOnlyOnce: true);
+        }
+
+        private void CloseProcess()
+        {
+            if (Interlocked.Exchange(ref _processClosed, 1) == 0 && !Process.IsNull)
+            {
+                PInvoke.CloseHandle(Process);
+            }
+        }
 
         public void ReleaseWhenProcessExits()
         {
@@ -222,10 +280,9 @@ internal static unsafe class SessionLauncher
                 PInvoke.CloseHandle(Job); // no KILL_ON_JOB_CLOSE: limits stay with the process
             }
 
-            if (!Process.IsNull)
-            {
-                PInvoke.CloseHandle(Process);
-            }
+            Monitored?.Dispose(); // KILL_ON_JOB_CLOSE: nothing in the job survives without monitoring
+
+            CloseProcess();
 
             PInvoke.CloseHandle(token);
         }
