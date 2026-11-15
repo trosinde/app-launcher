@@ -15,7 +15,7 @@
 - [x] 3.4 Neue EventIds (Kindprozess erlaubt, beendet mit Grund, Lernmodus Start/Ende, Steuerdatei ungeschützt); Tests für LaunchRequestHandler und JobMonitor mit Fakes
 
 ## 4. Setup
-- [ ] 4.1 SetupEngine: Modus und Positivliste setzen, Migration Version 1 → 2, Schutz der neuen Dateien in ProtectionService
+- [x] 4.1 SetupEngine: Modus und Positivliste setzen, Migration Version 1 → 2, Schutz der neuen Dateien in ProtectionService
 - [ ] 4.2 Assistent nach docs/ui-designs/Main, Helpers, Learn, LearnResult; Bestätigung bei «Alle erlaubt» und bei Shells; Texte in SetupTexts; Render- und ViewModel-Tests
 - [ ] 4.3 Kommandozeile gemäss design.md D4 (add --id/--child-processes, set-children, allow-child, deny-child, rehash --child, learn start|stop|show|apply, list); CliTexts; Tests für jeden Befehl und jeden Exit-Code
 - [ ] 4.4 apply --config [--replace] gemäss design.md D5: erst vollständig prüfen, dann schreiben, dann verify; Tests für Idempotenz und ungültige Dateien

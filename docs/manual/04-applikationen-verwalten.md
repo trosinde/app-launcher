@@ -95,14 +95,39 @@ Prüfen nach dem Update auch:
 - Hat das Update die Rechte von Datenordner oder Registry-Key zurückgesetzt? `verify` meldet es unter «Datenordner je App» bzw. «Registry-Key je App». Behebung wie oben.
 - Liegt die EXE an einem neuen Pfad? Dann mit `remove` die alte Freigabe entziehen und mit `add` die neue EXE freigeben.
 
-## Kindprozesse erlauben
+## Weitere Programme (Hilfsprogramme)
 
-Standard ist `allowChildProcesses: false`: Die Applikation läuft in einem Job-Objekt und kann keine weiteren Programme starten. Braucht eine Applikation nachweislich Kindprozesse (z.B. ein externes Hilfsprogramm), lässt sich das je Applikation in `apps.json` auf `true` setzen. Assistent und Kommandozeile bieten dafür keine Einstellung.
+Manche Applikationen starten eigene Hilfsprogramme, etwa für Export, Update oder PDF-Anzeige. Je Applikation gilt einer von drei Modi:
 
-1. Editor «Als Administrator ausführen», `C:\ProgramData\AppStart\apps.json` öffnen.
-2. Bei der Applikation `"allowChildProcesses": true` setzen, speichern. Die Datei bleibt gültiges JSON (keine Kommentare, keine Kommas am Ende).
-3. `AppStart.Setup.exe verify` ausführen. Prüfpunkt «apps.json» muss erfüllt sein.
+| Modus | Anzeige | Wirkung |
+|---|---|---|
+| `blocked` | gesperrt | Standard. Die Applikation kann keine weiteren Programme starten. |
+| `allowlist` | nur erlaubte Hilfsprogramme | Nur Programme aus der Liste starten, geprüft mit Signatur oder SHA-256. Jedes andere Programm beendet der Dienst sofort (Ereignis 1206). |
+| `all` | alle erlaubt (unsicher) | Jedes Programm startet, auch eine Eingabeaufforderung **mit Admin-Rechten**. Nur nach Abwägung und mit Vermerk im Service and Security Manual. |
 
-> **Warnung:** Mit `true` kann die Applikation über Dialoge wie «Datei öffnen» eine Eingabeaufforderung **mit Admin-Rechten** starten. Nur nach Abwägung und mit Vermerk im Service and Security Manual.
+Das Konsolenfenster von Windows (`conhost.exe` aus `C:\Windows\System32`) ist immer erlaubt; ohne es zeigen Konsolen-Hilfsprogramme kein Fenster.
 
-Der Dienst liest `apps.json` bei jedem Start neu; ein Neustart des Dienstes ist nicht nötig.
+Hilfsprogramm erlauben, Modus wird «nur erlaubte Hilfsprogramme»:
+
+```text
+%SETUP% allow-child --app app-a --exe "C:\Program Files\Hersteller\AppA\Export.exe"
+```
+
+Ausgabe: «Hilfsprogramm … für «app-a» erlaubt (Signatur)» bzw. «(SHA-256)» und «Weitere Programme für «app-a»: nur erlaubte Hilfsprogramme». Ist das Programm gültig signiert, gilt die Signatur, sonst die Prüfsumme. Ein Eintrag mit demselben Pfad wird ersetzt.
+
+Hilfsprogramm entfernen: «Hilfsprogramm … für «app-a» entfernt». Beim letzten Eintrag zusätzlich «Letztes Hilfsprogramm entfernt: weitere Programme für «app-a» wieder gesperrt».
+
+Nach einem Update unsignierter Hilfsprogramme stimmt die Prüfsumme nicht mehr und der Dienst beendet sie. `rehash` erfasst sie neu: «Prüfsummen der Hilfsprogramme von «app-a» neu erfasst (1)».
+
+Meldungen, bei denen nichts geändert wird:
+
+| Meldung | Bedeutung |
+|---|---|
+| «… ist eine Shell oder ein Skript-Host. Nur mit ausdrücklicher Bestätigung (--allow-shell) erlaubt.» | Eingabeaufforderung, PowerShell, Explorer, Skript-Hosts, `rundll32.exe`, `regsvr32.exe` und `mshta.exe` erlaubt AppStart nur, wenn Sie es ausdrücklich bestätigen. Damit kann jeder Bediener jedes Programm mit Admin-Rechten starten. |
+| «Hilfsprogramm nicht erlaubt: … liegt in einem Ordner, den Bediener beschreiben können» | Ein Bediener könnte die Datei austauschen. Programm in einen geschützten Ordner (z.B. unter `C:\Program Files`) installieren. |
+| «… ist nicht gültig signiert. Prüfung «signature» nicht möglich, «sha256» verwenden.» | Mit `--check signature` angegeben, die Datei hat aber keine gültige Signatur. |
+| ««…» ist kein Pfad auf eine EXE.», «… existiert nicht.» | Pfad prüfen. |
+| ««nur erlaubte Hilfsprogramme» braucht mindestens ein Hilfsprogramm. Zuerst allow-child ausführen.» | Der Modus lässt sich erst mit mindestens einem Eintrag einstellen. |
+| «Hilfsprogramm … steht nicht in der Liste von «app-a»» | Beim Entfernen oder `rehash --child`: Pfad wie in `list` angeben. |
+
+Modus direkt setzen, z.B. alle erlauben: «Weitere Programme für «app-a»: alle erlaubt (unsicher)». Der Dienst liest `apps.json` bei jedem Start neu; ein Neustart des Dienstes ist nicht nötig.

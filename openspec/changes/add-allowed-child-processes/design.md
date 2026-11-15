@@ -78,6 +78,8 @@ Neu bzw. erweitert, gleiche Exit-Codes wie heute (0 erfolgreich, 1 Fehler oder A
 | `learn show --app <AppId>` | Aufzeichnung ausgeben, Shells markiert |
 | `learn apply --app <AppId> (--all \| --exe <Pfad>…)` | Vorschläge übernehmen (`--all` ohne Shells), setzt Modus `allowlist`, löscht die Aufzeichnung |
 | `list` | zeigt zusätzlich Modus und Hilfsprogramme je Applikation |
+
+`allow-child` stellt den Modus der Applikation auf `allowlist` (sonst gäbe es keinen gültigen Weg von `blocked` zu einer Positivliste, weil `set-children --mode allowlist` ohne Einträge ungültig ist); `deny-child` des letzten Eintrags stellt ihn auf `blocked`. Beides steht in der Ausgabe. Ein schon vorhandener Eintrag mit demselben Pfad wird ersetzt.
 | `apply --config <Datei> [--replace]` | Antwortdatei anwenden (D5) |
 
 ### D5 Antwortdatei für die stille Einrichtung

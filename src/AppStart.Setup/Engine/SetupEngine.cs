@@ -35,8 +35,12 @@ public sealed class SetupEngine(
     IShortcutService shortcuts,
     IVerifier verifier,
     ISetupStateStore stateStore,
-    SetupPaths paths) : ISetupEngine
+    SetupPaths paths,
+    Func<string, IReadOnlyList<string>>? writeViolationsOf = null) : ISetupEngine
 {
+    // Folder/file of a helper writable for operators (injectable: temp folders in tests are user-writable).
+    private readonly Func<string, IReadOnlyList<string>> writeViolations = writeViolationsOf ?? ChildPrograms.WriteViolations;
+
     public SetupSnapshot LoadCurrent()
     {
         var config = ReadConfig();
@@ -263,10 +267,128 @@ public sealed class SetupEngine(
             return [new(string.Format(SetupEngineTexts.UnknownApp, appId), false)];
         }
 
+        // design D4: rehash also renews the SHA-256 entries of the helper programs.
         var fresh = AppCandidates.Inspect(app.Exe, [], app);
+        var rehashed = fresh.AllowedChildren?.Count(c => c.Check == IntegrityCheck.Sha256) ?? 0;
+        fresh = fresh with { AllowedChildren = fresh.AllowedChildren?.Select(ChildPrograms.Rehash).ToList() };
         var apps = current.Apps.Select(a => a.Id == appId ? fresh : ToCandidate(a)).ToList();
-        return Apply(new SetupRequest(apps, false, null, stateStore.Load().AddedGroupMembers));
+        IReadOnlyList<SetupStepResult> notes = rehashed > 0 ? [new(string.Format(SetupEngineTexts.ChildrenRehashed, appId, rehashed), true)] : [];
+        return [.. notes, .. Apply(new SetupRequest(apps, false, null, stateStore.Load().AddedGroupMembers))];
     }
+
+    // ------------------------------------------------------------------ helper programs (add-allowed-child-processes D4)
+
+    /// <summary>set-children: mode of one app. allowlist without entries is invalid input.</summary>
+    public IReadOnlyList<SetupStepResult> SetChildMode(string appId, ChildProcessMode mode) =>
+        ChangeApp(appId, app =>
+        {
+            if (mode == ChildProcessMode.Allowlist && app.AllowedChildren is not { Count: > 0 })
+            {
+                throw new SetupInputException(SetupEngineTexts.AllowlistNeedsEntries);
+            }
+
+            return (app with
+            {
+                ChildProcesses = mode,
+                AllowedChildren = mode == ChildProcessMode.Allowlist ? app.AllowedChildren : null,
+            }, [new(string.Format(SetupEngineTexts.ModeSet, appId, ModeText(mode)), true)]);
+        });
+
+    /// <summary>
+    /// allow-child: adds (or replaces) a helper and sets the mode to allowlist. A helper in a folder operators can
+    /// write is refused (exit code 1); shells need <paramref name="allowShell"/> (else invalid input, exit code 2).
+    /// </summary>
+    public IReadOnlyList<SetupStepResult> AllowChild(string appId, string exePath, IntegrityCheck? check, bool allowShell)
+    {
+        if (LoadCurrent().Apps.All(a => a.Id != appId))
+        {
+            return [new(string.Format(SetupEngineTexts.UnknownApp, appId), false)];
+        }
+
+        var entry = ChildPrograms.Inspect(exePath, check, allowShell);
+        var violations = writeViolations(entry.Exe);
+        if (violations.Count > 0)
+        {
+            return [new(string.Format(SetupEngineTexts.ChildFolderWritable, entry.Exe), false, string.Join(" ", violations))];
+        }
+
+        return ChangeApp(appId, app =>
+        {
+            var children = (app.AllowedChildren ?? []).Where(c => !ChildPrograms.SamePath(c.Exe, entry.Exe)).Append(entry).ToList();
+            var checkText = entry.Check == IntegrityCheck.Signature ? "Signatur" : "SHA-256";
+            return (app with { ChildProcesses = ChildProcessMode.Allowlist, AllowedChildren = children },
+            [
+                new(string.Format(SetupEngineTexts.ChildAllowed, entry.Exe, appId, checkText), true),
+                new(string.Format(SetupEngineTexts.ModeSet, appId, ModeText(ChildProcessMode.Allowlist)), true),
+            ]);
+        });
+    }
+
+    /// <summary>deny-child: removes a helper; the last one sets the mode back to blocked.</summary>
+    public IReadOnlyList<SetupStepResult> DenyChild(string appId, string exePath) =>
+        ChangeApp(appId, app =>
+        {
+            var children = app.AllowedChildren ?? [];
+            if (!children.Any(c => ChildPrograms.SamePath(c.Exe, exePath)))
+            {
+                throw new SetupInputException(string.Format(SetupEngineTexts.ChildUnknown, exePath, appId));
+            }
+
+            var rest = children.Where(c => !ChildPrograms.SamePath(c.Exe, exePath)).ToList();
+            List<SetupStepResult> notes = [new(string.Format(SetupEngineTexts.ChildDenied, Path.GetFullPath(exePath), appId), true)];
+            if (rest.Count == 0)
+            {
+                notes.Add(new(string.Format(SetupEngineTexts.LastChildRemoved, appId), true));
+                return (app with { ChildProcesses = ChildProcessMode.Blocked, AllowedChildren = null }, notes);
+            }
+
+            return (app with { AllowedChildren = rest }, notes);
+        });
+
+    /// <summary>rehash --child: only the SHA-256 of one helper (signature entries need no rehash).</summary>
+    public IReadOnlyList<SetupStepResult> RehashChild(string appId, string exePath) =>
+        ChangeApp(appId, app =>
+        {
+            var children = app.AllowedChildren ?? [];
+            if (!children.Any(c => ChildPrograms.SamePath(c.Exe, exePath)))
+            {
+                throw new SetupInputException(string.Format(SetupEngineTexts.ChildUnknown, exePath, appId));
+            }
+
+            var updated = children.Select(c => ChildPrograms.SamePath(c.Exe, exePath) ? ChildPrograms.Rehash(c) : c).ToList();
+            return (app with { AllowedChildren = updated }, [new(string.Format(SetupEngineTexts.ChildrenRehashed, appId, 1), true)]);
+        });
+
+    // Changes one app and applies everything (apps.json is written as version 2: migration on first write).
+    private IReadOnlyList<SetupStepResult> ChangeApp(string appId, Func<AppCandidate, (AppCandidate App, IReadOnlyList<SetupStepResult> Notes)> change)
+    {
+        var current = LoadCurrent();
+        if (current.Apps.All(a => a.Id != appId))
+        {
+            return [new(string.Format(SetupEngineTexts.UnknownApp, appId), false)];
+        }
+
+        IReadOnlyList<SetupStepResult> notes = [];
+        var apps = current.Apps.Select(a =>
+        {
+            if (a.Id != appId)
+            {
+                return ToCandidate(a);
+            }
+
+            (var changed, notes) = change(ToCandidate(a));
+            return changed;
+        }).ToList();
+
+        return [.. notes, .. Apply(new SetupRequest(apps, false, null, stateStore.Load().AddedGroupMembers))];
+    }
+
+    private static string ModeText(ChildProcessMode mode) => mode switch
+    {
+        ChildProcessMode.Allowlist => SetupEngineTexts.ModeAllowlist,
+        ChildProcessMode.All => SetupEngineTexts.ModeAll,
+        _ => SetupEngineTexts.ModeBlocked,
+    };
 
     /// <summary>uninstall: everything setup changed goes back; reports are kept.</summary>
     public IReadOnlyList<SetupStepResult> Uninstall()
