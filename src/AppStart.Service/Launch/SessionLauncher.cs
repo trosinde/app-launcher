@@ -123,7 +123,9 @@ internal static unsafe class SessionLauncher
             try
             {
                 // D3: no child processes unless allowed. Assigned while suspended, so no code runs outside the job.
-                if (!app.AllowChildProcesses)
+                // Mode allowlist is started like blocked (fail-closed) until the monitored job exists
+                // (add-allowed-child-processes task 3.1).
+                if (app.ChildProcessMode != ChildProcessMode.All)
                 {
                     cleanup.Job = CreateSingleProcessJob();
                     if (!PInvoke.AssignProcessToJobObject(cleanup.Job, info.hProcess))

@@ -16,10 +16,30 @@ public enum IntegrityCheck
     Sha256,
 }
 
+/// <summary>Which further processes an application may start (add-allowed-child-processes, design D1).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ChildProcessMode>))]
+public enum ChildProcessMode
+{
+    /// <summary>Job object with ActiveProcessLimit 1: no further process (default).</summary>
+    [JsonStringEnumMemberName("blocked")]
+    Blocked,
+
+    /// <summary>Monitored job object: only entries of allowedChildren, every other process is terminated.</summary>
+    [JsonStringEnumMemberName("allowlist")]
+    Allowlist,
+
+    /// <summary>No job object: every process allowed (unsafe, deliberate choice).</summary>
+    [JsonStringEnumMemberName("all")]
+    All,
+}
+
 /// <summary>Content of C:\ProgramData\AppStart\apps.json.</summary>
 public sealed record AppsConfig
 {
-    public const int CurrentVersion = 1;
+    /// <summary>Version written by the setup. Version 1 is still read (design D1, migration plan).</summary>
+    public const int CurrentVersion = 2;
+
+    public const int OldestReadableVersion = 1;
 
     [JsonRequired]
     public int Version { get; init; }
@@ -29,6 +49,38 @@ public sealed record AppsConfig
 
     public AppEntry? Find(string appId) =>
         Apps.FirstOrDefault(a => string.Equals(a.Id, appId, StringComparison.Ordinal));
+
+    /// <summary>
+    /// The same configuration in the current version: allowChildProcesses false becomes childProcesses
+    /// blocked, true becomes all (spec installation, requirement "Migration der Konfiguration").
+    /// </summary>
+    public AppsConfig ToCurrentVersion() => Version == CurrentVersion
+        ? this
+        : this with
+        {
+            Version = CurrentVersion,
+            Apps = [.. Apps.Select(a => a with { AllowChildProcesses = null, ChildProcesses = a.ChildProcessMode })],
+        };
+}
+
+/// <summary>A helper program an application may start in mode allowlist (design D1).</summary>
+public sealed record AllowedChild
+{
+    [JsonRequired]
+    public string Exe { get; init; } = string.Empty;
+
+    [JsonRequired]
+    public IntegrityCheck Check { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SignerThumbprint { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Sha256 { get; init; }
+
+    /// <summary>Confirmation that a shell or script host is allowed on purpose (design D3).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AllowShell { get; init; }
 }
 
 /// <summary>One released application.</summary>
@@ -53,7 +105,22 @@ public sealed record AppEntry
 
     public string? Sha256 { get; init; }
 
-    public bool AllowChildProcesses { get; init; }
+    /// <summary>Version 1 only: false = blocked, true = all. Use <see cref="ChildProcessMode"/>.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? AllowChildProcesses { get; init; }
+
+    /// <summary>Version 2: blocked (also when missing), allowlist or all.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ChildProcessMode? ChildProcesses { get; init; }
+
+    /// <summary>Version 2, mode allowlist only: at least one entry.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<AllowedChild>? AllowedChildren { get; init; }
+
+    /// <summary>The effective mode for both versions (version 1: allowChildProcesses false = blocked, true = all).</summary>
+    [JsonIgnore]
+    public ChildProcessMode ChildProcessMode =>
+        ChildProcesses ?? (AllowChildProcesses == true ? ChildProcessMode.All : ChildProcessMode.Blocked);
 
     public string? DataDir { get; init; }
 

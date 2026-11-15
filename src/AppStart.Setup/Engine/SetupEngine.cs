@@ -346,7 +346,7 @@ public sealed class SetupEngine(
     }
 
     private static AppCandidate ToCandidate(AppEntry a) => new(
-        a.Exe, a.Name, a.Id, a.Check, a.SignerThumbprint, a.Sha256, a.DataDir, a.RegistryKey, a.AllowChildProcesses);
+        a.Exe, a.Name, a.Id, a.Check, a.SignerThumbprint, a.Sha256, a.DataDir, a.RegistryKey, a.ChildProcessMode, a.AllowedChildren);
 
     private static bool SamePath(string a, string b) =>
         string.Equals(a.TrimEnd('\\'), b.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);

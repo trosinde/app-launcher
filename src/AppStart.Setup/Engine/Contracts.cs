@@ -192,7 +192,8 @@ public sealed record AppCandidate(
     string? Sha256,
     string? DataDir,
     string? RegistryKey,
-    bool AllowChildProcesses = false);
+    ChildProcessMode ChildProcesses = ChildProcessMode.Blocked,
+    IReadOnlyList<AllowedChild>? AllowedChildren = null);
 
 /// <summary>What is configured today (wizard opens with it on update / re-run, task 6.7).</summary>
 public sealed record SetupSnapshot(

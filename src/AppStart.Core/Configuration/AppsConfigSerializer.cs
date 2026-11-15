@@ -51,9 +51,9 @@ public static class AppsConfigSerializer
     /// <summary>Returns the first rule violation, or null when the configuration is valid.</summary>
     public static string? Validate(AppsConfig config)
     {
-        if (config.Version != AppsConfig.CurrentVersion)
+        if (config.Version is < AppsConfig.OldestReadableVersion or > AppsConfig.CurrentVersion)
         {
-            return $"version: {config.Version} wird nicht unterstützt, erwartet {AppsConfig.CurrentVersion}.";
+            return $"version: {config.Version} wird nicht unterstützt, erwartet {AppsConfig.OldestReadableVersion} bis {AppsConfig.CurrentVersion}.";
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -103,6 +103,76 @@ public static class AppsConfigSerializer
                     return $"{at}.signerThumbprint: bei check «signature» sind 40 Hex-Zeichen nötig.";
                 case IntegrityCheck.Sha256 when !IsHex(app.Sha256, 64):
                     return $"{at}.sha256: bei check «sha256» sind 64 Hex-Zeichen nötig.";
+            }
+
+            var childError = ValidateChildProcesses(app, at, config.Version);
+            if (childError is not null)
+            {
+                return childError;
+            }
+        }
+
+        return null;
+    }
+
+    // add-allowed-child-processes, design D1.
+    private static string? ValidateChildProcesses(AppEntry app, string at, int version)
+    {
+        if (version == 1)
+        {
+            if (app.ChildProcesses is not null)
+            {
+                return $"{at}.childProcesses: gibt es erst ab Version 2.";
+            }
+
+            return app.AllowedChildren is not null ? $"{at}.allowedChildren: gibt es erst ab Version 2." : null;
+        }
+
+        if (app.AllowChildProcesses is not null)
+        {
+            return $"{at}.allowChildProcesses: gibt es ab Version 2 nicht mehr, «childProcesses» verwenden.";
+        }
+
+        if (app.ChildProcessMode != ChildProcessMode.Allowlist)
+        {
+            return app.AllowedChildren is not null
+                ? $"{at}.allowedChildren: nur bei childProcesses «allowlist» erlaubt."
+                : null;
+        }
+
+        if (app.AllowedChildren is not { Count: > 0 })
+        {
+            return $"{at}.allowedChildren: bei childProcesses «allowlist» ist mindestens ein Eintrag nötig.";
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var j = 0; j < app.AllowedChildren.Count; j++)
+        {
+            var child = app.AllowedChildren[j];
+            var cat = $"{at}.allowedChildren[{j}]";
+
+            if (!IsAbsoluteWindowsPath(child.Exe) || child.Exe.Contains('%', StringComparison.Ordinal)
+                || !child.Exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{cat}.exe: «{child.Exe}» ist kein absoluter Pfad auf eine EXE (ohne Platzhalter).";
+            }
+
+            if (!seen.Add(child.Exe))
+            {
+                return $"{cat}.exe: «{child.Exe}» kommt mehrfach vor.";
+            }
+
+            switch (child.Check)
+            {
+                case IntegrityCheck.Signature when !IsHex(child.SignerThumbprint, 40):
+                    return $"{cat}.signerThumbprint: bei check «signature» sind 40 Hex-Zeichen nötig.";
+                case IntegrityCheck.Sha256 when !IsHex(child.Sha256, 64):
+                    return $"{cat}.sha256: bei check «sha256» sind 64 Hex-Zeichen nötig.";
+            }
+
+            if (ChildProcessRules.IsShellOrScriptHost(child.Exe) && !child.AllowShell)
+            {
+                return $"{cat}.allowShell: «{Path.GetFileName(child.Exe)}» ist eine Shell oder ein Skript-Host und nur mit «allowShell»: true erlaubt.";
             }
         }
 

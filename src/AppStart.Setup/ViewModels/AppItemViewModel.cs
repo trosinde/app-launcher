@@ -19,7 +19,7 @@ public sealed partial class AppItemViewModel : ObservableObject
 
     public static AppItemViewModel FromEntry(AppEntry entry) => new(
         new AppCandidate(entry.Exe, entry.Name, entry.Id, entry.Check, entry.SignerThumbprint, entry.Sha256,
-            entry.DataDir, entry.RegistryKey, entry.AllowChildProcesses),
+            entry.DataDir, entry.RegistryKey, entry.ChildProcessMode, entry.AllowedChildren),
         isSelected: true,
         isReleased: true);
 
