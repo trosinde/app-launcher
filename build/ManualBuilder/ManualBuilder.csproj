@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Build tool (task 10.3): docs/manual/*.md -> one printable HTML; build/Build-Manual.ps1 prints it to PDF with Edge. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- A plain console tool: runs on Windows and Linux, not part of the product. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyTitle>AppStart ManualBuilder</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.6.0" />
+  </ItemGroup>
+
+</Project>

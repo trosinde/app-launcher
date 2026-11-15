@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Task 10.4: every message, check point and command of the software is described in the manual (docs/manual). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Setup, Service and TestApp are self-contained win-x64 executables; the tests reference them and must match. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <UseWPF>true</UseWPF>
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <!-- Launcher and bootstrapper (Native AOT, not self-contained) are referenced only to read their texts by reflection (NETSDK1150). -->
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
+    <!-- Same Markdown pipeline as build/ManualBuilder: the test compares against what the reader sees. -->
+    <PackageReference Include="Markdig" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\AppStart.Launcher\AppStart.Launcher.csproj" />
+    <ProjectReference Include="..\..\src\AppStart.Setup\AppStart.Setup.csproj" />
+    <ProjectReference Include="..\..\src\AppStart.Service\AppStart.Service.csproj" />
+    <ProjectReference Include="..\..\src\AppStart.TestApp\AppStart.TestApp.csproj" />
+    <ProjectReference Include="..\..\src\AppStart.Bootstrapper\AppStart.Bootstrapper.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The manual travels with the test binaries, so the published test EXE runs anywhere (e.g. copied to the Windows test folder). -->
+    <None Include="..\..\docs\manual\**\*" LinkBase="manual" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
