@@ -1,6 +1,6 @@
 ## Context
 
-Konzept: `docs/konzept/option3-appstart.md`. Spike-Ergebnisse mit Logs und Begründungen: `spike-results.md`.
+Konzept: `docs/konzept/konzept.md`. Spike-Ergebnisse mit Logs und Begründungen: `spike-results.md`.
 Dieses Dokument hält die technischen Entscheide fest, die aus den Spikes folgen und vom Konzept abweichen oder es präzisieren.
 
 ## Goals / Non-Goals
@@ -11,7 +11,7 @@ Dieses Dokument hält die technischen Entscheide fest, die aus den Spikes folgen
 - Installation interaktiv (Wizard) und still (Softwareverteilung) mit demselben MSI.
 
 **Non-Goals:**
-- Umbau der Applikationen (Option 4).
+- Änderungen an den Applikationen.
 - Automatische Updates.
 
 ## Decisions
@@ -47,7 +47,7 @@ Lieferumfang: `AppStart-Setup.exe` (interaktiv) und `AppStart.msi` (still), beid
 
 ### D7 Geprüfte Datei bleibt gesperrt bis zum Start
 Der Dienst öffnet die EXE mit `FileShare.Read` (kein Schreiben, kein Löschen/Umbenennen), prüft Signatur (WinVerifyTrust über das Datei-Handle) oder SHA-256 über dasselbe Handle und hält es bis nach `CreateProcessAsUser`. So kann zwischen Prüfung und Start nichts ausgetauscht werden (TOCTOU).
-Signatur: Kette muss gültig sein, Thumbprint muss passen (Pinning). Keine Online-Sperrprüfung, weil Laborrechner oft offline sind; das Pinning auf den Thumbprint ersetzt sie.
+Signatur: Kette muss gültig sein, Thumbprint muss passen (Pinning). Keine Online-Sperrprüfung, weil Arbeitsplatzrechner oft offline sind; das Pinning auf den Thumbprint ersetzt sie.
 
 ### D8 Antwortprotokoll
 Anfrage `START <AppId>` (ASCII, max. 64 Byte). Antwort `OK` oder `DENIED <grund> <ereignis-id>`, max. 64 Byte. Gründe: `unknown-app`, `integrity`, `config`, `busy`, `error`. Details nur im Ereignisprotokoll, nie an den Client.

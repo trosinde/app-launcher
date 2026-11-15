@@ -12,4 +12,4 @@ Mehrere Applikationen brauchen Admin-Rechte. Bediener arbeiten deshalb heute als
 ## Impact
 - Keine Änderung an Applikationen und deren Installern
 - Neue Komponenten: Service, Launcher, Setup, Core, Bootstrapper, MSI
-- Restrisiko: Administratoren können Passwörter weiterhin lesen (Option 4)
+- Restrisiko: Administratoren können Passwörter weiterhin lesen

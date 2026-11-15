@@ -1,6 +1,8 @@
-# Option 3 – Eigener Start-Dienst «AppStart» (Umsetzung)
+# Konzept – Start-Dienst «AppStart»
 
-Diese Seite ist die Übergabe an Claude Code. AppStart wird als eigenständige Komponente in einem eigenen Repository spec-driven mit OpenSpec umgesetzt. Applikationen und ihre Installer bleiben unverändert.
+> **Historisches Dokument.** Übergabe zu Projektbeginn. Massgeblich sind inzwischen die Specs und Entscheide im [OpenSpec-Change](../../openspec/changes/add-appstart-service/) (z. B. GitHub Actions statt Azure DevOps, S4U statt DPAPI, Bootstrapper für die Installation). Aktuelle Übersicht: [Dokumentation](../README.md).
+
+AppStart wird als eigenständige Komponente in einem eigenen Repository spec-driven mit OpenSpec umgesetzt. Applikationen und ihre Installer bleiben unverändert.
 
 ## Ziel und Abgrenzung
 
@@ -8,7 +10,7 @@ Diese Seite ist die Übergabe an Claude Code. AppStart wird als eigenständige K
 - Austauschdateien und Passwörter in der Registry sind für Standard-User gesperrt.
 - Bei der Installation werden eine oder mehrere Applikationen ausgewählt. Jede bekommt eine eigene Verknüpfung mit ihrem eigenen Icon.
 - Eigenes Repository, eigener Release-Zyklus, eigenes Installationspaket.
-- Nicht Teil dieser Komponente: der Umbau der Applikationen (Option 4).
+- Nicht Teil dieser Komponente: Änderungen an den Applikationen.
 
 ## UI-Entwürfe
 
@@ -158,7 +160,7 @@ Set-Acl -Path $RegKey -AclObject $acl
 
 **Programmordner** `C:\Program Files\AppStart`: nur für SYSTEM und Administratoren beschreibbar.
 
-**Restrisiko:** Administratoren können die Passwörter weiterhin lesen. Erst Option 4 behebt das.
+**Restrisiko:** Administratoren können die Passwörter weiterhin lesen.
 
 ## Prüfbefehl für das Service and Security Manual
 
@@ -323,7 +325,7 @@ Mehrere Applikationen brauchen Admin-Rechte. Bediener arbeiten deshalb heute als
 ## Impact
 - Keine Änderung an Applikationen und deren Installern
 - Neue Komponenten: Service, Launcher, Setup, Core, MSI
-- Restrisiko: Administratoren können Passwörter weiterhin lesen (Option 4)
+- Restrisiko: Administratoren können Passwörter weiterhin lesen
 ```
 
 ### specs/app-launch/spec.md
