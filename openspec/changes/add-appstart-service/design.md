@@ -34,7 +34,7 @@ Bei `allowChildProcesses: false`. Bestätigt: `cmd.exe` scheitert mit ERROR_NOT_
 Verworfen: WiX MSI als Fallback, da Velopack alle Prüfpunkte aus Spike 1.3 erfüllt.
 
 ### D5 Hooks nur für den Dienst
-Install-Hook registriert und startet den Dienst. Uninstall-Hook stoppt und löscht ihn. Da der Uninstall-Hook auch bei jedem Update läuft, entfernt er nichts weiter. Konten, Gruppe, Verknüpfungen, Rechte und `apps.json` räumt nur `AppStart.Setup.exe uninstall` auf.
+Install-Hook registriert und startet den Dienst und legt über `AppStart.Setup.exe startmenu --create` die eigenen Startmenü-Einträge an («AppStart – Einrichtung», «AppStart – Einrichtung prüfen»). Uninstall-Hook stoppt und löscht den Dienst und entfernt diese Einträge. Velopacks eigene Verknüpfung auf die Haupt-EXE (= Dienst) wird mit `--shortcuts ''` abgeschaltet. Da der Uninstall-Hook auch bei jedem Update läuft, entfernt er nichts weiter. Konten, Gruppe, Verknüpfungen, Rechte und `apps.json` räumt nur `AppStart.Setup.exe uninstall` auf.
 
 ### D6 Bootstrapper für die interaktive Installation
 Velopack-Hooks dürfen keine Oberfläche zeigen. Gängige Praxis bei Software mit Einrichtungsdialog ist eine Setup.exe, die ein MSI einbettet (wie WiX Burn, InstallShield). Umsetzung als eigener, dünner Bootstrapper:

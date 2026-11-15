@@ -6,7 +6,8 @@ namespace AppStart.Service.Installation;
 /// <summary>
 /// Registers and removes the Windows service from the Velopack hooks (task 7.4, design D5). Runs with the
 /// installer's admin rights, without UI and within Velopack's 30 s limit. Touches only the service and the
-/// event source; apps.json, accounts, shortcuts and ACLs belong to "AppStart.Setup.exe uninstall".
+/// event source and AppStart's own Start menu folder; apps.json, accounts, app shortcuts and ACLs belong to
+/// "AppStart.Setup.exe uninstall".
 /// </summary>
 internal static class ServiceInstaller
 {
@@ -30,6 +31,7 @@ internal static class ServiceInstaller
         }
 
         Sc($"start {AppStartConstants.ServiceName}");
+        StartMenu("--create");
     }
 
     /// <summary>Uninstall hook (also before an MSI upgrade): stop and delete the service only.</summary>
@@ -37,6 +39,24 @@ internal static class ServiceInstaller
     {
         StopAndWait();
         Sc($"delete {AppStartConstants.ServiceName}");
+        StartMenu("--remove");
+    }
+
+    // AppStart's own Start menu entries («AppStart – Einrichtung», «… prüfen») are written by the setup EXE
+    // next to this one, so the shortcut code exists only once. Bounded wait: the hook has 30 s in total.
+    private static void StartMenu(string action)
+    {
+        var setup = Path.Combine(AppContext.BaseDirectory, "AppStart.Setup.exe");
+        if (!File.Exists(setup))
+        {
+            return;
+        }
+
+        using var p = Process.Start(new ProcessStartInfo(setup, $"startmenu {action}") { CreateNoWindow = true, UseShellExecute = false });
+        if (p is not null && !p.WaitForExit(15_000))
+        {
+            p.Kill();
+        }
     }
 
     /// <summary>Before an update through Update.exe: the files of "current" are replaced, the service must not run.</summary>

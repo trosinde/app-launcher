@@ -6,7 +6,7 @@
 .DESCRIPTION
   1. dotnet restore / build / test (Release)
   2. publish AppStart.Service (main EXE, Velopack hooks), AppStart.Launcher (Native AOT) and
-     AppStart.TestApp (subfolder TestApp)
+     AppStart.Setup (WPF, not single-file) and AppStart.TestApp (subfolder TestApp)
   3. vpk pack --msi --instLocation PerMachine --packTitle AppStart  ->  C:\Program Files\AppStart
   4. removes Velopack's per-user Setup.exe and Portable.zip: they install into a folder the user can
      write to (concept: "Nie das per-user-Setup von Velopack verwenden")
@@ -80,6 +80,11 @@ try {
             dotnet publish src/AppStart.Launcher @common -r win-x64 -o $pack
         }
     }
+    Invoke-Step 'Publish AppStart.Setup' {
+        # Not single-file: a self-extracting WPF EXE would unpack native libraries to %TEMP% while running
+        # elevated (design D6). It shares the self-contained runtime folder with the service.
+        dotnet publish src/AppStart.Setup @common -r win-x64 --self-contained -o $pack
+    }
     Invoke-Step 'Publish AppStart.TestApp' {
         dotnet publish src/AppStart.TestApp @common -r win-x64 --self-contained -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $pack 'TestApp')
@@ -104,7 +109,7 @@ try {
     Invoke-Step 'Restore tools (vpk)' { dotnet tool restore }
     Invoke-Step 'vpk pack --msi (PerMachine)' {
         dotnet vpk pack --packId AppStart --packVersion $Version --packDir $pack --mainExe AppStart.Service.exe `
-            --packTitle AppStart --packAuthors AppStart --msi --instLocation PerMachine --outputDir $OutputDir @signArgs
+            --packTitle AppStart --packAuthors AppStart --msi --instLocation PerMachine --shortcuts '' --outputDir $OutputDir @signArgs
     }
 
     # --- release content: only the per-machine MSI and the update packages
@@ -136,7 +141,7 @@ try {
             }
             if ($own -and $file.Extension -eq '.exe') { $ownExes++ }
         }
-        foreach ($required in 'AppStart.Service.exe', 'AppStart.Launcher.exe') {
+        foreach ($required in 'AppStart.Service.exe', 'AppStart.Launcher.exe', 'AppStart.Setup.exe') {
             if (-not ($shipped | Where-Object Name -eq $required)) { throw "$required missing in the package (lib/app)." }
         }
         Write-Host "Signatures verified: MSI and $($shipped.Count - 1) EXE in the package ($ownExes own)."
