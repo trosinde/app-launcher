@@ -105,13 +105,28 @@ try {
     Rename-Item $msi.FullName $msiName
 
     if ($CertificateThumbprint) {
-        foreach ($file in @((Join-Path $OutputDir $msiName), (Join-Path $pack 'AppStart.Service.exe'))) {
-            $sig = Get-AuthenticodeSignature $file
-            if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Thumbprint -ne $CertificateThumbprint) {
-                throw "Signature check failed for $file ($($sig.Status))."
+        # vpk signs copies in its own staging folder, not $pack: check what actually ships, i.e. the MSI
+        # and every EXE inside the full package (lib/app). Own EXEs must carry our certificate.
+        $nupkg = Get-ChildItem $OutputDir -Filter '*-full.nupkg' | Select-Object -First 1
+        if (-not $nupkg) { throw 'vpk did not produce a full package.' }
+        $extract = Join-Path $work 'verify'
+        New-Item -ItemType Directory -Force $extract | Out-Null
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($nupkg.FullName, $extract)
+
+        $shipped = @(Get-Item (Join-Path $OutputDir $msiName)) + @(Get-ChildItem (Join-Path $extract 'lib/app') -Recurse -Filter '*.exe')
+        $ownExes = 0
+        foreach ($file in $shipped) {
+            $sig = Get-AuthenticodeSignature $file.FullName
+            $own = $file.Extension -eq '.msi' -or $file.Name -like 'AppStart.*.exe'
+            if ($sig.Status -ne 'Valid') { throw "Signature check failed for $($file.Name) ($($sig.Status))." }
+            if ($own -and $sig.SignerCertificate.Thumbprint -ne $CertificateThumbprint) {
+                throw "$($file.Name) is signed by $($sig.SignerCertificate.Subject), not by the release certificate."
             }
+            if ($own -and $file.Extension -eq '.exe') { $ownExes++ }
         }
-        Write-Host 'Signatures verified (MSI and service EXE).'
+        if ($ownExes -eq 0) { throw 'No AppStart EXE found in the package (lib/app).' }
+        Write-Host "Signatures verified: MSI and $($shipped.Count - 1) EXE in the package ($ownExes own)."
     }
 
     $sums = Get-ChildItem $OutputDir -File | Sort-Object Name | ForEach-Object {
