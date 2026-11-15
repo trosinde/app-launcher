@@ -60,6 +60,17 @@ public sealed class SetupEngine(
     public IReadOnlyList<SetupStepResult> Apply(SetupRequest request, IProgress<string>? progress = null)
     {
         var results = new List<SetupStepResult>();
+        try
+        {
+            // C:\ProgramData\AppStart must exist and be protected before the state can be written.
+            protection.ProtectConfigDirectory();
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            results.Add(new(SetupEngineTexts.ConfigFailed, false, ex.Message));
+            return results;
+        }
+
         var state = stateStore.Load();
 
         // 1. Accounts and group
@@ -110,7 +121,6 @@ public sealed class SetupEngine(
 
         try
         {
-            protection.ProtectConfigDirectory();
             foreach (var removed in previous.Apps.Where(p => entries.All(e => e.Id != p.Id)))
             {
                 state = Unregister(removed.Id, state);

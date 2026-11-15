@@ -15,13 +15,48 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
 {
     public static readonly TimeSpan ReadTimeout = TimeSpan.FromSeconds(2);
 
+    public static readonly TimeSpan GroupRetry = TimeSpan.FromSeconds(10);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         string sddl;
         NamedPipeServerStream first;
+        var waitingLogged = false;
+        while (true)
+        {
+            try
+            {
+                // Before AppStart.Setup ran, the group "AppStart Users" does not exist yet. The service stays
+                // running and retries, so it serves requests as soon as setup has created the group.
+                sddl = PipeFactory.BuildSddl(PipeFactory.ResolveOperatorGroup());
+            }
+            catch (System.Security.Principal.IdentityNotMappedException)
+            {
+                if (!waitingLogged)
+                {
+                    log.LogWarning(EventIds.PipeSetupFailed,
+                        "Gruppe «{Group}» fehlt: AppStart ist noch nicht eingerichtet. Der Dienst wartet und versucht es alle {Seconds} s erneut.",
+                        Core.AppStartConstants.OperatorGroupName, GroupRetry.TotalSeconds);
+                    waitingLogged = true;
+                }
+
+                try
+                {
+                    await Task.Delay(GroupRetry, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                continue;
+            }
+
+            break;
+        }
+
         try
         {
-            sddl = PipeFactory.BuildSddl(PipeFactory.ResolveOperatorGroup());
             first = PipeFactory.Create(sddl, firstInstance: true);
         }
         catch (PipeAlreadyExistsException ex)

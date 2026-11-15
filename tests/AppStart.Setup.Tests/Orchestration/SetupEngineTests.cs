@@ -3,7 +3,7 @@ using System.Security.Principal;
 using AppStart.Core.Configuration;
 using AppStart.Setup.Engine;
 
-namespace AppStart.Setup.Tests.Engine;
+namespace AppStart.Setup.Tests.Orchestration;
 
 public sealed class SetupEngineTests : IDisposable
 {
@@ -117,7 +117,7 @@ public sealed class SetupEngineTests : IDisposable
         _accounts.Fail = true;
         var results = _engine.Apply(Request(App("appa")));
         Assert.False(Assert.Single(results).Success);
-        Assert.False(_protection.ConfigDirProtected);
+        Assert.True(_protection.ConfigDirProtected); // created first, so the state can be written
         Assert.False(File.Exists(Path.Combine(_dir, "apps.json")));
     }
 

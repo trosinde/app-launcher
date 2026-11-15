@@ -1,7 +1,7 @@
 using AppStart.Core;
 using AppStart.Setup.Engine;
 
-namespace AppStart.Setup.Tests.Engine;
+namespace AppStart.Setup.Tests.Orchestration;
 
 public class AppCandidatesTests
 {

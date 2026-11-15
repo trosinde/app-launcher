@@ -1,5 +1,3 @@
-using System.Windows;
-
 namespace AppStart.Setup;
 
 /// <summary>
@@ -9,15 +7,7 @@ namespace AppStart.Setup;
 public static class Program
 {
     [STAThread]
-    public static int Main(string[] args)
-    {
-        if (args.Length > 0)
-        {
-            return Cli.CommandLine.Run(args);
-        }
-
-        var app = new App();
-        app.InitializeComponent();
-        return app.Run();
-    }
+    public static int Main(string[] args) => args.Length > 0
+        ? Cli.CommandLine.Run(args)
+        : Views.WizardLauncher.ShowWizard(Integration.SetupComposition.CreateEngine());
 }
