@@ -181,6 +181,8 @@ AppStart.Setup.exe startmenu --remove
 | `--create` | Legt «AppStart – Einrichtung», «AppStart – Einrichtung prüfen» und «AppStart – Handbuch» an (bestehende werden ersetzt) |
 | `--remove` | Löscht den Ordner «AppStart» im Startmenü |
 
+«AppStart – Handbuch» öffnet das mitgelieferte PDF `C:\Program Files\AppStart\current\AppStart-Handbuch.pdf`; der Eintrag entsteht nur, wenn die Datei vorhanden ist.
+
 Genau eine Option angeben, sonst Exit-Code 2.
 
 <a id="appstart-setup-exe"></a>
