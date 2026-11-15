@@ -90,9 +90,10 @@ public sealed partial class CompletenessTests
             }
         }
 
-        foreach (var command in AllCommands(root))
+        foreach (var (command, path) in AllCommands(root, string.Empty))
         {
-            var heading = $"`{command.Name}`";
+            // Subcommands by their full path (`learn apply`), so equal names under different parents stay apart.
+            var heading = $"`{path}`";
             var section = Manual.Section(source, line => line.Contains(heading, StringComparison.Ordinal));
             if (section is null)
             {
@@ -205,12 +206,13 @@ public sealed partial class CompletenessTests
         return (RootCommand)build.Invoke(null, [null])!;
     }
 
-    private static IEnumerable<Command> AllCommands(Command command)
+    private static IEnumerable<(Command Command, string Path)> AllCommands(Command command, string prefix)
     {
         foreach (var sub in command.Subcommands)
         {
-            yield return sub;
-            foreach (var deeper in AllCommands(sub))
+            var path = prefix.Length == 0 ? sub.Name : $"{prefix} {sub.Name}";
+            yield return (sub, path);
+            foreach (var deeper in AllCommands(sub, path))
             {
                 yield return deeper;
             }

@@ -49,6 +49,8 @@ public static class SetupEngineTexts
     public const string IdFixed = "Die Applikation ist bereits als «{0}» freigegeben; die AppId lässt sich nicht ändern (remove, dann add).";
     public const string IdTaken = "AppId «{0}» ist bereits vergeben.";
 
+    public const string AnswerFileMissing = "Antwortdatei {0} nicht gefunden.";
+
     // Learn mode (design D3)
     public const string LearnStarted = "Lernmodus für «{0}» gestartet, endet automatisch um {1} Uhr";
     public const string LearnStopped = "Lernmodus für «{0}» beendet";

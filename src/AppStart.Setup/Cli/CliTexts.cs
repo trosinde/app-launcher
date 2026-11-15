@@ -71,5 +71,9 @@ public static class CliTexts
     public const string LearnEmpty = "Nichts aufgezeichnet.";
     public const string LearnProgramLine = "    {0} Start(s), Prüfung {1}, zuletzt {2}";
 
+    public const string ApplyDescription = "Richtet AppStart nach einer Antwortdatei ein (stille Installation). Zweimal angewendet ändert nichts.";
+    public const string ConfigOption = "Antwortdatei (JSON) mit Applikationen, Schutz, weiteren Programmen und Bedienern.";
+    public const string ReplaceOption = "Applikationen, die nicht in der Antwortdatei stehen, werden entfernt.";
+
     public const string UninstallDescription = "Stellt alles zurück, was das Setup geändert hat (vor der Deinstallation des MSI ausführen).";
 }

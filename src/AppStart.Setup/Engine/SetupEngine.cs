@@ -439,6 +439,142 @@ public sealed class SetupEngine(
         return Core.Integrity.ExecutableVerifier.Verify(entry, exe);
     }
 
+    // ------------------------------------------------------------------ answer file (design D5)
+
+    /// <summary>
+    /// apply --config: sets up apps, protection, modes, helpers and operators as the file describes, idempotent.
+    /// Everything is checked first: invalid input (format, missing files, shells without confirmation, signature
+    /// for unsigned files) raises <see cref="SetupInputException"/> with all findings; a helper operators could
+    /// replace is refused (exit code 1). Apps not in the file stay unless <paramref name="replace"/>.
+    /// </summary>
+    public IReadOnlyList<SetupStepResult> ApplyAnswerFile(string path, bool replace)
+    {
+        if (!File.Exists(path))
+        {
+            throw new SetupInputException(string.Format(SetupEngineTexts.AnswerFileMissing, path));
+        }
+
+        var (file, errors) = AnswerFileSerializer.Parse(File.ReadAllText(path));
+        if (file is null)
+        {
+            throw new SetupInputException(string.Join(Environment.NewLine, errors));
+        }
+
+        var current = LoadCurrent();
+        var problems = new List<string>();
+        var refused = new List<string>();
+        var candidates = new List<AppCandidate>();
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < file.Apps.Count; i++)
+        {
+            var at = $"apps[{i}]";
+            var answer = file.Apps[i];
+            try
+            {
+                var candidate = FromAnswer(answer, current, ids, at, problems, refused);
+                if (candidate is not null)
+                {
+                    candidates.Add(candidate);
+                    ids.Add(candidate.Id);
+                }
+            }
+            catch (SetupInputException ex)
+            {
+                problems.Add($"{at}: {ex.Message}");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                problems.Add($"{at}.exe: {ex.Message}");
+            }
+        }
+
+        if (problems.Count > 0)
+        {
+            throw new SetupInputException(string.Join(Environment.NewLine, problems));
+        }
+
+        if (refused.Count > 0)
+        {
+            return [.. refused.Select(r => new SetupStepResult(r, false))];
+        }
+
+        // Apps of the release that are not in the file stay (with their settings), unless --replace.
+        var kept = replace
+            ? []
+            : current.Apps.Where(a => candidates.All(c => c.Id != a.Id && !string.Equals(c.ExePath, a.Exe, StringComparison.OrdinalIgnoreCase))).Select(ToCandidate);
+        var operators = (file.Operators ?? []).Concat(replace ? [] : stateStore.Load().AddedGroupMembers).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return Apply(new SetupRequest([.. kept, .. candidates], false, null, operators));
+    }
+
+    private AppCandidate? FromAnswer(AnswerApp answer, SetupSnapshot current, HashSet<string> idsInFile, string at, List<string> problems, List<string> refused)
+    {
+        var exe = Path.GetFullPath(answer.Exe);
+        if (!File.Exists(exe))
+        {
+            problems.Add($"{at}.exe: {string.Format(SetupEngineTexts.ChildMissing, exe)}");
+            return null;
+        }
+
+        var existing = current.Apps.FirstOrDefault(a => string.Equals(a.Exe, exe, StringComparison.OrdinalIgnoreCase));
+        if (answer.Id is { } wanted && existing is not null && existing.Id != wanted)
+        {
+            problems.Add($"{at}.id: {string.Format(SetupEngineTexts.IdFixed, existing.Id)}");
+            return null;
+        }
+
+        var taken = current.Apps.Where(a => a != existing).Select(a => a.Id).Concat(idsInFile);
+        if (answer.Id is { } id && taken.Contains(id))
+        {
+            problems.Add($"{at}.id: {string.Format(SetupEngineTexts.IdTaken, id)}");
+            return null;
+        }
+
+        var candidate = AppCandidates.Inspect(exe, taken, existing);
+        if (answer.Check == IntegrityCheck.Signature && candidate.Check != IntegrityCheck.Signature)
+        {
+            problems.Add($"{at}.check: {string.Format(SetupEngineTexts.ChildNotSigned, exe)}");
+            return null;
+        }
+
+        if (answer.Check == IntegrityCheck.Sha256 && candidate.Check != IntegrityCheck.Sha256)
+        {
+            candidate = candidate with { Check = IntegrityCheck.Sha256, SignerThumbprint = null, Sha256 = ChildPrograms.Rehash(new AllowedChild { Exe = exe, Check = IntegrityCheck.Sha256 }).Sha256 };
+        }
+
+        var children = new List<AllowedChild>();
+        for (var j = 0; j < (answer.AllowedChildren?.Count ?? 0); j++)
+        {
+            var child = answer.AllowedChildren![j];
+            var cat = $"{at}.allowedChildren[{j}]";
+            try
+            {
+                var entry = ChildPrograms.Inspect(child.Exe, child.Check, child.AllowShell);
+                var violations = writeViolations(entry.Exe);
+                if (violations.Count > 0)
+                {
+                    refused.Add($"{cat}: {string.Format(SetupEngineTexts.ChildFolderWritable, entry.Exe)}");
+                }
+
+                children.Add(entry);
+            }
+            catch (SetupInputException ex)
+            {
+                problems.Add($"{cat}.exe: {ex.Message}");
+            }
+        }
+
+        var mode = answer.ChildProcesses ?? ChildProcessMode.Blocked;
+        return candidate with
+        {
+            Id = answer.Id ?? candidate.Id,
+            Name = answer.Name?.Trim() ?? candidate.Name,
+            DataDir = answer.DataDir,
+            RegistryKey = answer.RegistryKey,
+            ChildProcesses = mode,
+            AllowedChildren = mode == ChildProcessMode.Allowlist ? children : null,
+        };
+    }
+
     // ------------------------------------------------------------------ learn mode (design D3)
 
     public LearnSession? GetLearnSession(string appId) => ReadLearnState().ActiveFor(appId, time.GetUtcNow());

@@ -15,7 +15,7 @@ Allgemeines:
 - Das Programm verlangt Admin-Rechte (UAC). Für die Kommandozeile eine Eingabeaufforderung oder PowerShell «Als Administrator ausführen» öffnen; nur dann erscheinen Ausgaben und Passwortabfrage im selben Fenster.
 - `AppStart.Setup.exe` ist ein Windows-Programm. In Batch-Dateien wartet `cmd` auf das Ende; in einer interaktiven Eingabeaufforderung `start "" /wait` voranstellen, damit `%ERRORLEVEL%` den Exit-Code enthält. In PowerShell `Start-Process … -Wait -PassThru` verwenden (Beispiel im Kapitel [Installation](03-installation.md)).
 - Pfade mit Leerzeichen in Anführungszeichen setzen.
-- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`, `set-children`, `allow-child`, `deny-child`, `learn apply`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab. `learn start` und `learn stop` ändern `apps.json` nicht und prüfen nicht automatisch.
+- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`, `set-children`, `allow-child`, `deny-child`, `learn apply`, `apply`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab. `learn start` und `learn stop` ändern `apps.json` nicht und prüfen nicht automatisch.
 
 Exit-Codes:
 
@@ -45,6 +45,7 @@ Optionen für alle Befehle:
 | `allow-child` | Hilfsprogramm erlauben |
 | `deny-child` | Hilfsprogramm entfernen |
 | `learn start`, `learn stop`, `learn show`, `learn apply` | Lernmodus |
+| `apply` | Einrichtung nach Antwortdatei (stille Installation) |
 | `list` | Freigaben, Gruppe und Dienst anzeigen |
 | `verify` | Einrichtung prüfen, Prüfbericht ablegen |
 | `uninstall` | Alles zurückstellen (vor der MSI-Deinstallation) |
@@ -187,7 +188,7 @@ AppStart.Setup.exe learn show  --app <AppId>
 AppStart.Setup.exe learn apply --app <AppId> (--all | --exe "<Pfad>" [--exe "<Pfad>" …])
 ```
 
-#### learn `start`
+#### `learn start`
 
 Startet den Lernmodus für eine Applikation.
 
@@ -196,7 +197,7 @@ Startet den Lernmodus für eine Applikation.
 | `--app <AppId>` | ja | AppId der Applikation (siehe list). |
 | `--minutes <Minuten>` | nein | Dauer in Minuten (5 bis 120, Standard 30). |
 
-#### learn `stop`
+#### `learn stop`
 
 Beendet den Lernmodus sofort.
 
@@ -204,7 +205,7 @@ Beendet den Lernmodus sofort.
 |---|---|---|
 | `--app <AppId>` | ja | AppId der Applikation (siehe list). |
 
-#### learn `show`
+#### `learn show`
 
 Zeigt, was der Lernmodus aufgezeichnet hat.
 
@@ -224,7 +225,7 @@ C:\Windows\System32\cmd.exe – Shell oder Skript-Host
 
 Ohne laufenden Lernmodus erste Zeile «Lernmodus für «app-a»: nicht aktiv.», ohne Aufzeichnung «Nichts aufgezeichnet.»
 
-#### learn `apply`
+#### `learn apply`
 
 Übernimmt aufgezeichnete Programme als Hilfsprogramme und löscht die Aufzeichnung.
 
@@ -235,6 +236,51 @@ Ohne laufenden Lernmodus erste Zeile «Lernmodus für «app-a»: nicht aktiv.»,
 | `--exe <Pfad>` | eine von beiden | Nur diese aufgezeichneten Programme (mehrfach möglich). |
 
 Ohne oder mit beiden Angaben: «Bitte genau eine Angabe machen: --all oder --exe \<Pfad> (mehrfach möglich).», Exit-Code 2. Setzt den Modus auf «nur erlaubte Hilfsprogramme» und beendet einen noch laufenden Lernmodus.
+
+### `apply`
+
+Richtet AppStart nach einer Antwortdatei ein (stille Installation). Zweimal angewendet ändert nichts.
+
+```text
+AppStart.Setup.exe apply --config "<Datei>" [--replace]
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--config <Datei>` | ja | Antwortdatei (JSON) mit Applikationen, Schutz, weiteren Programmen und Bedienern. |
+| `--replace` | nein | Applikationen, die nicht in der Antwortdatei stehen, werden entfernt. |
+
+Der Befehl prüft zuerst die ganze Datei. Bei einem Fehler ändert er nichts, nennt alle Fehler mit Feld (z.B. `apps[0].allowedChildren[1].exe`) und endet mit Exit-Code 2. Fehlt die Datei: «Antwortdatei … nicht gefunden.» Liegt ein Hilfsprogramm in einem Ordner, den Bediener beschreiben können, ändert er ebenfalls nichts (Exit-Code 1). Danach richtet er alles ein wie der Assistent und prüft automatisch. Ohne `--replace` bleiben andere Applikationen und bisherige Mitglieder der Gruppe; mit `--replace` gilt nur, was in der Datei steht.
+
+Format der Antwortdatei (JSON, ohne Kommentare und ohne Kommas am Ende; unbekannte Felder sind Fehler):
+
+```json
+{
+  "version": 1,
+  "apps": [{
+    "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
+    "id": "appa", "name": "Applikation A",
+    "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
+    "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA",
+    "childProcesses": "allowlist",
+    "allowedChildren": [ { "exe": "C:\\Program Files\\Hersteller\\AppA\\Export.exe" } ]
+  }],
+  "operators": [ "DOMAIN\\Bediener-Gruppe" ]
+}
+```
+
+| Feld | Pflicht | Inhalt |
+|---|---|---|
+| `version` | ja | `1` |
+| `apps[].exe` | ja | Absoluter Pfad zur EXE; die Datei muss vorhanden sein. |
+| `apps[].id`, `name` | nein | AppId und Anzeigename wie bei `add --id` und `--name`. |
+| `apps[].dataDir`, `registryKey` | nein | wie bei `add` |
+| `apps[].check` | nein | `signature` oder `sha256`; sonst Signatur, wenn gültig signiert. |
+| `apps[].childProcesses` | nein | `blocked` (Standard), `allowlist` oder `all` |
+| `apps[].allowedChildren[]` | bei `allowlist` | `exe` (Pflicht), `check` (wie oben), `allowShell: true` für Shells und Skript-Hosts |
+| `operators` | nein | Konten oder Gruppen für «AppStart Users» |
+
+Signatur-Thumbprints und Prüfsummen stehen nicht in der Datei; der Befehl liest sie auf dem Zielrechner aus den Dateien. Passwörter gehören nicht in die Datei: Das lokale Bedienerkonto legt weiterhin `add-user --name appstart-user --password-stdin` an.
 
 ### `list`
 

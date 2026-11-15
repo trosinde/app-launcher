@@ -61,6 +61,13 @@ internal static class CommandLine
 
         root.Subcommands.Add(BuildLearn(engineFactory));
 
+        // apply --config <file> [--replace] (design D5): unattended setup in one step
+        var config = new Option<FileInfo>("--config") { Description = CliTexts.ConfigOption, Required = true };
+        var replace = new Option<bool>("--replace") { Description = CliTexts.ReplaceOption };
+        var apply = new Command("apply", CliTexts.ApplyDescription) { config, replace };
+        apply.SetAction(r => Changed(engineFactory, e => e.ApplyAnswerFile(r.GetValue(config)!.FullName, r.GetValue(replace))));
+        root.Subcommands.Add(apply);
+
         // add-user --name appstart-user [--password-stdin] | --member "<DOMAIN\User>"
         var userName = new Option<string?>("--name") { Description = CliTexts.UserNameOption };
         var member = new Option<string?>("--member") { Description = CliTexts.MemberOption };

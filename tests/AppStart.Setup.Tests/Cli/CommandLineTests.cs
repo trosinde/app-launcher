@@ -306,6 +306,123 @@ public sealed class CommandLineTests : IDisposable
         Assert.Equal(2, Run("learn", "apply", "--app", "appa", "--exe", @"C:\Windows\System32\cmd.exe").Code);
     }
 
+    // ------------------------------------------------ apply --config (task 4.4, design D5)
+
+    private static string Json(string path) => path.Replace(@"\", @"\\", StringComparison.Ordinal);
+
+    private string AnswerFile(string content) => File("appstart.json", content);
+
+    private string TwoApps()
+    {
+        var a = File("AppA.exe");
+        var b = File("AppB.exe");
+        var export = File("Export.exe");
+        return AnswerFile($$"""
+            {
+              "version": 1,
+              "apps": [
+                { "exe": "{{Json(a)}}", "id": "appa", "name": "Applikation A", "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
+                  "childProcesses": "allowlist", "allowedChildren": [ { "exe": "{{Json(export)}}" } ] },
+                { "exe": "{{Json(b)}}", "id": "appb" }
+              ],
+              "operators": [ "LABOR\\Bediener" ]
+            }
+            """);
+    }
+
+    // Spec scenario «Erste Einrichtung».
+    [Fact]
+    public void Apply_sets_up_two_apps_and_checks()
+    {
+        var r = Run("apply", "--config", TwoApps());
+
+        Assert.Equal(0, r.Code);
+        Assert.Contains("Automatische Prüfung", r.Out, StringComparison.Ordinal);
+        var a = Saved("appa");
+        Assert.Equal("Applikation A", a.Name);
+        Assert.Equal(@"C:\ProgramData\Hersteller\AppA", a.DataDir);
+        Assert.Equal(ChildProcessMode.Allowlist, a.ChildProcesses);
+        Assert.Equal(IntegrityCheck.Sha256, Assert.Single(a.AllowedChildren!).Check); // value read from the file on this machine
+        Assert.Equal(ChildProcessMode.Blocked, Saved("appb").ChildProcesses);
+    }
+
+    // Spec scenario «Zweite Anwendung»: nothing changes.
+    [Fact]
+    public void Apply_twice_changes_nothing()
+    {
+        var file = TwoApps();
+        Run("apply", "--config", file);
+        var first = System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json"));
+
+        var r = Run("apply", "--config", file);
+
+        Assert.Equal(0, r.Code);
+        Assert.Equal(first, System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json")));
+    }
+
+    // Spec scenario «Ungültige Datei»: nothing changes, output names field or path, exit 2.
+    [Theory]
+    [InlineData("""{ "version": 1, "apps": [], "password": "geheim" }""", "password")]
+    [InlineData("""{ "version": 1, "apps": [ { "exe": "C:\\nicht\\da\\App.exe" } ] }""", "apps[0].exe")]
+    [InlineData("""{ "version": 1, "apps": [ { "exe": "C:\\nicht\\da\\App.exe", "registryKey": "HKCU\\X" } ] }""", "apps[0].registryKey")]
+    [InlineData("""{ "version": 1, "apps": [], }""", "JSON")]
+    public void Invalid_file_changes_nothing_and_is_exit_2(string content, string named)
+    {
+        Released();
+        var before = System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json"));
+
+        var r = Run("apply", "--config", AnswerFile(content));
+
+        Assert.Equal(2, r.Code);
+        Assert.Contains(named, r.Err, StringComparison.Ordinal);
+        Assert.Equal(before, System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json")));
+    }
+
+    // Format errors (e.g. a shell without allowShell, see AnswerFileTests) come first; then every missing file at once.
+    [Fact]
+    public void Missing_helpers_are_reported_together()
+    {
+        var a = File("AppA.exe");
+        var r = Run("apply", "--config", AnswerFile($$"""
+            { "version": 1, "apps": [ { "exe": "{{Json(a)}}", "childProcesses": "allowlist", "allowedChildren": [
+              { "exe": "C:\\nicht\\da\\Export.exe" }, { "exe": "C:\\nicht\\da\\Updater.exe" } ] } ] }
+            """));
+
+        Assert.Equal(2, r.Code);
+        Assert.Contains("allowedChildren[0]", r.Err, StringComparison.Ordinal);
+        Assert.Contains("allowedChildren[1]", r.Err, StringComparison.Ordinal);
+        Assert.False(System.IO.File.Exists(Path.Combine(_dir, "apps.json")));
+    }
+
+    [Fact]
+    public void Missing_answer_file_is_exit_2() =>
+        Assert.Equal(2, Run("apply", "--config", Path.Combine(_dir, "fehlt.json")).Code);
+
+    [Fact]
+    public void Writable_helper_folder_is_exit_1_and_changes_nothing()
+    {
+        var file = TwoApps();
+        _writable.Add(Path.Combine(_dir, "Export.exe"));
+
+        Assert.Equal(1, Run("apply", "--config", file).Code);
+        Assert.False(System.IO.File.Exists(Path.Combine(_dir, "apps.json")));
+    }
+
+    [Fact]
+    public void Apps_not_in_the_file_stay_unless_replace()
+    {
+        Released(); // appa from AppA.exe
+        var c = File("AppC.exe");
+        var file = AnswerFile($$"""{ "version": 1, "apps": [ { "exe": "{{Json(c)}}", "id": "appc" } ] }""");
+
+        Assert.Equal(0, Run("apply", "--config", file).Code);
+        Assert.NotNull(Saved("appa"));
+
+        Assert.Equal(0, Run("apply", "--config", file, "--replace").Code);
+        Assert.Null(AppsConfigSerializer.Parse(System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json"))).Config!.Find("appa"));
+        Assert.NotNull(Saved("appc"));
+    }
+
     // ------------------------------------------------ list
 
     [Fact]
