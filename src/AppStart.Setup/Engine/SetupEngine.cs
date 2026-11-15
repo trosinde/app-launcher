@@ -61,8 +61,11 @@ public sealed class SetupEngine(
     SetupPaths paths,
     Func<string, IReadOnlyList<string>>? writeViolationsOf = null,
     TimeProvider? clock = null,
-    Action<int, string>? eventWriter = null) : ISetupEngine
+    Action<int, string>? eventWriter = null,
+    Func<SetupStepResult>? serviceCheck = null) : ISetupEngine
 {
+    private readonly Func<SetupStepResult> ensureService = serviceCheck ?? EnsureServiceRunning;
+
     // Folder/file of a helper writable for operators (injectable: temp folders in tests are user-writable).
     private readonly Func<string, IReadOnlyList<string>> writeViolations = writeViolationsOf ?? ChildPrograms.WriteViolations;
     private readonly TimeProvider time = clock ?? TimeProvider.System;
@@ -239,7 +242,7 @@ public sealed class SetupEngine(
 
         // 5. Service
         progress?.Report(SetupEngineTexts.ProgressService);
-        results.Add(EnsureServiceRunning());
+        results.Add(ensureService());
         return results;
     }
 
@@ -256,15 +259,46 @@ public sealed class SetupEngine(
     // ------------------------------------------------------------------ command line operations
 
     /// <summary>add: releases one EXE (or updates it when already released) and applies everything.</summary>
-    public IReadOnlyList<SetupStepResult> Add(string exePath, string? dataDir, string? registryKey, string? name)
+    public IReadOnlyList<SetupStepResult> Add(string exePath, string? dataDir, string? registryKey, string? name,
+        string? id = null, ChildProcessMode? childProcesses = null)
     {
         var current = LoadCurrent();
         var candidate = Inspect(exePath);
+        var released = current.Apps.Any(a => a.Id == candidate.Id && string.Equals(a.Exe, candidate.ExePath, StringComparison.OrdinalIgnoreCase));
+
+        // design D4: --id sets the AppId of a new release; an existing release keeps its AppId (shortcuts use it).
+        if (id is not null)
+        {
+            if (!AppId.IsValid(id))
+            {
+                throw new SetupInputException(string.Format(SetupEngineTexts.IdInvalid, id, AppId.MaxLength));
+            }
+
+            if (released && id != candidate.Id)
+            {
+                throw new SetupInputException(string.Format(SetupEngineTexts.IdFixed, candidate.Id));
+            }
+
+            if (!released && current.Apps.Any(a => a.Id == id))
+            {
+                throw new SetupInputException(string.Format(SetupEngineTexts.IdTaken, id));
+            }
+        }
+
+        var mode = childProcesses ?? candidate.ChildProcesses;
+        if (mode == ChildProcessMode.Allowlist && candidate.AllowedChildren is not { Count: > 0 })
+        {
+            throw new SetupInputException(SetupEngineTexts.AllowlistNeedsEntries);
+        }
+
         candidate = candidate with
         {
+            Id = id ?? candidate.Id,
             Name = string.IsNullOrWhiteSpace(name) ? candidate.Name : name.Trim(),
             DataDir = dataDir ?? candidate.DataDir,
             RegistryKey = registryKey ?? candidate.RegistryKey,
+            ChildProcesses = mode,
+            AllowedChildren = mode == ChildProcessMode.Allowlist ? candidate.AllowedChildren : null,
         };
 
         var apps = current.Apps.Where(a => a.Id != candidate.Id).Select(ToCandidate).Append(candidate).ToList();

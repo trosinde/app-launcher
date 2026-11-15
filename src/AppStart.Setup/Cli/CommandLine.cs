@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Security;
 using AppStart.Core;
+using AppStart.Core.Configuration;
 using AppStart.Setup.Engine;
 using Windows.Win32;
 
@@ -30,9 +31,35 @@ internal static class CommandLine
         var dataDir = new Option<string?>("--data-dir") { Description = CliTexts.DataDirOption };
         var regKey = new Option<string?>("--reg-key") { Description = CliTexts.RegKeyOption };
         var name = new Option<string?>("--name") { Description = CliTexts.NameOption };
-        var add = new Command("add", CliTexts.AddDescription) { exe, dataDir, regKey, name };
-        add.SetAction(r => Changed(engineFactory, e => e.Add(r.GetValue(exe)!.FullName, r.GetValue(dataDir), r.GetValue(regKey), r.GetValue(name))));
+        var id = new Option<string?>("--id") { Description = CliTexts.IdOption };
+        var addMode = new Option<ChildProcessMode?>("--child-processes") { Description = CliTexts.ChildProcessesOption };
+        var add = new Command("add", CliTexts.AddDescription) { exe, dataDir, regKey, name, id, addMode };
+        add.SetAction(r => Changed(engineFactory, e => e.Add(r.GetValue(exe)!.FullName, r.GetValue(dataDir), r.GetValue(regKey), r.GetValue(name),
+            r.GetValue(id), r.GetValue(addMode))));
         root.Subcommands.Add(add);
+
+        // add-allowed-child-processes, design D4: helper programs and learn mode
+        var modeApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var mode = new Option<ChildProcessMode>("--mode") { Description = CliTexts.ModeOption, Required = true };
+        var setChildren = new Command("set-children", CliTexts.SetChildrenDescription) { modeApp, mode };
+        setChildren.SetAction(r => Changed(engineFactory, e => e.SetChildMode(r.GetValue(modeApp)!, r.GetValue(mode))));
+        root.Subcommands.Add(setChildren);
+
+        var allowApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var allowExe = new Option<FileInfo>("--exe") { Description = CliTexts.ChildExeOption, Required = true };
+        var check = new Option<IntegrityCheck?>("--check") { Description = CliTexts.CheckOption };
+        var allowShell = new Option<bool>("--allow-shell") { Description = CliTexts.AllowShellOption };
+        var allowChild = new Command("allow-child", CliTexts.AllowChildDescription) { allowApp, allowExe, check, allowShell };
+        allowChild.SetAction(r => Changed(engineFactory, e => e.AllowChild(r.GetValue(allowApp)!, r.GetValue(allowExe)!.FullName, r.GetValue(check), r.GetValue(allowShell))));
+        root.Subcommands.Add(allowChild);
+
+        var denyApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var denyExe = new Option<FileInfo>("--exe") { Description = CliTexts.ChildExeOption, Required = true };
+        var denyChild = new Command("deny-child", CliTexts.DenyChildDescription) { denyApp, denyExe };
+        denyChild.SetAction(r => Changed(engineFactory, e => e.DenyChild(r.GetValue(denyApp)!, r.GetValue(denyExe)!.FullName)));
+        root.Subcommands.Add(denyChild);
+
+        root.Subcommands.Add(BuildLearn(engineFactory));
 
         // add-user --name appstart-user [--password-stdin] | --member "<DOMAIN\User>"
         var userName = new Option<string?>("--name") { Description = CliTexts.UserNameOption };
@@ -49,8 +76,11 @@ internal static class CommandLine
         root.Subcommands.Add(remove);
 
         var rehashApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
-        var rehash = new Command("rehash", CliTexts.RehashDescription) { rehashApp };
-        rehash.SetAction(r => Changed(engineFactory, e => e.Rehash(r.GetValue(rehashApp)!)));
+        var rehashChild = new Option<FileInfo?>("--child") { Description = CliTexts.RehashChildOption };
+        var rehash = new Command("rehash", CliTexts.RehashDescription) { rehashApp, rehashChild };
+        rehash.SetAction(r => Changed(engineFactory, e => r.GetValue(rehashChild) is { } child
+            ? e.RehashChild(r.GetValue(rehashApp)!, child.FullName)
+            : e.Rehash(r.GetValue(rehashApp)!)));
         root.Subcommands.Add(rehash);
 
         var list = new Command("list", CliTexts.ListDescription);
@@ -78,6 +108,85 @@ internal static class CommandLine
         root.Subcommands.Add(startMenu);
 
         return root;
+    }
+
+    // learn start | stop | show | apply (design D3/D4)
+    private static Command BuildLearn(Func<SetupEngine> engineFactory)
+    {
+        var learn = new Command("learn", CliTexts.LearnDescription);
+
+        var startApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var minutes = new Option<int>("--minutes") { Description = CliTexts.MinutesOption, DefaultValueFactory = _ => Core.Learning.LearnState.DefaultMinutes };
+        var start = new Command("start", CliTexts.LearnStartDescription) { startApp, minutes };
+        start.SetAction(r => Unchecked(() => Print(engineFactory().StartLearning(r.GetValue(startApp)!, r.GetValue(minutes)))));
+        learn.Subcommands.Add(start);
+
+        var stopApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var stop = new Command("stop", CliTexts.LearnStopDescription) { stopApp };
+        stop.SetAction(r => Unchecked(() => Print(engineFactory().StopLearning(r.GetValue(stopApp)!))));
+        learn.Subcommands.Add(stop);
+
+        var showApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var show = new Command("show", CliTexts.LearnShowDescription) { showApp };
+        show.SetAction(r => Unchecked(() => LearnShow(engineFactory(), r.GetValue(showApp)!)));
+        learn.Subcommands.Add(show);
+
+        var applyApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
+        var all = new Option<bool>("--all") { Description = CliTexts.LearnAllOption };
+        var exes = new Option<FileInfo[]>("--exe") { Description = CliTexts.LearnExeOption, AllowMultipleArgumentsPerToken = true };
+        var apply = new Command("apply", CliTexts.LearnApplyDescription) { applyApp, all, exes };
+        apply.SetAction(r =>
+        {
+            var chosen = r.GetValue(exes) ?? [];
+            if (r.GetValue(all) == (chosen.Length > 0))
+            {
+                Console.Error.WriteLine(CliTexts.LearnApplyUsage);
+                return 2;
+            }
+
+            return Changed(engineFactory, e => e.ApplyLearned(r.GetValue(applyApp)!, r.GetValue(all) ? null : [.. chosen.Select(f => f.FullName)]));
+        });
+        learn.Subcommands.Add(apply);
+        return learn;
+    }
+
+    private static int LearnShow(SetupEngine engine, string appId)
+    {
+        var session = engine.GetLearnSession(appId);
+        Console.WriteLine(session is null
+            ? string.Format(CliTexts.LearnInactive, appId)
+            : string.Format(CliTexts.LearnActiveUntil, appId, session.ExpiresUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
+        var recording = engine.GetRecording(appId);
+        if (recording is not { Programs.Count: > 0 })
+        {
+            Console.WriteLine(CliTexts.LearnEmpty);
+            return 0;
+        }
+
+        foreach (var p in recording.Programs.OrderBy(p => p.FirstStartUtc))
+        {
+            var mark = p.IsShellOrScriptHost ? CliTexts.ShellMark : string.Empty;
+            Console.WriteLine($"{p.Exe}{mark}");
+            Console.WriteLine(string.Format(CliTexts.LearnProgramLine, p.Starts,
+                p.SignatureValid ? CliTexts.CheckSignature : CliTexts.CheckSha256,
+                p.LastStartUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        return 0;
+    }
+
+    // Invalid input found by AppStart itself (not by the parser): message on stderr, exit code 2, nothing changed.
+    private static int Unchecked(Func<int> action)
+    {
+        try
+        {
+            return action();
+        }
+        catch (SetupInputException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 2;
+        }
     }
 
     private static int AddUser(Func<SetupEngine> engineFactory, string? name, string? member, bool passwordFromStdin)
@@ -124,7 +233,12 @@ internal static class CommandLine
         foreach (var app in current.Apps)
         {
             Console.WriteLine($"{app.Id,-20} {app.Name}");
-            Console.WriteLine($"{string.Empty,-20} {app.Exe} ({(app.Check == Core.Configuration.IntegrityCheck.Signature ? "Signatur" : "SHA-256")})");
+            Console.WriteLine($"{string.Empty,-20} {app.Exe} ({CheckText(app.Check)})");
+            Console.WriteLine($"{string.Empty,-20} {string.Format(CliTexts.ChildModeLine, ModeText(app.ChildProcessMode))}");
+            foreach (var child in app.AllowedChildren ?? [])
+            {
+                Console.WriteLine($"{string.Empty,-20}   {child.Exe} ({CheckText(child.Check)}{(child.AllowShell ? CliTexts.ShellMark : string.Empty)})");
+            }
         }
 
         Console.WriteLine();
@@ -162,8 +276,28 @@ internal static class CommandLine
     private static int Changed(Func<SetupEngine> engineFactory, Func<SetupEngine, IReadOnlyList<SetupStepResult>> change)
     {
         var engine = engineFactory();
-        return Changed(engine, change(engine));
+        IReadOnlyList<SetupStepResult> results;
+        try
+        {
+            results = change(engine);
+        }
+        catch (SetupInputException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 2;
+        }
+
+        return Changed(engine, results);
     }
+
+    private static string CheckText(IntegrityCheck check) => check == IntegrityCheck.Signature ? CliTexts.CheckSignature : CliTexts.CheckSha256;
+
+    private static string ModeText(ChildProcessMode mode) => mode switch
+    {
+        ChildProcessMode.Allowlist => SetupEngineTexts.ModeAllowlist,
+        ChildProcessMode.All => SetupEngineTexts.ModeAll,
+        _ => SetupEngineTexts.ModeBlocked,
+    };
 
     // Task 9.3: every change is followed by an automatic check with a stored report.
     private static int Changed(SetupEngine engine, IReadOnlyList<SetupStepResult> results)

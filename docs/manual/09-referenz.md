@@ -15,7 +15,7 @@ Allgemeines:
 - Das Programm verlangt Admin-Rechte (UAC). Für die Kommandozeile eine Eingabeaufforderung oder PowerShell «Als Administrator ausführen» öffnen; nur dann erscheinen Ausgaben und Passwortabfrage im selben Fenster.
 - `AppStart.Setup.exe` ist ein Windows-Programm. In Batch-Dateien wartet `cmd` auf das Ende; in einer interaktiven Eingabeaufforderung `start "" /wait` voranstellen, damit `%ERRORLEVEL%` den Exit-Code enthält. In PowerShell `Start-Process … -Wait -PassThru` verwenden (Beispiel im Kapitel [Installation](03-installation.md)).
 - Pfade mit Leerzeichen in Anführungszeichen setzen.
-- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab.
+- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`, `set-children`, `allow-child`, `deny-child`, `learn apply`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab. `learn start` und `learn stop` ändern `apps.json` nicht und prüfen nicht automatisch.
 
 Exit-Codes:
 
@@ -23,7 +23,7 @@ Exit-Codes:
 |---|---|
 | 0 | Erfolgreich, Prüfung ohne Abweichung |
 | 1 | Ein Schritt ist fehlgeschlagen, die Prüfung hat Abweichungen gefunden, oder Befehl bzw. Optionen sind ungültig (z.B. Pflichtoption fehlt) |
-| 2 | `add-user`: falsche oder fehlende Angabe, Passwort leer oder verschieden. Assistent: vor der Einrichtung abgebrochen. `startmenu`: weder oder beide Optionen. |
+| 2 | Ungültige Angabe, nichts wurde geändert: `add-user` (falsche oder fehlende Angabe, Passwort leer oder verschieden), `add --id` ungültig oder vergeben, «nur erlaubte Hilfsprogramme» ohne Eintrag, Shell ohne `--allow-shell`, Prüfung `signature` für eine nicht signierte Datei, Dauer des Lernmodus ausserhalb 5–120, `learn apply` ohne oder mit beiden Angaben `--all`/`--exe`. Assistent: vor der Einrichtung abgebrochen. `startmenu`: weder oder beide Optionen. |
 
 Optionen für alle Befehle:
 
@@ -41,6 +41,10 @@ Optionen für alle Befehle:
 | `add-user` | Bedienerkonto anlegen oder Benutzer in die Gruppe aufnehmen |
 | `remove` | Freigabe entziehen |
 | `rehash` | Nach Update der Applikation Signatur bzw. Prüfsumme neu erfassen |
+| `set-children` | Weitere Programme: gesperrt, nur erlaubte Hilfsprogramme oder alle erlaubt |
+| `allow-child` | Hilfsprogramm erlauben |
+| `deny-child` | Hilfsprogramm entfernen |
+| `learn start`, `learn stop`, `learn show`, `learn apply` | Lernmodus |
 | `list` | Freigaben, Gruppe und Dienst anzeigen |
 | `verify` | Einrichtung prüfen, Prüfbericht ablegen |
 | `uninstall` | Alles zurückstellen (vor der MSI-Deinstallation) |
@@ -51,7 +55,7 @@ Optionen für alle Befehle:
 Gibt eine Applikation frei oder aktualisiert ihre Freigabe.
 
 ```text
-AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"] [--name "<Anzeigename>"]
+AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"] [--name "<Anzeigename>"] [--id <AppId>] [--child-processes blocked|allowlist|all]
 ```
 
 | Option | Pflicht | Beschreibung |
@@ -60,8 +64,10 @@ AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"
 | `--data-dir <Ordner>` | nein | Datenordner (Austauschdateien), wird für Bediener gesperrt. |
 | `--reg-key <Key>` | nein | Registry-Key mit Passwörtern unter HKLM\\, wird für Bediener gesperrt. |
 | `--name <Anzeigename>` | nein | Anzeigename (Name der Verknüpfung). |
+| `--id <AppId>` | nein | AppId festlegen (a-z, 0-9, -; sonst aus dem Dateinamen). Nur bei einer neuen Freigabe. |
+| `--child-processes <Modus>` | nein | Weitere Programme: blocked (gesperrt), allowlist (nur erlaubte Hilfsprogramme) oder all (alle erlaubt). |
 
-Ohne `--name`: Dateibeschreibung, sonst Produktname der EXE, sonst Dateiname. Ist die EXE schon freigegeben, werden Signatur bzw. Prüfsumme neu erfasst und angegebene Werte übernommen; AppId und nicht angegebene Werte bleiben.
+Ohne `--name`: Dateibeschreibung, sonst Produktname der EXE, sonst Dateiname. Ist die EXE schon freigegeben, werden Signatur bzw. Prüfsumme neu erfasst und angegebene Werte übernommen; AppId und nicht angegebene Werte bleiben. Meldungen zu `--id` (Exit-Code 2): «AppId «My App» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis 32 Zeichen.», «AppId «app-a» ist bereits vergeben.», «Die Applikation ist bereits als «app-a» freigegeben; die AppId lässt sich nicht ändern (remove, dann add).» `--child-processes allowlist` geht nur, wenn die Applikation schon Hilfsprogramme hat; sonst zuerst `allow-child`.
 
 Beispiele:
 
@@ -115,14 +121,120 @@ Beispiel: `AppStart.Setup.exe remove --app app-a`
 Erfasst nach einem Update der Applikation Signatur oder Prüfsumme neu.
 
 ```text
-AppStart.Setup.exe rehash --app <AppId>
+AppStart.Setup.exe rehash --app <AppId> [--child "<Pfad>"]
 ```
 
 | Option | Pflicht | Beschreibung |
 |---|---|---|
 | `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--child <Pfad>` | nein | Nur die Prüfsumme dieses Hilfsprogramms neu erfassen. |
 
-Beispiel: `AppStart.Setup.exe rehash --app appstart-testapp`. Wendet zugleich Schutz und Verknüpfungen aller Applikationen erneut an.
+Beispiel: `AppStart.Setup.exe rehash --app appstart-testapp`. Wendet zugleich Schutz und Verknüpfungen aller Applikationen erneut an. Ohne `--child` werden auch die Prüfsummen aller Hilfsprogramme mit SHA-256 neu erfasst; Hilfsprogramme mit Signatur brauchen das nicht.
+
+### `set-children`
+
+Stellt ein, welche weiteren Programme eine Applikation starten darf.
+
+```text
+AppStart.Setup.exe set-children --app <AppId> --mode blocked|allowlist|all
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--mode <Modus>` | ja | blocked, allowlist oder all. allowlist braucht mindestens ein Hilfsprogramm. |
+
+Erklärung der Modi: [Applikationen verwalten → Weitere Programme](04-applikationen-verwalten.md). Mit `blocked` oder `all` wird die Liste der Hilfsprogramme verworfen.
+
+### `allow-child`
+
+Erlaubt einer Applikation ein Hilfsprogramm (Modus wird «nur erlaubte Hilfsprogramme»).
+
+```text
+AppStart.Setup.exe allow-child --app <AppId> --exe "<Pfad>" [--check signature|sha256] [--allow-shell]
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--exe <Pfad>` | ja | Pfad zur EXE des Hilfsprogramms. |
+| `--check <Prüfung>` | nein | Prüfung signature oder sha256 (ohne Angabe: Signatur, wenn gültig signiert, sonst SHA-256). |
+| `--allow-shell` | nein | Bestätigt, dass eine Shell oder ein Skript-Host erlaubt werden soll (z.B. cmd.exe, powershell.exe). |
+
+Exit-Code 1, wenn das Programm in einem Ordner liegt, den Bediener beschreiben können; Exit-Code 2 bei einer Shell ohne `--allow-shell`.
+
+### `deny-child`
+
+Entfernt ein Hilfsprogramm aus der Liste (beim letzten wird der Modus wieder «gesperrt»).
+
+```text
+AppStart.Setup.exe deny-child --app <AppId> --exe "<Pfad>"
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--exe <Pfad>` | ja | Pfad zur EXE des Hilfsprogramms. |
+
+### `learn`
+
+Lernmodus: zeichnet auf, welche Programme eine Applikation startet, und übernimmt sie als Hilfsprogramme. Ablauf und Hinweise: [Applikationen verwalten → Lernmodus](04-applikationen-verwalten.md).
+
+```text
+AppStart.Setup.exe learn start --app <AppId> [--minutes <5–120>]
+AppStart.Setup.exe learn stop  --app <AppId>
+AppStart.Setup.exe learn show  --app <AppId>
+AppStart.Setup.exe learn apply --app <AppId> (--all | --exe "<Pfad>" [--exe "<Pfad>" …])
+```
+
+#### learn `start`
+
+Startet den Lernmodus für eine Applikation.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--minutes <Minuten>` | nein | Dauer in Minuten (5 bis 120, Standard 30). |
+
+#### learn `stop`
+
+Beendet den Lernmodus sofort.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+
+#### learn `show`
+
+Zeigt, was der Lernmodus aufgezeichnet hat.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+
+Ausgabe:
+
+```text
+Lernmodus für «app-a»: aktiv bis 15.11.2026 10:55.
+C:\Program Files\Hersteller\AppA\Export.exe
+    3 Start(s), Prüfung Signatur, zuletzt 15.11.2026 10:41:07
+C:\Windows\System32\cmd.exe – Shell oder Skript-Host
+    1 Start(s), Prüfung Signatur, zuletzt 15.11.2026 10:44:10
+```
+
+Ohne laufenden Lernmodus erste Zeile «Lernmodus für «app-a»: nicht aktiv.», ohne Aufzeichnung «Nichts aufgezeichnet.»
+
+#### learn `apply`
+
+Übernimmt aufgezeichnete Programme als Hilfsprogramme und löscht die Aufzeichnung.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--all` | eine von beiden | Alle aufgezeichneten Programme ausser Shells und Skript-Hosts. |
+| `--exe <Pfad>` | eine von beiden | Nur diese aufgezeichneten Programme (mehrfach möglich). |
+
+Ohne oder mit beiden Angaben: «Bitte genau eine Angabe machen: --all oder --exe \<Pfad> (mehrfach möglich).», Exit-Code 2. Setzt den Modus auf «nur erlaubte Hilfsprogramme» und beendet einen noch laufenden Lernmodus.
 
 ### `list`
 
@@ -132,7 +244,7 @@ Zeigt freigegebene Applikationen, Bediener und Dienststatus.
 AppStart.Setup.exe list
 ```
 
-Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-applikationen-verwalten.md). Exit-Code immer 0.
+Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-applikationen-verwalten.md); je Applikation zusätzlich die Zeile «Weitere Programme: …» und darunter die erlaubten Hilfsprogramme mit Prüfung, Shells mit dem Zusatz «– Shell oder Skript-Host». Exit-Code immer 0.
 
 ### `verify`
 

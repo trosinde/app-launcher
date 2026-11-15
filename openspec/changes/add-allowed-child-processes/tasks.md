@@ -17,7 +17,7 @@
 ## 4. Setup
 - [x] 4.1 SetupEngine: Modus und Positivliste setzen, Migration Version 1 → 2, Schutz der neuen Dateien in ProtectionService
 - [x] 4.2 Assistent nach docs/ui-designs/Main, Helpers, Learn, LearnResult; Bestätigung bei «Alle erlaubt» und bei Shells; Texte in SetupTexts; Render- und ViewModel-Tests
-- [ ] 4.3 Kommandozeile gemäss design.md D4 (add --id/--child-processes, set-children, allow-child, deny-child, rehash --child, learn start|stop|show|apply, list); CliTexts; Tests für jeden Befehl und jeden Exit-Code
+- [x] 4.3 Kommandozeile gemäss design.md D4 (add --id/--child-processes, set-children, allow-child, deny-child, rehash --child, learn start|stop|show|apply, list); CliTexts; Tests für jeden Befehl und jeden Exit-Code
 - [ ] 4.4 apply --config [--replace] gemäss design.md D5: erst vollständig prüfen, dann schreiben, dann verify; Tests für Idempotenz und ungültige Dateien
 - [ ] 4.5 verify und Prüfbericht nach docs/ui-designs/Verify: Hilfsprogramme, Modus all, aktiver Lernmodus
 

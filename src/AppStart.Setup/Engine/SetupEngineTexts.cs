@@ -45,6 +45,10 @@ public static class SetupEngineTexts
     public const string ChildFolderWritable = "Hilfsprogramm nicht erlaubt: {0} liegt in einem Ordner, den Bediener beschreiben können";
     public const string ChildrenRehashed = "Prüfsummen der Hilfsprogramme von «{0}» neu erfasst ({1})";
 
+    public const string IdInvalid = "AppId «{0}» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis {1} Zeichen.";
+    public const string IdFixed = "Die Applikation ist bereits als «{0}» freigegeben; die AppId lässt sich nicht ändern (remove, dann add).";
+    public const string IdTaken = "AppId «{0}» ist bereits vergeben.";
+
     // Learn mode (design D3)
     public const string LearnStarted = "Lernmodus für «{0}» gestartet, endet automatisch um {1} Uhr";
     public const string LearnStopped = "Lernmodus für «{0}» beendet";

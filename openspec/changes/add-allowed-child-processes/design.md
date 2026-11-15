@@ -81,6 +81,8 @@ Neu bzw. erweitert, gleiche Exit-Codes wie heute (0 erfolgreich, 1 Fehler oder A
 | `learn apply --app <AppId> (--all \| --exe <Pfad>…)` | Vorschläge übernehmen (`--all` ohne Shells), setzt Modus `allowlist`, löscht die Aufzeichnung |
 | `list` | zeigt zusätzlich Modus und Hilfsprogramme je Applikation |
 
+`learn start` und `learn stop` ändern apps.json nicht und lösen keine automatische Prüfung aus: Ein aktiver Lernmodus ist für verify eine Abweichung, `learn start` endete sonst immer mit Exit-Code 1. `learn show` ändert nichts. `learn apply` ändert apps.json und endet wie jede Änderung mit der automatischen Prüfung. Ungültige Angaben, die AppStart selbst prüft (Shell ohne `--allow-shell`, `allowlist` ohne Einträge, Dauer ausserhalb 5–120, `--all` zusammen mit `--exe`, unbekannter Pfad in der Aufzeichnung), ergeben Exit-Code 2; Syntaxfehler der Kommandozeile wie bisher Exit-Code 1.
+
 `allow-child` stellt den Modus der Applikation auf `allowlist` (sonst gäbe es keinen gültigen Weg von `blocked` zu einer Positivliste, weil `set-children --mode allowlist` ohne Einträge ungültig ist); `deny-child` des letzten Eintrags stellt ihn auf `blocked`. Beides steht in der Ausgabe. Ein schon vorhandener Eintrag mit demselben Pfad wird ersetzt.
 | `apply --config <Datei> [--replace]` | Antwortdatei anwenden (D5) |
 
