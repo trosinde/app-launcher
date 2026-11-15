@@ -136,6 +136,13 @@ internal sealed class FakeProbe : ISystemProbe
 
     public IntegrityResult VerifyExecutable(AppEntry app) =>
         Integrity.TryGetValue(app.Exe, out var result) ? result : IntegrityResult.Ok("ok");
+
+    public IntegrityResult VerifyChild(AllowedChild child) =>
+        Integrity.TryGetValue(child.Exe, out var result) ? result : IntegrityResult.Ok("ok");
+
+    public AppStart.Core.Learning.LearnStateLoadResult LearnState { get; set; } = new(AppStart.Core.Learning.LearnStateSerializer.Empty, null, false);
+
+    public AppStart.Core.Learning.LearnStateLoadResult LoadLearnState(string path) => LearnState;
 }
 
 internal sealed class FixedTime(DateTimeOffset now) : TimeProvider

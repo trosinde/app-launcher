@@ -197,7 +197,7 @@ Weitere Gründe beim Zurückstellen: «Die Sicherung «…» der Verknüpfung «
 | Meldung | Bedeutung | Exit-Code |
 |---|---|---|
 | «Automatische Prüfung nach der Änderung:» | Nach `add`, `add-user`, `remove` und `rehash` folgt die Ausgabe von `verify` | 0 oder 1 |
-| «Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
+| «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
 | «Prüfung nicht bestanden – 2 Abweichung(en). Einsatz nicht abschliessen.» | Abweichungen, siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) | 1 |
 | «Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Pfad des Berichts (mit `--report` der angegebene Pfad) | – |
 | «Bitte genau eine Angabe machen: --name appstart-user oder --member "DOMAIN\User".» | `add-user` ohne oder mit beiden Angaben | 2 |

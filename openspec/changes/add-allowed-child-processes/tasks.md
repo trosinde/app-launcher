@@ -19,7 +19,7 @@
 - [x] 4.2 Assistent nach docs/ui-designs/Main, Helpers, Learn, LearnResult; Bestätigung bei «Alle erlaubt» und bei Shells; Texte in SetupTexts; Render- und ViewModel-Tests
 - [x] 4.3 Kommandozeile gemäss design.md D4 (add --id/--child-processes, set-children, allow-child, deny-child, rehash --child, learn start|stop|show|apply, list); CliTexts; Tests für jeden Befehl und jeden Exit-Code
 - [x] 4.4 apply --config [--replace] gemäss design.md D5: erst vollständig prüfen, dann schreiben, dann verify; Tests für Idempotenz und ungültige Dateien
-- [ ] 4.5 verify und Prüfbericht nach docs/ui-designs/Verify: Hilfsprogramme, Modus all, aktiver Lernmodus
+- [x] 4.5 verify und Prüfbericht nach docs/ui-designs/Verify: Hilfsprogramme, Modus all, aktiver Lernmodus
 
 ## 5. Bootstrapper
 - [ ] 5.1 /config <Pfad> nur zusammen mit /quiet; nach erfolgreichem msiexec AppStart.Setup.exe apply --config ohne Oberfläche, signaturgeprüft, Ausgabe in Logs\apply-<Zeit>.log; Exit-Codes gemäss design.md D6 (10 und 11 neu); Hilfe-Text; Tests in BootstrapperLogic

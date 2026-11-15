@@ -13,7 +13,10 @@ public sealed record CheckRow(string Title, string Text, bool IsDeviation)
     public static CheckRow From(CheckResult check)
     {
         var deviation = check.Outcome == CheckOutcome.Deviation;
-        var text = deviation && check.Findings.Count > 0 ? string.Join(Environment.NewLine, check.Findings) : check.Expected;
+        // Passed checks may carry notes (e.g. «Alle weiteren Programme erlaubt»): shown below the expected state.
+        var text = check.Findings.Count == 0 ? check.Expected
+            : deviation ? string.Join(Environment.NewLine, check.Findings)
+            : check.Expected + Environment.NewLine + string.Join(Environment.NewLine, check.Findings);
         return new CheckRow(check.Title, text, deviation);
     }
 

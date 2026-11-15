@@ -21,6 +21,7 @@ public sealed class Verifier : IVerifier
     public const string DataDirCheckId = "datenordner";
     public const string RegistryCheckId = "registry";
     public const string ShortcutsCheckId = "verknuepfungen";
+    public const string HelpersCheckId = "hilfsprogramme";
 
     public const string DenyInteractiveLogonRight = "SeDenyInteractiveLogonRight";
     public const string DenyRemoteInteractiveLogonRight = "SeDenyRemoteInteractiveLogonRight";
@@ -91,6 +92,7 @@ public sealed class Verifier : IVerifier
             Check(PipeCheckId, VerificationTexts.PipeTitle, VerificationTexts.PipeExpected, CheckPipe),
             Check(AppsJsonCheckId, VerificationTexts.AppsJsonTitle, VerificationTexts.AppsJsonExpected, () => CheckAppsJson(strictConfig)),
             Check(DataDirCheckId, VerificationTexts.DataDirTitle, VerificationTexts.DataDirExpected, () => CheckDataDirs(apps, appAccount)),
+            CheckWithNotes(HelpersCheckId, VerificationTexts.HelpersTitle, VerificationTexts.HelpersExpected, () => CheckHelpers(apps)),
             Check(RegistryCheckId, VerificationTexts.RegistryTitle, VerificationTexts.RegistryExpected, () => CheckRegistryKeys(apps, appAccount)),
             Check(ShortcutsCheckId, VerificationTexts.ShortcutsTitle, VerificationTexts.ShortcutsExpected, () => CheckShortcuts(apps)),
         };
@@ -367,6 +369,77 @@ public sealed class Verifier : IVerifier
     }
 
     // ------------------------------------------------------------------ Helpers
+
+    // add-allowed-child-processes, spec verification «Prüfung der Hilfsprogramme».
+    private (List<string> Deviations, List<string> Notes) CheckHelpers(IReadOnlyList<AppEntry>? apps)
+    {
+        if (apps is null)
+        {
+            return ([VerificationTexts.ConfigUnavailable], []);
+        }
+
+        var deviations = new List<string>();
+        var notes = new List<string>();
+        foreach (var app in apps)
+        {
+            if (app.ChildProcessMode == ChildProcessMode.All)
+            {
+                notes.Add(Format(VerificationTexts.HelpersAllAllowed, app.Id));
+                continue;
+            }
+
+            foreach (var child in app.ChildProcessMode == ChildProcessMode.Allowlist ? app.AllowedChildren ?? [] : [])
+            {
+                if (!_probe.FileExists(child.Exe))
+                {
+                    deviations.Add(Format(VerificationTexts.HelperMissing, app.Id, child.Exe));
+                    continue;
+                }
+
+                var check = _probe.VerifyChild(child);
+                if (!check.Success)
+                {
+                    deviations.Add(Format(VerificationTexts.HelperCheckFailed, app.Id, child.Exe, check.Detail));
+                }
+
+                var folder = Path.GetDirectoryName(child.Exe)!;
+                if (_probe.FindWriteViolations(folder).Count > 0 || _probe.FindWriteViolations(child.Exe).Count > 0)
+                {
+                    deviations.Add(Format(VerificationTexts.HelperWritable, app.Id, child.Exe));
+                }
+            }
+        }
+
+        var learnPath = Path.Combine(Path.GetDirectoryName(_configPath)!, "learn.json");
+        var learn = _probe.LoadLearnState(learnPath);
+        if (!learn.IsValid)
+        {
+            deviations.Add(Format(VerificationTexts.LearnStateInvalid, learn.Error!));
+        }
+
+        var now = _time.GetUtcNow();
+        foreach (var session in learn.State.Apps.Where(s => s.IsActive(now)))
+        {
+            deviations.Add(Format(VerificationTexts.LearnActive, session.AppId,
+                session.ExpiresUtc.ToOffset(_time.GetLocalNow().Offset).ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        return (deviations, notes);
+    }
+
+    /// <summary>Like <see cref="Check"/>, but notes are shown without making the check a deviation.</summary>
+    private static CheckResult CheckWithNotes(string id, string title, string expected, Func<(List<string> Deviations, List<string> Notes)> run)
+    {
+        try
+        {
+            var (deviations, notes) = run();
+            return new CheckResult(id, title, expected, deviations.Count == 0 ? CheckOutcome.Passed : CheckOutcome.Deviation, [.. deviations, .. notes]);
+        }
+        catch (Exception ex) when (IsCheckError(ex))
+        {
+            return new CheckResult(id, title, expected, CheckOutcome.Deviation, [Format(VerificationTexts.CheckFailed, ex.Message)]);
+        }
+    }
 
     private static CheckResult Check(string id, string title, string expected, Func<List<string>> run)
     {

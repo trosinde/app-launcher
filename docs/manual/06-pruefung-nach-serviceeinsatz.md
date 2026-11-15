@@ -25,7 +25,7 @@ Fenster «AppStart – Einrichtung prüfen». Während der Prüfung steht «Prü
 - Angaben: «Rechner» (Computername), «Datum» (z.B. 15.11.2026 10:42), «Servicetechniker» (angemeldetes Konto), «Version» (z.B. «AppStart 0.2.0»).
 - Tabelle mit den Spalten «Prüfpunkt», «Soll» und «Ergebnis» («Erfüllt» oder «Abweichung»). Bei einer Abweichung steht statt des Solls die gefundene Abweichung, darunter das Soll.
 - Bei Abweichungen ein roter Kasten «Einsatz nicht abschliessen» mit «Abweichungen korrigieren und Prüfung wiederholen:» und dem Befehl `AppStart.Setup.exe verify`.
-- Ohne Abweichung ein grüner Kasten «Einrichtung entspricht dem Soll» mit «Alle 8 Prüfpunkte erfüllt. Der Einsatz kann abgeschlossen werden.»
+- Ohne Abweichung ein grüner Kasten «Einrichtung entspricht dem Soll» mit «Alle 9 Prüfpunkte erfüllt. Der Einsatz kann abgeschlossen werden.»
 - Unten die Felder «Unterschrift Servicetechniker» und «Unterschrift Kunde» für den ausgedruckten Bericht.
 
 ![Prüfansicht mit einer Abweichung](images/pruefansicht-abweichung.png)
@@ -58,7 +58,7 @@ Jede Prüfung legt zwei Dateien unter `C:\ProgramData\AppStart\Reports` ab, bena
 
 | Datei | Inhalt |
 |---|---|
-| `verify-<JJJJ-MM-TT-hhmmss>.html` | Lesbarer Bericht «Prüfbericht AppStart», gleiche Gliederung wie die Prüfansicht. Abweichende Zeilen sind rot; ihr Soll steht nach «Soll:». Bei Abweichungen listet der Kasten «Einsatz nicht abschliessen» alle Abweichungen und endet mit «Korrigieren und Prüfung wiederholen:» `AppStart.Setup.exe verify`. Ohne Abweichung: «Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt». |
+| `verify-<JJJJ-MM-TT-hhmmss>.html` | Lesbarer Bericht «Prüfbericht AppStart», gleiche Gliederung wie die Prüfansicht. Abweichende Zeilen sind rot; ihr Soll steht nach «Soll:». Bei Abweichungen listet der Kasten «Einsatz nicht abschliessen» alle Abweichungen und endet mit «Korrigieren und Prüfung wiederholen:» `AppStart.Setup.exe verify`. Ohne Abweichung: «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt». |
 | `verify-<JJJJ-MM-TT-hhmmss>.json` | Dieselben Angaben maschinenlesbar, für Auswertungen |
 
 Mit `verify --report "<Pfad>"` wird der HTML-Bericht zusätzlich an den angegebenen Ort kopiert. Berichte bleiben auch nach `uninstall` erhalten. Für den Einsatz: Bericht ausdrucken und unterschreiben oder die HTML-Datei dem Einsatzrapport beilegen.
@@ -82,11 +82,11 @@ Prüfung nicht bestanden – 1 Abweichung(en). Einsatz nicht abschliessen.
 Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html
 ```
 
-Ohne Abweichung lautet die vorletzte Zeile «Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt.»
+Ohne Abweichung lautet die vorletzte Zeile «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt.»
 
 ![Ausgabe von verify in der Eingabeaufforderung](images/verify-konsole.png)
 
-## Die acht Prüfpunkte
+## Die neun Prüfpunkte
 
 Je Prüfpunkt: das Soll, jede mögliche Abweichung, wie sie im Bericht steht, mit Ursache und Behebung. Werte in spitzen Klammern ersetzt der Bericht durch die gefundenen Namen und Pfade. Nach jeder Behebung die Prüfung wiederholen.
 
@@ -206,6 +206,21 @@ Für jede Applikation mit Datenordner. Bediener dürfen den Ordner weder lesen n
 | «\<Ordner>: \<Konto>: Besitzer (darf Rechte lesen und ändern)» | Ein Benutzer ist Besitzer des Ordners und kann die Rechte jederzeit ändern | Einrichtung erneut ausführen (setzt Administratoren als Besitzer) |
 | «\<Ordner>: Jeder (NULL DACL): Vollzugriff» | Zugriffsliste entfernt | Einrichtung erneut ausführen |
 | «Konto «appstart-app» fehlt, Rechte können nicht geprüft werden» | Siehe Prüfpunkt [Konten](#konten) | Konto wiederherstellen, dann Einrichtung erneut ausführen |
+
+<a id="hilfsprogramme"></a>
+### Hilfsprogramme je App
+
+**Soll:** vorhanden, Prüfung bestanden, Ordner für Bediener nicht beschreibbar; kein Lernmodus aktiv; «Alle erlaubt» als Hinweis
+
+Für jede Applikation mit «nur erlaubte Hilfsprogramme» jedes Programm der Liste (siehe [Applikationen verwalten → Weitere Programme](04-applikationen-verwalten.md)). Applikationen mit «Alle erlaubt (unsicher)» erscheinen als «Hinweis: Alle weiteren Programme erlaubt (app-a)»; der Prüfpunkt bleibt erfüllt, weil der Modus bewusst gewählt ist.
+
+| Abweichung | Ursache | Behebung |
+|---|---|---|
+| «app-a: Hilfsprogramm \<Pfad> fehlt» | Programm deinstalliert oder verschoben | Neu installieren, oder mit `deny-child` aus der Liste entfernen |
+| «app-a: \<Pfad> besteht die Prüfung nicht (…). Nach einem Update: AppStart.Setup.exe rehash --app app-a --child "\<Pfad>"» | Datei nach einem Update geändert (SHA-256) oder Signatur ungültig bzw. von einem anderen Zertifikat | Nach einem gewollten Update den angezeigten Befehl ausführen; sonst Datei prüfen und dem Service melden |
+| «app-a: Ordner oder Datei von \<Pfad> ist für Bediener beschreibbar» | Bediener könnten das Programm austauschen | Rechte des Ordners korrigieren oder das Programm in einen geschützten Ordner installieren |
+| «app-a: Lernmodus aktiv bis 15.11.2026 11:07. Beenden: AppStart.Setup.exe learn stop --app app-a» | Lernmodus vergessen; der Schutz ist bis dahin schwächer | Angezeigten Befehl ausführen, danach Vorschläge mit `learn apply` übernehmen |
+| «Steuerdatei des Lernmodus wird vom Dienst ignoriert: …» | `C:\ProgramData\AppStart\learn.json` für Bediener beschreibbar oder ungültig | Einrichtung erneut ausführen, Lernmodus neu starten |
 
 <a id="registry"></a>
 ### Registry-Key je App

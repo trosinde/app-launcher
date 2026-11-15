@@ -23,7 +23,7 @@ Letzter Lauf: 15.11.2026, Windows 11 Pro 10.0.26300, MSI 0.1.0-dev.2 (mit Launch
 ## Setup über die Kommandozeile
 
 `Invoke-SetupE2E.ps1 -MsiPath <msi>` (als Admin): MSI installieren, `add` TestApp mit Datenordner und
-Registry-Key, `add-user`, `list`, `verify` (8 von 8), Start über die angelegte Verknüpfung, absichtliche
+Registry-Key, `add-user`, `list`, `verify` (9 von 9), Start über die angelegte Verknüpfung, absichtliche
 Fehlkonfiguration, `uninstall` (Konten, Verknüpfungen und Rechte zurückgestellt), MSI deinstallieren.
 
 Letzter Lauf: 15.11.2026, MSI 0.2.0-dev.3: 19 PASS, 0 FAIL.
