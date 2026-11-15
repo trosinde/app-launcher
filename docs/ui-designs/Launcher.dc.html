@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Launcher-Meldungen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+a{color:#0f5299}a:hover{color:#0a3a6e}
+</style>
+</helmet>
+<div style="width: 560px; height: 560px; box-sizing: border-box; background: #dfe3e8; padding: 28px; display: flex; flex-direction: column; gap: 28px; font-family: 'Segoe UI', system-ui, sans-serif; color: #1b1b1b">
+  <div style="background: #ffffff; border: 1px solid #c4c4c4; border-radius: 6px; display: flex; flex-direction: column">
+    <div style="height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 14px; font-size: 12px; border-bottom: 1px solid #eeeeee">
+      <span>Applikation A</span>
+      <button aria-label="Schliessen" style="width: 40px; height: 34px; border: 0; background: transparent; font-size: 14px; color: #1b1b1b">✕</button>
+    </div>
+    <div style="display: flex; gap: 14px; padding: 18px 20px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9a5b00" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5"></path><circle cx="12" cy="18" r="0.6"></circle></svg>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+        <strong style="font-weight: 600">Start-Dienst nicht erreichbar</strong>
+        <span style="color: #4a4a4a; font-size: 13px">Der Dienst AppStart läuft nicht. Bitte wenden Sie sich an Ihren Administrator oder den Service.</span>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; padding: 12px 16px; background: #f3f3f3; border-top: 1px solid #e0e0e0; border-radius: 0 0 6px 6px">
+      <button style="height: 32px; min-width: 88px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 13px; font-weight: 600">OK</button>
+    </div>
+  </div>
+  <div style="background: #ffffff; border: 1px solid #c4c4c4; border-radius: 6px; display: flex; flex-direction: column">
+    <div style="height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 14px; font-size: 12px; border-bottom: 1px solid #eeeeee">
+      <span>Applikation B</span>
+      <button aria-label="Schliessen" style="width: 40px; height: 34px; border: 0; background: transparent; font-size: 14px; color: #1b1b1b">✕</button>
+    </div>
+    <div style="display: flex; gap: 14px; padding: 18px 20px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 8l8 8M16 8l-8 8"></path></svg>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+        <strong style="font-weight: 600">Start verweigert</strong>
+        <span style="color: #4a4a4a; font-size: 13px">Die Applikation wurde verändert und darf nicht gestartet werden. Der Vorfall wurde protokolliert. Bitte wenden Sie sich an den Service.</span>
+        <span style="color: #4a4a4a; font-size: 12px">Ereignis-ID [ID] · 15.11.2026 10:51</span>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; padding: 12px 16px; background: #f3f3f3; border-top: 1px solid #e0e0e0; border-radius: 0 0 6px 6px">
+      <button style="height: 32px; min-width: 88px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 13px; font-weight: 600">OK</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":560,"height":560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

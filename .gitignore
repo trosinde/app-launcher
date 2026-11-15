@@ -1,0 +1,8 @@
+bin/
+obj/
+spikes/out/
+*.user
+.vs/
+spikes/out-velo/
+spikes/out-testapp/
+TestResults/

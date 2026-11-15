@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Setup – Zusammenfassung und Prüfung</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+a{color:#0f5299}a:hover{color:#0a3a6e}
+</style>
+</helmet>
+<div style="width: 960px; height: 640px; box-sizing: border-box; background: #f3f3f3; display: flex; flex-direction: column; font-family: 'Segoe UI', system-ui, sans-serif; color: #1b1b1b">
+  <div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 16px; background: #ffffff; border-bottom: 1px solid #e0e0e0">
+    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f5299" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="1"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span>AppStart Setup</span>
+    </div>
+    <button aria-label="Schliessen" style="width: 46px; height: 40px; border: 0; background: transparent; font-size: 16px; color: #1b1b1b">✕</button>
+  </div>
+  <div style="display: flex; flex: 1; min-height: 0">
+    <nav style="width: 220px; background: #eaeef3; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+      <div style="padding: 10px 12px; color: #4a4a4a">1  Applikationen ✓</div>
+      <div style="padding: 10px 12px; color: #4a4a4a">2  Konten und Gruppe ✓</div>
+      <div style="padding: 10px 12px; background: #ffffff; border-radius: 4px; font-weight: 600; color: #0f5299">3  Zusammenfassung</div>
+    </nav>
+    <main style="flex: 1; padding: 24px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600">Einrichtung abgeschlossen</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; color: #4a4a4a">Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.</p>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; display: flex; flex-direction: column; font-size: 14px">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px"><span style="width: 22px; height: 22px; border-radius: 11px; background: #1e7b34; color: #ffffff; font-size: 13px; display: flex; align-items: center; justify-content: center" aria-hidden="true">✓</span>Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt</div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid #eeeeee"><span style="width: 22px; height: 22px; border-radius: 11px; background: #1e7b34; color: #ffffff; font-size: 13px; display: flex; align-items: center; justify-content: center" aria-hidden="true">✓</span>2 Applikationen freigegeben, Konfiguration geschützt</div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid #eeeeee"><span style="width: 22px; height: 22px; border-radius: 11px; background: #1e7b34; color: #ffffff; font-size: 13px; display: flex; align-items: center; justify-content: center" aria-hidden="true">✓</span>Datenordner und Registry-Keys gesperrt</div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid #eeeeee"><span style="width: 22px; height: 22px; border-radius: 11px; background: #1e7b34; color: #ffffff; font-size: 13px; display: flex; align-items: center; justify-content: center" aria-hidden="true">✓</span>Verknüpfungen mit App-Icon angelegt, 2 alte Verknüpfungen gesichert</div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid #eeeeee"><span style="width: 22px; height: 22px; border-radius: 11px; background: #1e7b34; color: #ffffff; font-size: 13px; display: flex; align-items: center; justify-content: center" aria-hidden="true">✓</span>Dienst AppStart läuft, Start automatisch</div>
+      </div>
+      <div style="background: #e3f2e6; border-radius: 4px; padding: 14px 16px; display: flex; align-items: center; gap: 14px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1e6b33" stroke-width="2" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+          <strong style="font-weight: 600; color: #1e6b33">Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt</strong>
+          <span style="font-size: 13px; color: #1b1b1b">Bericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-1042.html</span>
+        </div>
+      </div>
+      <div style="margin-top: auto; display: flex; justify-content: flex-end; gap: 8px">
+        <button style="height: 34px; padding: 0 16px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px">Prüfbericht öffnen</button>
+        <button style="height: 34px; min-width: 96px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 14px; font-weight: 600">Fertig</button>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

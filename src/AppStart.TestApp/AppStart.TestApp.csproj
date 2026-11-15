@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test application that behaves like the affected fat clients (spec: test-app). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\TestApp.ico</ApplicationIcon>
+    <AssemblyTitle>AppStart TestApp</AssemblyTitle>
+    <!-- WPF0001: ThemeMode (Fluent) is marked experimental in .NET 9/10. The concept fixes Fluent as theme. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\TestApp.ico" />
+  </ItemGroup>
+
+</Project>

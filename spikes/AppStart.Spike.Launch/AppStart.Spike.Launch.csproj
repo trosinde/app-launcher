@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway spike for tasks 1.1 (S4U logon for appstart-app) and 1.2 (display in the user's
+    session via WinSta0\Default) plus a first look at the job object (4.5).
+    Not product code. Run only on the Windows test VM, never on the development machine.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>AppStart.Spike.Launch</AssemblyName>
+  </PropertyGroup>
+
+</Project>

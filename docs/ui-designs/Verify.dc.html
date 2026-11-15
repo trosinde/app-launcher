@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Prüfbericht AppStart</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+a{color:#0f5299}a:hover{color:#0a3a6e}
+</style>
+</helmet>
+<div style="width: 960px; height: 720px; box-sizing: border-box; background: #ffffff; padding: 36px 40px; display: flex; flex-direction: column; gap: 18px; font-family: 'Segoe UI', system-ui, sans-serif; color: #1b1b1b">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px">
+    <div>
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #4a4a4a">PRÜFBERICHT</div>
+      <h1 style="margin: 4px 0 0; font-size: 26px; font-weight: 600">AppStart – Prüfung nach Serviceeinsatz</h1>
+    </div>
+    <div style="background: #fbe9e7; color: #9c1f17; font-weight: 600; font-size: 14px; padding: 8px 12px; border-radius: 4px; white-space: nowrap">1 Abweichung</div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; font-size: 13px">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4a4a4a">Rechner</span><strong style="font-weight: 600">LAB-PC-014</strong></div>
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4a4a4a">Datum</span><strong style="font-weight: 600">15.11.2026 10:42</strong></div>
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4a4a4a">Servicetechniker</span><strong style="font-weight: 600">[NAME]</strong></div>
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4a4a4a">Version</span><strong style="font-weight: 600">AppStart [VERSION]</strong></div>
+  </div>
+  <table style="width: 100%; border-collapse: collapse; font-size: 14px">
+    <thead>
+      <tr style="text-align: left; color: #4a4a4a; font-size: 12px">
+        <th style="padding: 8px 10px; border-bottom: 2px solid #d6d6d6; font-weight: 600">Prüfpunkt</th>
+        <th style="padding: 8px 10px; border-bottom: 2px solid #d6d6d6; font-weight: 600">Soll</th>
+        <th style="padding: 8px 10px; border-bottom: 2px solid #d6d6d6; font-weight: 600; width: 130px">Ergebnis</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Dienst</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">läuft, Start automatisch, LocalSystem</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Programmordner</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">nur SYSTEM und Administratoren schreiben</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr style="background: #fdf3f2"><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; font-weight: 600">Konten</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">appstart-user ist Mitglied der Administratoren</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #b3261e; color: #ffffff; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Abweichung</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Pipe</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">Rechte gemäss SDDL, keine Fernzugriffe</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">apps.json</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">geschützt, jede EXE besteht die Prüfung</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Datenordner je App</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">nur appstart-app, SYSTEM, Administratoren</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Registry-Key je App</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">für Bediener nicht lesbar</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+      <tr><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee">Verknüpfungen</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee; color: #4a4a4a">zeigen auf den Launcher</td><td style="padding: 9px 10px; border-bottom: 1px solid #eeeeee"><span style="background: #e3f2e6; color: #1e6b33; font-weight: 600; padding: 3px 8px; border-radius: 4px; font-size: 13px">Erfüllt</span></td></tr>
+    </tbody>
+  </table>
+  <div style="background: #fbe9e7; border-radius: 4px; padding: 12px 16px; font-size: 14px; display: flex; flex-direction: column; gap: 4px">
+    <strong style="font-weight: 600; color: #9c1f17">Einsatz nicht abschliessen</strong>
+    <span>Bediener darf keine Admin-Rechte haben. Korrigieren und Prüfung wiederholen: <code style="font-family: Consolas, monospace; font-size: 13px">AppStart.Setup.exe verify</code></span>
+  </div>
+  <div style="margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; font-size: 13px; color: #4a4a4a">
+    <div style="border-top: 1px solid #1b1b1b; padding-top: 6px">Unterschrift Servicetechniker</div>
+    <div style="border-top: 1px solid #1b1b1b; padding-top: 6px">Unterschrift Kunde</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
