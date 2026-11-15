@@ -5,7 +5,7 @@
 ## 2. Core
 - [x] 2.1 AppsConfig Version 2: ChildProcessMode (blocked, allowlist, all), AllowedChild (exe, check, signerThumbprint, sha256, allowShell); Validierung gemäss design.md D1; Version 1 lesen und abbilden; Unit-Tests
 - [x] 2.2 ExecutableVerifier für AllowedChild wiederverwenden; Liste der Shells und Skript-Hosts als eine Konstante in Core
-- [ ] 2.3 LearnState (learn.json) und LearnRecording (Learn\<AppId>.json) mit Serializer und Rechteprüfung wie ConfigStore; Unit-Tests
+- [x] 2.3 LearnState (learn.json) und LearnRecording (Learn\<AppId>.json) mit Serializer und Rechteprüfung wie ConfigStore; Unit-Tests
 - [ ] 2.4 Antwortdatei-Modell und strikter Serializer (design.md D5); Unit-Tests für jedes Validierungsfeld
 
 ## 3. Dienst
