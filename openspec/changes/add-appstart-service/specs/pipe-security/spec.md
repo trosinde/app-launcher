@@ -19,6 +19,10 @@ Die Pipe SHALL nur für AppStart Users erreichbar sein, keine Fernzugriffe anneh
 - **WHEN** eine Anfrage ein anderes Format hat oder länger als 64 Byte ist
 - **THEN** wird sie verworfen und protokolliert
 
+#### Scenario: Bediener legt eigene Pipe-Instanz an
+- **WHEN** ein Mitglied von AppStart Users versucht, eine weitere Server-Instanz von \\.\pipe\AppStart anzulegen
+- **THEN** wird dies verweigert, da die Gruppe kein Recht FILE_CREATE_PIPE_INSTANCE hat
+
 #### Scenario: Fremde Session
 - **WHEN** eine Anfrage eingeht
 - **THEN** startet die Applikation nur in der Session des Anfragenden

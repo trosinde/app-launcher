@@ -1,0 +1,53 @@
+// Pipe
+CreateNamedPipe
+GetNamedPipeClientSessionId
+ConvertStringSecurityDescriptorToSecurityDescriptor
+LocalFree
+// LSA / S4U
+LsaRegisterLogonProcess
+LsaLookupAuthenticationPackage
+LsaLogonUser
+LsaFreeReturnBuffer
+LsaDeregisterLogonProcess
+LsaNtStatusToWinError
+MSV1_0_S4U_LOGON
+MSV1_0_LOGON_SUBMIT_TYPE
+TOKEN_SOURCE
+QUOTA_LIMITS
+// Token
+OpenProcessToken
+DuplicateTokenEx
+SetTokenInformation
+GetTokenInformation
+LookupPrivilegeValue
+AdjustTokenPrivileges
+TOKEN_ELEVATION_TYPE
+TOKEN_LINKED_TOKEN
+SE_TCB_NAME
+SE_ASSIGNPRIMARYTOKEN_NAME
+SE_INCREASE_QUOTA_NAME
+// Process, environment, profile
+CreateProcessAsUser
+ResumeThread
+TerminateProcess
+CloseHandle
+WaitForSingleObject
+GetExitCodeProcess
+GetCurrentProcess
+CreateEnvironmentBlock
+DestroyEnvironmentBlock
+LoadUserProfile
+UnloadUserProfile
+// Job object
+CreateJobObject
+SetInformationJobObject
+AssignProcessToJobObject
+JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+// Desktop
+OpenWindowStation
+OpenDesktop
+SetProcessWindowStation
+CloseWindowStation
+CloseDesktop
+SDDL_REVISION_1
+WIN32_ERROR

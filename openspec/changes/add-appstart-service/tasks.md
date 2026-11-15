@@ -16,11 +16,11 @@
 - [x] 3.3 Pipe-Protokoll START <AppId>, Parser mit Längenlimit
 
 ## 4. Dienst
-- [ ] 4.1 Worker Service, LocalSystem, Ereignisprotokoll-Quelle AppStart
-- [ ] 4.2 Named Pipe mit SDDL, PIPE_REJECT_REMOTE_CLIENTS, FILE_FLAG_FIRST_PIPE_INSTANCE
-- [ ] 4.3 Session des Anfragenden, Sperrzeit, Timeout, eine Anfrage pro Session
-- [ ] 4.4 Token für appstart-app, Zugriff auf WinSta0\Default, CreateProcessAsUser in der User-Session
-- [ ] 4.5 Job-Objekt mit Prozesslimit bei allowChildProcesses false
+- [x] 4.1 Worker Service, LocalSystem, Ereignisprotokoll-Quelle AppStart
+- [x] 4.2 Named Pipe mit SDDL, PIPE_REJECT_REMOTE_CLIENTS, FILE_FLAG_FIRST_PIPE_INSTANCE
+- [x] 4.3 Session des Anfragenden, Sperrzeit, Timeout, eine Anfrage pro Session
+- [x] 4.4 Token für appstart-app, Zugriff auf WinSta0\Default, CreateProcessAsUser in der User-Session
+- [x] 4.5 Job-Objekt mit Prozesslimit bei allowChildProcesses false
 
 ## 5. Launcher
 - [ ] 5.1 Native AOT WinExe, Argument --app, Formatprüfung, Meldung bei nicht erreichbarem Dienst
@@ -35,10 +35,10 @@
 - [ ] 6.7 Wizard erkennt bestehende Konfiguration (Update) und lässt sich nach Abbruch erneut starten; Startmenü-Eintrag «AppStart – Einrichtung»
 
 ## 7. Paket und Build
-- [ ] 7.1 Velopack MSI per-machine (--msi --instLocation PerMachine --packTitle AppStart), Auto-Update aus, TestApp im Paket; Einträge in «Apps und Features» prüfen
-- [ ] 7.2 Authenticode-Signatur aller Binaries und des MSI
-- [ ] 7.3 Azure DevOps Pipeline: Build, Tests, Paket, Signatur
-- [ ] 7.4 Velopack-Hooks: Install registriert und startet den Dienst, Uninstall stoppt und löscht ihn, keine Oberfläche, < 30 s
+- [x] 7.1 Velopack MSI per-machine (--msi --instLocation PerMachine --packTitle AppStart), Auto-Update aus, TestApp im Paket; Einträge in «Apps und Features» prüfen
+- [ ] 7.2 Authenticode-Signatur aller Binaries und des MSI mit dem eigenen PFX-Zertifikat des Herausgebers (build/Build-Release.ps1, Signatur per Thumbprint, Passwort nie in einer Befehlszeile)
+- [ ] 7.3 GitHub Actions statt Azure DevOps: CI bei Push/PR (Build, Tests) und Release-Workflow bei Tag v*.*.* (build/Build-Release.ps1, Signatur aus den Secrets SIGNING_PFX_BASE64/SIGNING_PFX_PASSWORD, GitHub Release mit MSI)
+- [x] 7.4 Velopack-Hooks: Install registriert und startet den Dienst, Uninstall stoppt und löscht ihn, keine Oberfläche, < 30 s
 - [ ] 7.5 AppStart.Bootstrapper (Native AOT, requireAdministrator): MSI eingebettet, msiexec still mit Log und Auswertung der Exit-Codes, danach installiertes AppStart.Setup nach Signaturprüfung starten
 - [ ] 7.6 Lieferumfang AppStart-Setup.exe (interaktiv) und AppStart.msi (Softwareverteilung), beide signiert
 

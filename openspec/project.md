@@ -13,7 +13,7 @@ Startet freigegebene Windows-Applikationen für Standard-User mit Admin-Rechten,
 - Kommandozeile: System.CommandLine
 - Paket: Velopack MSI, per-machine
 - Tests: xUnit, Integrationstests auf Windows-Test-VM mit Snapshot
-- CI: Azure DevOps, Windows-Agent
+- CI: GitHub Actions, windows-latest (CI bei Push/PR, Release bei Tag v*.*.*)
 
 ## Environment
 - Entwicklung, Build und Tests ausschliesslich unter Windows 11 x64

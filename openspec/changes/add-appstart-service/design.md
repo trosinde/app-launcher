@@ -52,6 +52,17 @@ Signatur: Kette muss gültig sein, Thumbprint muss passen (Pinning). Keine Onlin
 ### D8 Antwortprotokoll
 Anfrage `START <AppId>` (ASCII, max. 64 Byte). Antwort `OK` oder `DENIED <grund> <ereignis-id>`, max. 64 Byte. Gründe: `unknown-app`, `integrity`, `config`, `busy`, `error`. Details nur im Ereignisprotokoll, nie an den Client.
 
+### D9 Pipe-Rechte ohne FILE_CREATE_PIPE_INSTANCE
+Das SDDL-Beispiel im Konzept gibt der Gruppe `GRGW`. GENERIC_WRITE enthält bei Pipes `FILE_APPEND_DATA` = `FILE_CREATE_PIPE_INSTANCE`: Ein Bediener könnte weitere Server-Instanzen derselben Pipe anlegen und Anfragen anderer abfangen oder Antworten fälschen. Die Gruppe erhält deshalb nur `0x0012018B` = FILE_GENERIC_READ | FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES (Lesemodus setzen).
+SDDL: `D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x12018b;;;<SID AppStart Users>)(D;;GA;;;NU)`. Die Pipe wird mit `CreateNamedPipe` direkt angelegt (`FILE_FLAG_FIRST_PIPE_INSTANCE`, `PIPE_REJECT_REMOTE_CLIENTS`, Nachrichtenmodus, Puffer 64 Byte), nicht über die .NET-Klassen, damit alle Flags sichtbar und prüfbar sind.
+
+### D10 Build, Signatur und Release
+Ein Skript `build/Build-Release.ps1 -Version x.y.z` baut, testet, publiziert Dienst und TestApp, packt mit `vpk` (lokales Tool, `.config/dotnet-tools.json`) und benennt das MSI `AppStart-<Version>.msi`. Lokal und in GitHub Actions läuft dasselbe Skript; Azure DevOps entfällt.
+- Haupt-EXE des Pakets ist `AppStart.Service.exe`; sie enthält die Velopack-Hooks (D5).
+- Velopacks per-user `Setup.exe` und `Portable.zip` werden aus dem Release entfernt: sie installieren in einen für Benutzer beschreibbaren Ordner.
+- Signatur mit dem eigenen PFX-Zertifikat: Import in `CurrentUser\My` für die Dauer des Builds (Passwort als SecureString), signtool signiert per Thumbprint (`/sha1`), danach wird das Zertifikat wieder entfernt. So steht das Passwort in keiner Befehlszeile und in keinem Log.
+- Reguläre Releases ohne Zertifikat schlagen fehl; Prereleases dürfen unsigniert sein.
+
 ## Risks / Trade-offs
 
 - [Eigene Installationssteuerung statt Burn] → Exit-Codes, Logs und Abbruch sind in Spec `installation` als Szenarien festgelegt und in 8.5 getestet.
