@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AppStart.Bootstrapper/AppStart.Bootstrapper.csproj" />
     <Project Path="src/AppStart.Core/AppStart.Core.csproj" />
     <Project Path="src/AppStart.Launcher/AppStart.Launcher.csproj" />
     <Project Path="src/AppStart.Service/AppStart.Service.csproj" />
@@ -7,6 +8,7 @@
     <Project Path="src/AppStart.TestApp/AppStart.TestApp.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/AppStart.Bootstrapper.Tests/AppStart.Bootstrapper.Tests.csproj" />
     <Project Path="tests/AppStart.Core.Tests/AppStart.Core.Tests.csproj" />
     <Project Path="tests/AppStart.Launcher.Tests/AppStart.Launcher.Tests.csproj" />
     <Project Path="tests/AppStart.Service.Tests/AppStart.Service.Tests.csproj" />

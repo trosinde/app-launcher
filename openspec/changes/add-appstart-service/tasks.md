@@ -39,7 +39,7 @@
 - [ ] 7.2 Authenticode-Signatur aller Binaries und des MSI mit dem eigenen PFX-Zertifikat des Herausgebers (build/Build-Release.ps1, Signatur per Thumbprint, Passwort nie in einer Befehlszeile)
 - [ ] 7.3 GitHub Actions statt Azure DevOps: CI bei Push/PR (Build, Tests) und Release-Workflow bei Tag v*.*.* (build/Build-Release.ps1, Signatur aus den Secrets SIGNING_PFX_BASE64/SIGNING_PFX_PASSWORD, GitHub Release mit MSI)
 - [x] 7.4 Velopack-Hooks: Install registriert und startet den Dienst, Uninstall stoppt und löscht ihn, keine Oberfläche, < 30 s
-- [ ] 7.5 AppStart.Bootstrapper (Native AOT, requireAdministrator): MSI eingebettet, msiexec still mit Log und Auswertung der Exit-Codes, danach installiertes AppStart.Setup nach Signaturprüfung starten
+- [x] 7.5 AppStart.Bootstrapper (Native AOT, requireAdministrator): MSI eingebettet, msiexec still mit Log und Auswertung der Exit-Codes, danach installiertes AppStart.Setup nach Signaturprüfung starten
 - [ ] 7.6 Lieferumfang AppStart-Setup.exe (interaktiv) und AppStart.msi (Softwareverteilung), beide signiert
 
 ## 8. Tests

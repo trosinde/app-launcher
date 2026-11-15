@@ -10,7 +10,8 @@
   3. vpk pack --msi --instLocation PerMachine --packTitle AppStart  ->  C:\Program Files\AppStart
   4. removes Velopack's per-user Setup.exe and Portable.zip: they install into a folder the user can
      write to (concept: "Nie das per-user-Setup von Velopack verwenden")
-  5. renames the MSI to AppStart-<Version>.msi and writes SHA256SUMS.txt
+  5. renames the MSI to AppStart-<Version>.msi, builds the bootstrapper AppStart-Setup.exe with the MSI
+     embedded (tasks 7.5/7.6), signs it, and writes SHA256SUMS.txt
 
   Signing: with -PfxPath the certificate is imported into CurrentUser\My for the duration of the build
   and signtool signs by thumbprint (/sha1). The password never appears on a command line or in a log.
@@ -145,6 +146,29 @@ try {
             if (-not ($shipped | Where-Object Name -eq $required)) { throw "$required missing in the package (lib/app)." }
         }
         Write-Host "Signatures verified: MSI and $($shipped.Count - 1) EXE in the package ($ownExes own)."
+    }
+
+    # --- 7.5/7.6: bootstrapper AppStart-Setup.exe with the (signed) MSI embedded; built after vpk pack
+    Invoke-Step 'Publish AppStart-Setup.exe (bootstrapper)' {
+        $msiPath = Join-Path $OutputDir $msiName
+        $bootOut = Join-Path $work 'bootstrapper'
+        if ($NoAot) {
+            Write-Warning 'Bootstrapper without Native AOT (-NoAot): only for local tests.'
+            dotnet publish src/AppStart.Bootstrapper @common -r win-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true "-p:AppStartMsi=$msiPath" -o $bootOut
+        } else {
+            dotnet publish src/AppStart.Bootstrapper @common -r win-x64 "-p:AppStartMsi=$msiPath" -o $bootOut
+        }
+        Copy-Item (Join-Path $bootOut 'AppStart-Setup.exe') (Join-Path $OutputDir 'AppStart-Setup.exe')
+    }
+    if ($CertificateThumbprint) {
+        $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+        if (-not $signtool) { throw 'signtool.exe not found (Windows SDK).' }
+        $boot = Join-Path $OutputDir 'AppStart-Setup.exe'
+        Invoke-Step 'Sign AppStart-Setup.exe' { & $signtool.FullName sign /sha1 $CertificateThumbprint /s My /fd sha256 /tr $TimestampUrl /td sha256 $boot }
+        $sig = Get-AuthenticodeSignature $boot
+        if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Thumbprint -ne $CertificateThumbprint) { throw 'AppStart-Setup.exe signature check failed.' }
+        Write-Host 'Signature verified: AppStart-Setup.exe'
     }
 
     $sums = Get-ChildItem $OutputDir -File | Sort-Object Name | ForEach-Object {
