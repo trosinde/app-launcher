@@ -33,5 +33,5 @@
 
 ## 8. Dokumentation
 - [ ] 8.1 Handbuch: 03-installation (Antwortdatei, /config), 04-applikationen-verwalten (Weitere Programme, Lernmodus statt Handbearbeitung), 07-meldungen (neue Ereignisse), 09-referenz (Befehle, apps.json v2, Antwortdatei, Exit-Codes); Bildschirmfotos
-- [ ] 8.2 sicherheitsmodell.md und funktionsweise.md: Modus allowlist, Restrisiko aus design.md
+- [x] 8.2 sicherheitsmodell.md und funktionsweise.md: Modus allowlist, Restrisiko aus design.md
 - [ ] 8.3 Alle Tests grün. Erst wenn add-appstart-service archiviert ist (damit «Keine Kindprozesse» in openspec/specs steht): openspec archive add-allowed-child-processes
