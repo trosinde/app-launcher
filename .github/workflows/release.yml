@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release, e.g. v0.1.0'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  release:
+    name: Build, sign and publish
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Check version
+        shell: pwsh
+        run: |
+          if ($env:TAG -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "Invalid tag: $env:TAG" }
+
+      - name: Prepare signing certificate
+        shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.SIGNING_PFX_BASE64 }}
+        run: |
+          if ([string]::IsNullOrEmpty($env:PFX_BASE64)) {
+            if (-not $env:TAG.Contains('-')) { throw 'SIGNING_PFX_BASE64 is missing: regular releases must be signed.' }
+            Write-Warning 'No signing certificate: prerelease will be unsigned.'
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          "PFX_PATH=$pfx" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Trust self-signed test certificate (runner only)
+        if: env.PFX_PATH != ''
+        shell: pwsh
+        env:
+          PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
+        run: |
+          # A CA-issued certificate is trusted already. A self-signed test certificate is trusted
+          # only on this ephemeral runner, so the script's signature check can pass.
+          $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new($env:PFX_PATH, $env:PFX_PASSWORD)
+          if ($cert.Subject -ne $cert.Issuer) { exit 0 }
+          Write-Warning "Self-signed test certificate: $($cert.Subject). Replace it before a production release."
+          $public = [Security.Cryptography.X509Certificates.X509Certificate2]::new($cert.RawData)
+          foreach ($name in 'Root', 'TrustedPublisher') {
+            $store = [Security.Cryptography.X509Certificates.X509Store]::new($name, 'LocalMachine')
+            $store.Open('ReadWrite'); $store.Add($public); $store.Close()
+          }
+
+      - name: Build, test, sign and package
+        shell: pwsh
+        env:
+          PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
+        run: |
+          $p = @{ Version = $env:TAG.TrimStart('v'); OutputDir = 'artifacts/release' }
+          if ($env:PFX_PATH) {
+            $p.PfxPath = $env:PFX_PATH
+            $p.PfxPassword = ConvertTo-SecureString $env:PFX_PASSWORD -AsPlainText -Force
+          }
+          ./build/Build-Release.ps1 @p
+
+      - name: Remove signing certificate
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:PFX_PATH) { Remove-Item $env:PFX_PATH -Force -ErrorAction SilentlyContinue }
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $assets = @(Get-ChildItem artifacts/release -File | Where-Object { $_.Name -match '\.(msi|nupkg|json)$|^RELEASES$|^SHA256SUMS\.txt$' } | ForEach-Object FullName)
+          if (-not ($assets -match '\.msi$')) { throw 'No MSI found in artifacts/release.' }
+          $flags = @('--generate-notes', '--verify-tag')
+          if ($env:TAG.Contains('-')) { $flags += '--prerelease' }
+          gh release create $env:TAG @assets --title "AppStart $env:TAG" @flags
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
