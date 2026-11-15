@@ -45,6 +45,17 @@ public static class SetupEngineTexts
     public const string ChildFolderWritable = "Hilfsprogramm nicht erlaubt: {0} liegt in einem Ordner, den Bediener beschreiben können";
     public const string ChildrenRehashed = "Prüfsummen der Hilfsprogramme von «{0}» neu erfasst ({1})";
 
+    // Learn mode (design D3)
+    public const string LearnStarted = "Lernmodus für «{0}» gestartet, endet automatisch um {1} Uhr";
+    public const string LearnStopped = "Lernmodus für «{0}» beendet";
+    public const string LearnNotActive = "Lernmodus für «{0}» war nicht aktiv";
+    public const string LearnMinutesInvalid = "Dauer des Lernmodus: {0} bis {1} Minuten.";
+    public const string LearnNothingRecorded = "Für «{0}» wurde nichts aufgezeichnet. Zuerst learn start und die Applikation benutzen.";
+    public const string LearnNotRecorded = "{0} steht nicht in der Aufzeichnung.";
+    public const string LearnShellNotSelectable = "{0} ist eine Shell oder ein Skript-Host und wird nie übernommen. Falls nötig von Hand: allow-child --allow-shell.";
+    public const string LearnNothingToApply = "Für «{0}» gibt es keine übernehmbaren Vorschläge (nur Shells oder Skript-Hosts aufgezeichnet).";
+    public const string LearnApplied = "{0} Hilfsprogramm(e) aus dem Lernmodus für «{1}» übernommen, Aufzeichnung gelöscht";
+
     public const string UninstallShortcuts = "Verknüpfungen zurückgestellt, Datenordner und Registry-Keys zurückgesetzt";
     public const string UninstallAccounts = "Konten und Gruppe entfernt";
     public const string UninstallConfig = "Konfiguration entfernt (Prüfberichte bleiben erhalten)";

@@ -107,6 +107,71 @@ Manche Applikationen starten eigene Hilfsprogramme, etwa für Export, Update ode
 
 Das Konsolenfenster von Windows (`conhost.exe` aus `C:\Windows\System32`) ist immer erlaubt; ohne es zeigen Konsolen-Hilfsprogramme kein Fenster.
 
+### Im Assistenten
+
+In Schritt 1 zeigt die Spalte «Weitere Programme» den Modus jeder Applikation, z.B. «2 erlaubt», «gesperrt» oder «alle erlaubt». Unter «Schutz für …» wählen Sie bei «Weitere Programme»:
+
+- «Gesperrt (empfohlen)»: Hinweis «Applikation … kann keine weiteren Programme starten.»
+- «Nur erlaubte Hilfsprogramme»: Hinweis «Nur Programme auf der Liste dürfen aus … starten. Alle anderen beendet der Dienst sofort.» Daneben öffnet «Hilfsprogramme (2)…» die Liste. Solange sie leer ist, steht dort «Mindestens ein Hilfsprogramm hinzufügen («Hilfsprogramme…») oder «Gesperrt» wählen.» und «Weiter» bleibt gesperrt.
+- «Alle erlaubt (unsicher)»: Erst nach der Rückfrage «Alle weiteren Programme erlauben?» mit dem Text «Applikation A darf dann jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten. Bediener können so den Schutz umgehen. Nur nach Abwägung und mit Vermerk im Service and Security Manual.» Danach Hinweis «Applikation A darf jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten.»
+
+Die Änderungen gelten erst, wenn Sie den Assistenten mit «Weiter» abschliessen.
+
+**Dialog «Erlaubte Hilfsprogramme – Applikation A».** Überschrift «Erlaubte Hilfsprogramme», darunter «Diese Programme darf Applikation A starten. Sie laufen dann ebenfalls mit Admin-Rechten. Jedes andere Programm beendet der Dienst sofort und protokolliert es.» Die Liste zeigt je Programm die Prüfung und den Zustand:
+
+| Zustand | Bedeutung |
+|---|---|
+| «In Ordnung» | Datei vorhanden, Signatur bzw. Prüfsumme stimmt. |
+| «Prüfsumme neu» | Die Datei hat sich geändert, meist nach einem Update. «Prüfsumme aktualisieren» erfasst sie neu (bei markierten Einträgen, sonst bei allen mit SHA-256). |
+| «Datei fehlt» | Programm deinstalliert oder verschoben. Entfernen oder neu hinzufügen. |
+| «Prüfung fehlgeschlagen» | Signatur ungültig oder Datei nicht lesbar. Entfernen und neu hinzufügen. |
+
+Knöpfe: «EXE hinzufügen…», «Lernmodus starten…», «Prüfsumme aktualisieren», «Entfernen» (markierte Einträge). Ist ein Programm nicht signiert, erscheint der gelbe Hinweis «Updater.exe ist nicht signiert» mit «Nach jedem Update der Applikation stimmt die Prüfsumme nicht mehr und der Start wird blockiert. Dann hier «Prüfsumme aktualisieren».» Unten steht: «Erlaubt sind nur Programme aus Ordnern, in die Bediener nicht schreiben können. Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts nur mit ausdrücklicher Bestätigung.»
+
+- Wählen Sie eine Shell, fragt der Dialog «cmd.exe erlauben?» mit «Dies ist eine Shell oder ein Skript-Host. Wer die Applikation bedient, kann damit jedes Programm mit Admin-Rechten starten.»
+- Liegt das Programm in einem Ordner, den Bediener beschreiben können: «Export.exe kann nicht erlaubt werden: Der Ordner ist für Bediener beschreibbar. Programm in einen geschützten Ordner installieren.»
+
+«Übernehmen» gibt die Liste an den Assistenten zurück, «Abbrechen» verwirft die Änderungen im Dialog.
+
+### Lernmodus: Hilfsprogramme ermitteln
+
+Welche Programme eine Applikation braucht, ist oft nicht bekannt. Der Lernmodus zeichnet es auf: Für eine begrenzte Zeit beendet der Dienst bei dieser Applikation nichts, sondern notiert jedes gestartete Programm (Ereignis 1102). Danach gilt wieder der eingestellte Modus, auch in einer noch laufenden Applikation.
+
+Der Lernmodus ist erst möglich, wenn die Applikation eingerichtet ist. Sonst meldet der Dialog «Der Lernmodus ist erst möglich, wenn Applikation A eingerichtet ist. Zuerst den Assistenten abschliessen, dann erneut öffnen.»
+
+1. Im Dialog «Erlaubte Hilfsprogramme» auf «Lernmodus starten…». Es öffnet sich «Lernmodus – Applikation A» mit der Überschrift «Lernmodus läuft» und dem Text «Starten Sie Applikation A jetzt über ihre Verknüpfung und benutzen Sie alle Funktionen, die Hilfsprogramme brauchen: Export, Drucken, Update, Hilfe.» Rechts oben läuft «endet automatisch in» 30:00 ab.
+2. Der gelbe Hinweis «Während des Lernmodus ist der Schutz für Applikation A schwächer. Programme werden nicht beendet, nur aufgezeichnet. Den PC dabei nicht unbeaufsichtigt lassen.» gilt wörtlich.
+3. Die Liste «Aufgezeichnete Programme» zeigt «Starts» und «Zuletzt» je Programm, anfangs «Noch nichts aufgezeichnet.»
+4. «Lernmodus beenden» (oder Ablauf der Zeit) führt zu «Vorschläge übernehmen». «Abbrechen, nichts übernehmen» beendet den Lernmodus und löscht die Aufzeichnung. Kann der Lernmodus nicht starten, steht «Der Lernmodus konnte nicht gestartet werden: …» mit dem Grund im Dialog.
+
+**Dialog «Vorschläge übernehmen».** «Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme Applikation A künftig starten darf.» Gültig signierte Programme werden mit Signatur vorgeschlagen, alle anderen mit SHA-256. Die Spalte «Hinweis»:
+
+| Hinweis | Vorauswahl |
+|---|---|
+| «–» | angehakt |
+| «nicht signiert» | angehakt, Prüfung SHA-256 |
+| «kann Dateien öffnen – abwägen» (z.B. PDF-Anzeige, Browser, Editor) | nicht angehakt. Mit Admin-Rechten kann das Programm beliebige Dateien öffnen und speichern. |
+| «Eingabeaufforderung – nur von Hand», «Shell oder Skript-Host – nur von Hand» | nicht auswählbar |
+| «Ordner für Bediener beschreibbar» | nicht auswählbar |
+
+Unten: «Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.» «2 Programme übernehmen» übernimmt die angehakten in die Liste, «Verwerfen» nichts; beide löschen die Aufzeichnung. Wurde nichts aufgezeichnet: «Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?»
+
+Meldungen des Lernmodus auf der Kommandozeile:
+
+| Meldung | Bedeutung |
+|---|---|
+| «Lernmodus für «app-a» gestartet, endet automatisch um 10:55 Uhr» | Lernmodus läuft (Ereignis 1400). |
+| «Lernmodus für «app-a» beendet» | Von Hand beendet (Ereignis 1401). |
+| «Lernmodus für «app-a» war nicht aktiv» | Nichts zu beenden. |
+| «Dauer des Lernmodus: 5 bis 120 Minuten.» | Ungültige Dauer, nichts geändert. |
+| «Für «app-a» wurde nichts aufgezeichnet. Zuerst learn start und die Applikation benutzen.» | Keine Aufzeichnung vorhanden. |
+| «… steht nicht in der Aufzeichnung.» | Pfad wie in der Aufzeichnung angeben. |
+| «cmd.exe ist eine Shell oder ein Skript-Host und wird nie übernommen. Falls nötig von Hand: allow-child --allow-shell.» | Shells übernimmt der Lernmodus nie. |
+| «Für «app-a» gibt es keine übernehmbaren Vorschläge (nur Shells oder Skript-Hosts aufgezeichnet).» | Nichts zu übernehmen. |
+| «2 Hilfsprogramm(e) aus dem Lernmodus für «app-a» übernommen, Aufzeichnung gelöscht» | Erledigt, Modus «nur erlaubte Hilfsprogramme». |
+
+### Auf der Kommandozeile
+
 Hilfsprogramm erlauben, Modus wird «nur erlaubte Hilfsprogramme»:
 
 ```text

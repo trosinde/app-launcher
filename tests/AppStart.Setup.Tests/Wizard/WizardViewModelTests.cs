@@ -360,5 +360,23 @@ public sealed class WizardViewModelTests
         public Engine.VerifyReport Verify() => throw new NotSupportedException();
 
         public string WriteReport(Engine.VerifyReport report) => throw new NotSupportedException();
+
+        public Core.Configuration.AllowedChild InspectChild(string exePath, bool allowShell) => throw new NotSupportedException();
+
+        public IReadOnlyList<string> WriteViolations(string exePath) => throw new NotSupportedException();
+
+        public Core.Integrity.IntegrityResult VerifyChild(Core.Configuration.AllowedChild entry) => throw new NotSupportedException();
+
+        public Core.Configuration.AllowedChild RehashChild(Core.Configuration.AllowedChild entry) => throw new NotSupportedException();
+
+        public Core.Learning.LearnSession? GetLearnSession(string appId) => throw new NotSupportedException();
+
+        public IReadOnlyList<Engine.SetupStepResult> StartLearning(string appId, int minutes) => throw new NotSupportedException();
+
+        public IReadOnlyList<Engine.SetupStepResult> StopLearning(string appId) => throw new NotSupportedException();
+
+        public Core.Learning.LearnRecording? GetRecording(string appId) => throw new NotSupportedException();
+
+        public void DiscardRecording(string appId) => throw new NotSupportedException();
     }
 }

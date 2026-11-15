@@ -192,7 +192,9 @@ public static class LearnRecordingStore
     /// Null recording and no error when nothing was recorded. A recording operators could have changed
     /// is refused: «learn apply» turns it into allowlist entries.
     /// </summary>
-    public static (LearnRecording? Recording, string? Error) Load(string appId, string? directory = null)
+    /// <param name="writeViolations">Violations of the file and its folder (default: <see cref="WriteAccessPolicy"/>); injectable for tests.</param>
+    public static (LearnRecording? Recording, string? Error) Load(string appId, string? directory = null,
+        Func<string, IReadOnlyList<string>>? writeViolations = null)
     {
         var path = PathFor(appId, directory);
         if (!File.Exists(path))
@@ -200,13 +202,11 @@ public static class LearnRecordingStore
             return (null, null);
         }
 
-        foreach (var target in new[] { Path.GetDirectoryName(path)!, path })
+        var found = writeViolations?.Invoke(path)
+                    ?? [.. WriteAccessPolicy.FindViolations(Path.GetDirectoryName(path)!), .. WriteAccessPolicy.FindViolations(path)];
+        if (found.Count > 0)
         {
-            var violations = WriteAccessPolicy.FindViolations(target);
-            if (violations.Count > 0)
-            {
-                return (null, $"{target} ist nicht geschützt: {string.Join(" ", violations)}");
-            }
+            return (null, $"{path} ist nicht geschützt: {string.Join(" ", found)}");
         }
 
         var (recording, error) = LearnRecordingSerializer.Parse(File.ReadAllText(path));

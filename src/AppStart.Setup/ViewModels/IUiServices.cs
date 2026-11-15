@@ -25,4 +25,16 @@ public interface IUiServices
 
     /// <summary>Opens the verify view as a dialog (button «Einrichtung prüfen» in the wizard, task 9.2).</summary>
     void ShowVerifyView(ISetupEngine engine);
+
+    /// <summary>Warning with «Ja»/«Nein»; true only for «Ja» (add-allowed-child-processes: «Alle erlaubt», shells).</summary>
+    bool Confirm(string heading, string text);
+
+    /// <summary>Dialog «Erlaubte Hilfsprogramme»; true after «Übernehmen».</summary>
+    bool ShowHelpers(HelpersViewModel viewModel);
+
+    /// <summary>Dialog «Lernmodus läuft» (modal until finished or cancelled).</summary>
+    void ShowLearn(LearnViewModel viewModel);
+
+    /// <summary>Dialog «Vorschläge übernehmen»; true after «… Programme übernehmen».</summary>
+    bool ShowLearnResult(LearnResultViewModel viewModel);
 }

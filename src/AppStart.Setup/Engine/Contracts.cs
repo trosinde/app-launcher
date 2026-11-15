@@ -230,4 +230,30 @@ public interface ISetupEngine
     VerifyReport Verify();
 
     string WriteReport(VerifyReport report);
+
+    // ------------------------------------------------------------------ helper programs (add-allowed-child-processes)
+
+    /// <summary>Reads a helper EXE: signature when validly signed, else SHA-256. Throws <see cref="SetupInputException"/>.</summary>
+    AllowedChild InspectChild(string exePath, bool allowShell);
+
+    /// <summary>Why operators could change the helper or its folder; empty when protected.</summary>
+    IReadOnlyList<string> WriteViolations(string exePath);
+
+    /// <summary>Checks the helper file against its entry (missing file = failure).</summary>
+    Core.Integrity.IntegrityResult VerifyChild(AllowedChild entry);
+
+    /// <summary>The entry with the SHA-256 of the current file (signature entries unchanged).</summary>
+    AllowedChild RehashChild(AllowedChild entry);
+
+    /// <summary>The running learn session of a released app, else null.</summary>
+    Core.Learning.LearnSession? GetLearnSession(string appId);
+
+    IReadOnlyList<SetupStepResult> StartLearning(string appId, int minutes);
+
+    IReadOnlyList<SetupStepResult> StopLearning(string appId);
+
+    /// <summary>What the service recorded; null when nothing.</summary>
+    Core.Learning.LearnRecording? GetRecording(string appId);
+
+    void DiscardRecording(string appId);
 }

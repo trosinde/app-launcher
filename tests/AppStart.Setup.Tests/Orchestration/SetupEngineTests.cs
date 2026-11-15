@@ -317,6 +317,98 @@ public sealed class SetupEngineTests : IDisposable
         Assert.False(Assert.Single(_engine.AllowChild("nope", Helper("Export.exe"), null, false)).Success);
     }
 
+    // ------------------------------------------------------------------ learn mode (design D3, engine part of 4.2/4.3)
+
+    private void Record(string appId, params (string Exe, string? Thumb)[] programs)
+    {
+        var rec = new Core.Learning.LearnRecording { AppId = appId };
+        foreach (var (exe, thumb) in programs)
+        {
+            rec = rec.Record(exe, thumb, new string('E', 64), null, DateTimeOffset.UtcNow);
+        }
+
+        Directory.CreateDirectory(Path.Combine(_dir, "Learn"));
+        File.WriteAllText(Path.Combine(_dir, "Learn", appId + ".json"), Core.Learning.LearnRecordingSerializer.Serialize(rec));
+    }
+
+    [Fact]
+    public void Start_learning_writes_learn_json_and_an_event()
+    {
+        var events = new List<int>();
+        var engine = new SetupEngine(_accounts, _protection, _shortcuts, new FakeVerifier(), _state,
+            new SetupPaths(@"C:\Program Files\AppStart\current", ConfigPath, Path.Combine(_dir, "Reports")), _ => [], null, (id, _) => events.Add(id));
+        engine.Apply(Request(App("appa")));
+
+        var result = Assert.Single(engine.StartLearning("appa", 30));
+
+        Assert.True(result.Success);
+        Assert.NotNull(engine.GetLearnSession("appa"));
+        Assert.Equal([1400], events);
+        engine.StopLearning("appa");
+        Assert.Null(engine.GetLearnSession("appa"));
+        Assert.Equal([1400, 1401], events);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(121)]
+    public void Learn_duration_outside_5_to_120_is_invalid_input(int minutes)
+    {
+        _engine.Apply(Request(App("appa")));
+        Assert.Throws<SetupInputException>(() => _engine.StartLearning("appa", minutes));
+        Assert.False(File.Exists(Path.Combine(_dir, "learn.json")));
+    }
+
+    [Fact]
+    public void Learn_for_unknown_app_is_refused() =>
+        Assert.False(Assert.Single(_engine.StartLearning("nope", 30)).Success);
+
+    [Fact]
+    public void Apply_learned_takes_all_but_shells_and_cleans_up()
+    {
+        _engine.Apply(Request(App("appa")));
+        _engine.StartLearning("appa", 30);
+        Record("appa", (@"C:\Apps\appa\Export.exe", new string('B', 40)), (@"C:\Apps\appa\Updater.exe", null), (@"C:\Windows\System32\cmd.exe", new string('C', 40)));
+
+        var results = _engine.ApplyLearned("appa", null);
+
+        Assert.All(results.Take(3), r => Assert.True(r.Success, r.Text + r.Detail));
+        var app = Saved("appa");
+        Assert.Equal(ChildProcessMode.Allowlist, app.ChildProcesses);
+        Assert.Equal([IntegrityCheck.Signature, IntegrityCheck.Sha256], app.AllowedChildren!.Select(c => c.Check));
+        Assert.DoesNotContain(app.AllowedChildren!, c => c.Exe.EndsWith("cmd.exe", StringComparison.OrdinalIgnoreCase));
+        Assert.Null(_engine.GetLearnSession("appa"));
+        Assert.Null(_engine.GetRecording("appa"));
+    }
+
+    [Fact]
+    public void Apply_learned_shell_by_name_is_invalid_input()
+    {
+        _engine.Apply(Request(App("appa")));
+        Record("appa", (@"C:\Windows\System32\cmd.exe", new string('C', 40)));
+
+        Assert.Throws<SetupInputException>(() => _engine.ApplyLearned("appa", [@"C:\Windows\System32\cmd.exe"]));
+        Assert.Throws<SetupInputException>(() => _engine.ApplyLearned("appa", null)); // nothing else to take
+    }
+
+    [Fact]
+    public void Apply_learned_without_recording_is_invalid_input()
+    {
+        _engine.Apply(Request(App("appa")));
+        Assert.Throws<SetupInputException>(() => _engine.ApplyLearned("appa", null));
+    }
+
+    [Fact]
+    public void Apply_learned_refuses_writable_folders()
+    {
+        _engine.Apply(Request(App("appa")));
+        Record("appa", (@"C:\Users\Public\Export.exe", null));
+        _writable.Add(@"C:\Users\Public\Export.exe");
+
+        Assert.False(Assert.Single(_engine.ApplyLearned("appa", null)).Success);
+        Assert.Equal(ChildProcessMode.Blocked, Saved("appa").ChildProcesses);
+    }
+
     // ------------------------------------------------------------------ fakes
 
     private sealed class FakeAccounts : IAccountService

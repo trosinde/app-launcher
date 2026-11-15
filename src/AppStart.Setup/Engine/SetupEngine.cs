@@ -1,8 +1,25 @@
 using System.ServiceProcess;
 using AppStart.Core;
 using AppStart.Core.Configuration;
+using AppStart.Core.Learning;
 
 namespace AppStart.Setup.Engine;
+
+/// <summary>Events of the setup in the AppStart event log (learn mode start/end, design D3).</summary>
+public static class SetupEvents
+{
+    public static void Write(int id, string text)
+    {
+        try
+        {
+            System.Diagnostics.EventLog.WriteEntry(AppStartConstants.EventSource, text, System.Diagnostics.EventLogEntryType.Information, id);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or System.Security.SecurityException or ArgumentException)
+        {
+            // Source not registered yet (service not installed) or no rights: the change itself must not fail.
+        }
+    }
+}
 
 /// <summary>Persistence of <see cref="SetupState"/> (implemented in Engine/Protection).</summary>
 public interface ISetupStateStore
@@ -15,6 +32,12 @@ public interface ISetupStateStore
 /// <summary>Installation paths, injectable for tests.</summary>
 public sealed record SetupPaths(string InstallDir, string ConfigPath, string ReportDir)
 {
+    /// <summary>learn.json next to apps.json (design D3).</summary>
+    public string LearnStatePath => Path.Combine(Path.GetDirectoryName(ConfigPath)!, "learn.json");
+
+    /// <summary>Learn\ next to apps.json: recordings of the service.</summary>
+    public string LearnDirectory => Path.Combine(Path.GetDirectoryName(ConfigPath)!, "Learn");
+
     /// <summary>Velopack layout: C:\Program Files\AppStart\current\ next to the running Setup EXE.</summary>
     public static SetupPaths Default { get; } = new(
         AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar),
@@ -36,10 +59,14 @@ public sealed class SetupEngine(
     IVerifier verifier,
     ISetupStateStore stateStore,
     SetupPaths paths,
-    Func<string, IReadOnlyList<string>>? writeViolationsOf = null) : ISetupEngine
+    Func<string, IReadOnlyList<string>>? writeViolationsOf = null,
+    TimeProvider? clock = null,
+    Action<int, string>? eventWriter = null) : ISetupEngine
 {
     // Folder/file of a helper writable for operators (injectable: temp folders in tests are user-writable).
     private readonly Func<string, IReadOnlyList<string>> writeViolations = writeViolationsOf ?? ChildPrograms.WriteViolations;
+    private readonly TimeProvider time = clock ?? TimeProvider.System;
+    private readonly Action<int, string> writeEvent = eventWriter ?? SetupEvents.Write;
 
     public SetupSnapshot LoadCurrent()
     {
@@ -358,6 +385,168 @@ public sealed class SetupEngine(
             var updated = children.Select(c => ChildPrograms.SamePath(c.Exe, exePath) ? ChildPrograms.Rehash(c) : c).ToList();
             return (app with { AllowedChildren = updated }, [new(string.Format(SetupEngineTexts.ChildrenRehashed, appId, 1), true)]);
         });
+
+    /// <summary>Reads a helper EXE for the wizard (same rules as allow-child).</summary>
+    public AllowedChild InspectChild(string exePath, bool allowShell) => ChildPrograms.Inspect(exePath, null, allowShell);
+
+    /// <summary>Why operators could change the helper or its folder; empty when protected.</summary>
+    public IReadOnlyList<string> WriteViolations(string exePath) => writeViolations(Path.GetFullPath(exePath));
+
+    public AllowedChild RehashChild(AllowedChild entry) => ChildPrograms.Rehash(entry);
+
+    public Core.Integrity.IntegrityResult VerifyChild(AllowedChild entry)
+    {
+        if (!File.Exists(entry.Exe))
+        {
+            return Core.Integrity.IntegrityResult.Fail(string.Format(SetupEngineTexts.ChildMissing, entry.Exe));
+        }
+
+        using var exe = Core.Integrity.LockedExecutable.Open(entry.Exe);
+        return Core.Integrity.ExecutableVerifier.Verify(entry, exe);
+    }
+
+    // ------------------------------------------------------------------ learn mode (design D3)
+
+    public LearnSession? GetLearnSession(string appId) => ReadLearnState().ActiveFor(appId, time.GetUtcNow());
+
+    /// <summary>All learn sessions still running (verify).</summary>
+    public IReadOnlyList<LearnSession> ActiveLearnSessions() =>
+        [.. ReadLearnState().Apps.Where(s => s.IsActive(time.GetUtcNow()))];
+
+    /// <summary>learn start: writes learn.json (protected like apps.json) for one released app.</summary>
+    public IReadOnlyList<SetupStepResult> StartLearning(string appId, int minutes)
+    {
+        if (minutes is < LearnState.MinMinutes or > LearnState.MaxMinutes)
+        {
+            throw new SetupInputException(string.Format(SetupEngineTexts.LearnMinutesInvalid, LearnState.MinMinutes, LearnState.MaxMinutes));
+        }
+
+        if (ReadConfig().Find(appId) is null)
+        {
+            return [new(string.Format(SetupEngineTexts.UnknownApp, appId), false)];
+        }
+
+        protection.ProtectConfigDirectory();
+        var state = ReadLearnState().Start(appId, minutes, time.GetUtcNow());
+        protection.WriteProtectedFile(paths.LearnStatePath, LearnStateSerializer.Serialize(state));
+        var session = state.ActiveFor(appId, time.GetUtcNow())!;
+        var text = string.Format(SetupEngineTexts.LearnStarted, appId, session.ExpiresUtc.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+        writeEvent(1400, text);
+        return [new(text, true)];
+    }
+
+    /// <summary>learn stop: ends learn mode for one app at once; the recording stays for learn show/apply.</summary>
+    public IReadOnlyList<SetupStepResult> StopLearning(string appId)
+    {
+        var state = ReadLearnState();
+        if (state.Apps.All(s => s.AppId != appId))
+        {
+            return [new(string.Format(SetupEngineTexts.LearnNotActive, appId), true)];
+        }
+
+        protection.ProtectConfigDirectory();
+        protection.WriteProtectedFile(paths.LearnStatePath, LearnStateSerializer.Serialize(state.Stop(appId)));
+        var text = string.Format(SetupEngineTexts.LearnStopped, appId);
+        writeEvent(1401, text);
+        return [new(text, true)];
+    }
+
+    /// <summary>The recording of the service; null when nothing was recorded. Refuses a recording operators could change.</summary>
+    public LearnRecording? GetRecording(string appId)
+    {
+        var (recording, error) = LearnRecordingStore.Load(appId, paths.LearnDirectory, writeViolations);
+        return error is null ? recording : throw new InvalidOperationException(error);
+    }
+
+    public void DiscardRecording(string appId) => File.Delete(LearnRecordingStore.PathFor(appId, paths.LearnDirectory));
+
+    /// <summary>
+    /// learn apply: takes the proposals of the recording into the allowlist (all except shells, or the given
+    /// EXEs), sets mode allowlist, ends learn mode and deletes the recording.
+    /// </summary>
+    public IReadOnlyList<SetupStepResult> ApplyLearned(string appId, IReadOnlyList<string>? exes)
+    {
+        if (ReadConfig().Find(appId) is null)
+        {
+            return [new(string.Format(SetupEngineTexts.UnknownApp, appId), false)];
+        }
+
+        var recording = GetRecording(appId);
+        if (recording is not { Programs.Count: > 0 })
+        {
+            throw new SetupInputException(string.Format(SetupEngineTexts.LearnNothingRecorded, appId));
+        }
+
+        List<RecordedProgram> chosen;
+        if (exes is null)
+        {
+            chosen = [.. recording.Programs.Where(p => !p.IsShellOrScriptHost)];
+        }
+        else
+        {
+            chosen = [];
+            foreach (var exe in exes)
+            {
+                var program = recording.Programs.FirstOrDefault(p => ChildPrograms.SamePath(p.Exe, exe))
+                              ?? throw new SetupInputException(string.Format(SetupEngineTexts.LearnNotRecorded, exe));
+                if (program.IsShellOrScriptHost)
+                {
+                    throw new SetupInputException(string.Format(SetupEngineTexts.LearnShellNotSelectable, Path.GetFileName(program.Exe)));
+                }
+
+                chosen.Add(program);
+            }
+        }
+
+        if (chosen.Count == 0)
+        {
+            throw new SetupInputException(string.Format(SetupEngineTexts.LearnNothingToApply, appId));
+        }
+
+        foreach (var program in chosen)
+        {
+            var violations = writeViolations(program.Exe);
+            if (violations.Count > 0)
+            {
+                return [new(string.Format(SetupEngineTexts.ChildFolderWritable, program.Exe), false, string.Join(" ", violations))];
+            }
+        }
+
+        var results = ChangeApp(appId, app =>
+        {
+            var children = (app.AllowedChildren ?? [])
+                .Where(c => chosen.All(p => !ChildPrograms.SamePath(p.Exe, c.Exe)))
+                .Concat(chosen.Select(p => p.ToAllowedChild()))
+                .ToList();
+            return (app with { ChildProcesses = ChildProcessMode.Allowlist, AllowedChildren = children },
+            [
+                new(string.Format(SetupEngineTexts.LearnApplied, chosen.Count, appId), true),
+                new(string.Format(SetupEngineTexts.ModeSet, appId, ModeText(ChildProcessMode.Allowlist)), true),
+            ]);
+        });
+
+        // Learn mode ends once the list is in apps.json, even if a later step (e.g. the service) failed.
+        var saved = ReadConfig().Find(appId);
+        if (saved is { ChildProcessMode: ChildProcessMode.Allowlist }
+            && chosen.All(p => saved.AllowedChildren!.Any(c => ChildPrograms.SamePath(c.Exe, p.Exe))))
+        {
+            StopLearning(appId);
+            DiscardRecording(appId);
+        }
+
+        return results;
+    }
+
+    private LearnState ReadLearnState()
+    {
+        if (!File.Exists(paths.LearnStatePath))
+        {
+            return LearnStateSerializer.Empty;
+        }
+
+        var (state, error) = LearnStateSerializer.Parse(File.ReadAllText(paths.LearnStatePath));
+        return state ?? throw new InvalidOperationException(error);
+    }
 
     // Changes one app and applies everything (apps.json is written as version 2: migration on first write).
     private IReadOnlyList<SetupStepResult> ChangeApp(string appId, Func<AppCandidate, (AppCandidate App, IReadOnlyList<SetupStepResult> Notes)> change)

@@ -8,6 +8,9 @@ namespace AppStart.Setup.ViewModels;
 /// <summary>One application row of wizard step 1 with its protection settings.</summary>
 public sealed partial class AppItemViewModel : ObservableObject
 {
+    private ChildProcessMode _childMode;
+    private IReadOnlyList<AllowedChild> _allowedChildren;
+
     public AppItemViewModel(AppCandidate candidate, bool isSelected, bool isReleased)
     {
         Candidate = candidate;
@@ -15,6 +18,8 @@ public sealed partial class AppItemViewModel : ObservableObject
         IsReleased = isReleased;
         _dataDir = candidate.DataDir ?? string.Empty;
         _registryKey = candidate.RegistryKey ?? string.Empty;
+        _childMode = candidate.ChildProcesses;
+        _allowedChildren = candidate.AllowedChildren ?? [];
     }
 
     public static AppItemViewModel FromEntry(AppEntry entry) => new(
@@ -27,6 +32,8 @@ public sealed partial class AppItemViewModel : ObservableObject
 
     /// <summary>Already released in apps.json (pre-filled from LoadCurrent).</summary>
     public bool IsReleased { get; }
+
+    public string Id => Candidate.Id;
 
     public string Name => Candidate.Name;
 
@@ -47,13 +54,95 @@ public sealed partial class AppItemViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(RegistryKeyError), nameof(IsValid))]
     private string _registryKey;
 
+    // ------------------------------------------------------------------ further programs (add-allowed-child-processes)
+
+    /// <summary>Asked before «Alle erlaubt (unsicher)» is taken (wizard sets it; false keeps the old mode).</summary>
+    public Func<AppItemViewModel, bool>? ConfirmAllowAll { get; set; }
+
+    public IReadOnlyList<string> ChildModeOptions { get; } = [SetupTexts.ChildModeBlocked, SetupTexts.ChildModeAllowlist, SetupTexts.ChildModeAll];
+
+    public ChildProcessMode ChildMode
+    {
+        get => _childMode;
+        set
+        {
+            if (value == _childMode)
+            {
+                return;
+            }
+
+            if (value == ChildProcessMode.All && ConfirmAllowAll is { } confirm && !confirm(this))
+            {
+                OnPropertyChanged(nameof(ChildModeIndex)); // the combo box shows the old mode again
+                return;
+            }
+
+            _childMode = value;
+            OnChildrenChanged();
+        }
+    }
+
+    /// <summary>Index into <see cref="ChildModeOptions"/> (blocked, allowlist, all) for the combo box.</summary>
+    public int ChildModeIndex
+    {
+        get => (int)ChildMode;
+        set => ChildMode = (ChildProcessMode)Math.Clamp(value, 0, 2);
+    }
+
+    public IReadOnlyList<AllowedChild> AllowedChildren
+    {
+        get => _allowedChildren;
+        set
+        {
+            _allowedChildren = value;
+            OnChildrenChanged();
+        }
+    }
+
+    public bool IsAllowlist => ChildMode == ChildProcessMode.Allowlist;
+
+    /// <summary>Column «Weitere Programme» of the list.</summary>
+    public string ChildSummary => ChildMode switch
+    {
+        ChildProcessMode.Allowlist => SetupTexts.Format(SetupTexts.ChildSummaryAllowlistFormat, AllowedChildren.Count),
+        ChildProcessMode.All => SetupTexts.ChildSummaryAll,
+        _ => SetupTexts.ChildSummaryBlocked,
+    };
+
+    public string HelpersButtonText => SetupTexts.Format(SetupTexts.ButtonHelpersFormat, AllowedChildren.Count);
+
+    public string ChildHint => ChildMode switch
+    {
+        ChildProcessMode.Allowlist => SetupTexts.Format(SetupTexts.ChildHintAllowlistFormat, Name),
+        ChildProcessMode.All => SetupTexts.Format(SetupTexts.ChildHintAllFormat, Name),
+        _ => SetupTexts.Format(SetupTexts.ChildHintBlocked, Name),
+    };
+
+    /// <summary>allowlist needs at least one entry (design D1).</summary>
+    public string? ChildError => IsAllowlist && AllowedChildren.Count == 0 ? SetupTexts.ChildAllowlistEmpty : null;
+
+    private void OnChildrenChanged()
+    {
+        OnPropertyChanged(nameof(ChildMode));
+        OnPropertyChanged(nameof(ChildModeIndex));
+        OnPropertyChanged(nameof(AllowedChildren));
+        OnPropertyChanged(nameof(IsAllowlist));
+        OnPropertyChanged(nameof(ChildSummary));
+        OnPropertyChanged(nameof(HelpersButtonText));
+        OnPropertyChanged(nameof(ChildHint));
+        OnPropertyChanged(nameof(ChildError));
+        OnPropertyChanged(nameof(IsValid));
+    }
+
+    // ------------------------------------------------------------------ validation
+
     /// <summary>Validation message for the data folder, null when valid (empty is allowed: no folder to protect).</summary>
     public string? DataDirError => IsValidDataDir(DataDir) ? null : SetupTexts.DataDirInvalid;
 
     /// <summary>Validation message for the registry key, null when valid (empty is allowed).</summary>
     public string? RegistryKeyError => IsValidRegistryKey(RegistryKey) ? null : SetupTexts.RegistryKeyInvalid;
 
-    public bool IsValid => DataDirError is null && RegistryKeyError is null;
+    public bool IsValid => DataDirError is null && RegistryKeyError is null && ChildError is null;
 
     public static bool IsValidRegistryKey(string? key)
     {
@@ -86,5 +175,7 @@ public sealed partial class AppItemViewModel : ObservableObject
     {
         DataDir = string.IsNullOrWhiteSpace(DataDir) ? null : DataDir.Trim(),
         RegistryKey = string.IsNullOrWhiteSpace(RegistryKey) ? null : RegistryKey.Trim(),
+        ChildProcesses = ChildMode,
+        AllowedChildren = ChildMode == ChildProcessMode.Allowlist ? AllowedChildren : null,
     };
 }

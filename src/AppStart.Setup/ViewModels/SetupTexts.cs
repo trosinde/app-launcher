@@ -46,6 +46,74 @@ public static class SetupTexts
     public const string LoadFailedFormat = "Die bestehende Konfiguration konnte nicht gelesen werden: {0}";
     public const string InspectFailedFormat = "{0} kann nicht hinzugefügt werden: {1}";
 
+    // ------------------------------------------------------------------ Step 1: further programs (docs/ui-designs/Main, add-allowed-child-processes)
+    public const string AppsColumnChildren = "Weitere Programme";
+    public const string ChildrenLabel = "Weitere Programme";
+    public const string ChildModeBlocked = "Gesperrt (empfohlen)";
+    public const string ChildModeAllowlist = "Nur erlaubte Hilfsprogramme";
+    public const string ChildModeAll = "Alle erlaubt (unsicher)";
+    public const string ChildSummaryBlocked = "gesperrt";
+    public const string ChildSummaryAllowlistFormat = "{0} erlaubt";
+    public const string ChildSummaryAll = "alle erlaubt";
+    public const string ButtonHelpersFormat = "Hilfsprogramme ({0})…";
+    public const string ChildHintBlocked = "Applikation {0} kann keine weiteren Programme starten.";
+    public const string ChildHintAllowlistFormat = "Nur Programme auf der Liste dürfen aus {0} starten. Alle anderen beendet der Dienst sofort.";
+    public const string ChildHintAllFormat = "{0} darf jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten.";
+    public const string ChildAllowlistEmpty = "Mindestens ein Hilfsprogramm hinzufügen («Hilfsprogramme…») oder «Gesperrt» wählen.";
+    public const string ConfirmAllHeading = "Alle weiteren Programme erlauben?";
+    public const string ConfirmAllTextFormat = "{0} darf dann jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten. Bediener können so den Schutz umgehen. Nur nach Abwägung und mit Vermerk im Service and Security Manual.";
+
+    // ------------------------------------------------------------------ Dialog «Erlaubte Hilfsprogramme» (docs/ui-designs/Helpers)
+    public const string HelpersTitleFormat = "Erlaubte Hilfsprogramme – {0}";
+    public const string HelpersHeading = "Erlaubte Hilfsprogramme";
+    public const string HelpersIntroFormat = "Diese Programme darf {0} starten. Sie laufen dann ebenfalls mit Admin-Rechten. Jedes andere Programm beendet der Dienst sofort und protokolliert es.";
+    public const string HelpersColumnProgram = "Programm";
+    public const string HelpersColumnCheck = "Prüfung";
+    public const string HelpersColumnState = "Zustand";
+    public const string HelperStateOk = "In Ordnung";
+    public const string HelperStateRenew = "Prüfsumme neu";
+    public const string HelperStateMissing = "Datei fehlt";
+    public const string HelperStateInvalid = "Prüfung fehlgeschlagen";
+    public const string ButtonLearnStart = "Lernmodus starten…";
+    public const string ButtonRehash = "Prüfsumme aktualisieren";
+    public const string ButtonApply = "Übernehmen";
+    public const string HelpersUnsignedFormat = "{0} ist nicht signiert";
+    public const string HelpersUnsignedText = "Nach jedem Update der Applikation stimmt die Prüfsumme nicht mehr und der Start wird blockiert. Dann hier «Prüfsumme aktualisieren».";
+    public const string HelpersFooter = "Erlaubt sind nur Programme aus Ordnern, in die Bediener nicht schreiben können. Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts nur mit ausdrücklicher Bestätigung.";
+    public const string HelperWritableFormat = "{0} kann nicht erlaubt werden: Der Ordner ist für Bediener beschreibbar. Programm in einen geschützten Ordner installieren.";
+    public const string ConfirmShellHeadingFormat = "{0} erlauben?";
+    public const string ConfirmShellText = "Dies ist eine Shell oder ein Skript-Host. Wer die Applikation bedient, kann damit jedes Programm mit Admin-Rechten starten.";
+    public const string LearnNeedsReleaseFormat = "Der Lernmodus ist erst möglich, wenn {0} eingerichtet ist. Zuerst den Assistenten abschliessen, dann erneut öffnen.";
+
+    // ------------------------------------------------------------------ Dialog «Lernmodus läuft» (docs/ui-designs/Learn)
+    public const string LearnTitleFormat = "Lernmodus – {0}";
+    public const string LearnHeading = "Lernmodus läuft";
+    public const string LearnIntroFormat = "Starten Sie {0} jetzt über ihre Verknüpfung und benutzen Sie alle Funktionen, die Hilfsprogramme brauchen: Export, Drucken, Update, Hilfe.";
+    public const string LearnEndsIn = "endet automatisch in";
+    public const string LearnWarningTitleFormat = "Während des Lernmodus ist der Schutz für {0} schwächer.";
+    public const string LearnWarningText = "Programme werden nicht beendet, nur aufgezeichnet. Den PC dabei nicht unbeaufsichtigt lassen.";
+    public const string LearnColumnPrograms = "Aufgezeichnete Programme";
+    public const string LearnColumnStarts = "Starts";
+    public const string LearnColumnLast = "Zuletzt";
+    public const string LearnNothingYet = "Noch nichts aufgezeichnet.";
+    public const string ButtonLearnCancel = "Abbrechen, nichts übernehmen";
+    public const string ButtonLearnFinish = "Lernmodus beenden";
+    public const string LearnStartFailedFormat = "Der Lernmodus konnte nicht gestartet werden: {0}";
+
+    // ------------------------------------------------------------------ Dialog «Vorschläge übernehmen» (docs/ui-designs/LearnResult)
+    public const string LearnResultHeading = "Vorschläge übernehmen";
+    public const string LearnResultIntroFormat = "Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme {0} künftig starten darf.";
+    public const string LearnResultColumnHint = "Hinweis";
+    public const string LearnHintUnsigned = "nicht signiert";
+    public const string LearnHintOpensFiles = "kann Dateien öffnen – abwägen";
+    public const string LearnHintShell = "Shell oder Skript-Host – nur von Hand";
+    public const string LearnHintCmd = "Eingabeaufforderung – nur von Hand";
+    public const string LearnHintWritable = "Ordner für Bediener beschreibbar";
+    public const string LearnResultFooter = "Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.";
+    public const string ButtonDiscard = "Verwerfen";
+    public const string ButtonTakeOverFormat = "{0} Programme übernehmen";
+    public const string LearnResultNothing = "Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?";
+
     // ------------------------------------------------------------------ Step 2: accounts and group
     public const string AccountsHeading = "Konten und Gruppe";
     public const string AccountsIntro = "Die Applikationen laufen unter einem eigenen Konto. Nur Mitglieder der Gruppe dürfen den Launcher nutzen.";
