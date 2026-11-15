@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    AppStart-Setup.exe (task 7.5, design D6): Native AOT bootstrapper, requireAdministrator.
+    Installs the embedded MSI silently and then starts the installed AppStart.Setup (wizard).
+
+    Embedding the MSI:  dotnet publish src/AppStart.Bootstrapper -c Release -p:AppStartMsi=<full path to AppStart-x.y.z.msi>
+    Without AppStartMsi the build still works (tests, CI build); the EXE then reports "Kein Installationspaket enthalten".
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>AppStart-Setup</AssemblyName>
+    <RootNamespace>AppStart.Bootstrapper</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyTitle>AppStart Setup</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.371" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppStart.Core\AppStart.Core.csproj" />
+    <InternalsVisibleTo Include="AppStart.Bootstrapper.Tests" />
+  </ItemGroup>
+
+  <!-- The MSI is embedded only when the release build passes its path. -->
+  <ItemGroup Condition="'$(AppStartMsi)' != ''">
+    <EmbeddedResource Include="$(AppStartMsi)" LogicalName="AppStart.msi" WithCulture="false" Type="Non-Resx" />
+  </ItemGroup>
+
+  <Target Name="CheckAppStartMsi" BeforeTargets="PrepareForBuild" Condition="'$(AppStartMsi)' != ''">
+    <Error Condition="!Exists('$(AppStartMsi)')" Text="AppStartMsi: file '$(AppStartMsi)' not found." />
+    <Message Importance="high" Text="AppStart-Setup.exe embeds $(AppStartMsi)" />
+  </Target>
+
+</Project>
