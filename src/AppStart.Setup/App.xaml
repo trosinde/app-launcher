@@ -1,0 +1,9 @@
+<Application x:Class="AppStart.Setup.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ThemeMode="Light"
+             ShutdownMode="OnMainWindowClose">
+  <Application.Resources>
+    <!-- Styles and colours of the UI design are added by the wizard (Views/Styles.xaml). -->
+  </Application.Resources>
+</Application>

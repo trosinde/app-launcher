@@ -3,11 +3,13 @@
     <Project Path="src/AppStart.Core/AppStart.Core.csproj" />
     <Project Path="src/AppStart.Launcher/AppStart.Launcher.csproj" />
     <Project Path="src/AppStart.Service/AppStart.Service.csproj" />
+    <Project Path="src/AppStart.Setup/AppStart.Setup.csproj" />
     <Project Path="src/AppStart.TestApp/AppStart.TestApp.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AppStart.Core.Tests/AppStart.Core.Tests.csproj" />
     <Project Path="tests/AppStart.Launcher.Tests/AppStart.Launcher.Tests.csproj" />
     <Project Path="tests/AppStart.Service.Tests/AppStart.Service.Tests.csproj" />
+    <Project Path="tests/AppStart.Setup.Tests/AppStart.Setup.Tests.csproj" />
   </Folder>
 </Solution>

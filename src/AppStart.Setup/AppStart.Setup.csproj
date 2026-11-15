@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Configuration tool (WPF wizard + command line), runs with admin rights (tasks 6.x, 9.x). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>AppStart.Setup.Program</StartupObject>
+    <AssemblyTitle>AppStart Setup</AssemblyTitle>
+    <!-- WPF0001: ThemeMode (Fluent) is experimental in .NET 10; the concept fixes Fluent. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="System.CommandLine" Version="2.0.15" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.371" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Custom Main in Program.cs decides between command line and wizard. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppStart.Core\AppStart.Core.csproj" />
+    <InternalsVisibleTo Include="AppStart.Setup.Tests" />
+  </ItemGroup>
+
+</Project>
