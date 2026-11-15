@@ -25,7 +25,7 @@
 - [x] 5.1 /config <Pfad> nur zusammen mit /quiet; nach erfolgreichem msiexec AppStart.Setup.exe apply --config ohne Oberfläche, signaturgeprüft, Ausgabe in Logs\apply-<Zeit>.log; Exit-Codes gemäss design.md D6 (10 und 11 neu); Hilfe-Text; Tests in BootstrapperLogic
 
 ## 6. TestApp
-- [ ] 6.1 Knöpfe «Erlaubtes Hilfsprogramm starten» (eigene signierte Helper-EXE im TestApp-Ordner) und «Eingabeaufforderung starten» zeigen das Ergebnis je Modus
+- [x] 6.1 (Helper unsigniert, solange das Zertifikat aus add-appstart-service 7.2 fehlt; dann SHA-256) Knöpfe «Erlaubtes Hilfsprogramm starten» (eigene signierte Helper-EXE im TestApp-Ordner) und «Eingabeaufforderung starten» zeigen das Ergebnis je Modus
 
 ## 7. Tests auf der Test-VM
 - [ ] 7.1 E2E (tests/e2e): jedes Szenario aus specs/app-launch, specs/installation und specs/verification, inkl. Dienst-Stopp während laufender Applikation und /quiet /config als SYSTEM

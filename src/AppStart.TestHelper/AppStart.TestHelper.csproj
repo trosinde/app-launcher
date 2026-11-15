@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Helper program of the TestApp (add-allowed-child-processes task 6.1): stands for an application's own
+    helper (export, updater). Lies next to AppStart.TestApp.exe; the TestApp starts it with
+    «Erlaubtes Hilfsprogramm starten». Prints the account it runs as and ends with exit code 0.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyTitle>AppStart TestHelper</AssemblyTitle>
+  </PropertyGroup>
+
+</Project>

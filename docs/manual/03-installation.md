@@ -218,7 +218,10 @@ Fenster «AppStart TestApp», Überschrift «Zustand der Testapplikation», daru
 | «Admin-Rechte» | «Ja», «OK» | «Nein», «Fehler» |
 | «Registry lesen/schreiben» | `HKLM\SOFTWARE\AppStartTest`, «OK» | «Fehler» mit Grund: Key gesperrt ohne `appstart-app` oder Rechte falsch |
 | «Dateien lesen/schreiben» | `C:\ProgramData\AppStartTest`, «OK» | «Fehler» mit Grund |
-| «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt», «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: das Job-Objekt fehlt (`allowChildProcesses` ist `true`). «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
+| «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt» (Modus «gesperrt») oder «Von AppStart sofort beendet (nicht erlaubt)» (Modus «nur erlaubte Hilfsprogramme»), jeweils «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: Modus «alle erlaubt» oder die Eingabeaufforderung steht auf der Liste. «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
+| «Hilfsprogramm (TestHelper)» | nach Klick auf «Erlaubtes Hilfsprogramm starten», je nach Modus der TestApp (siehe [Weitere Programme](04-applikationen-verwalten.md)): «Gestartet und beendet: AppStart TestHelper läuft als …» mit «Erlaubt», wenn `AppStart.TestHelper.exe` erlaubt ist; «Start blockiert durch Job-Objekt (Modus gesperrt)» oder «Von AppStart sofort beendet (nicht auf der Liste)» mit «Gesperrt» | «Start fehlgeschlagen: …» mit «Prüfen» |
+
+Das Hilfsprogramm `AppStart.TestHelper.exe` liegt neben der TestApp. Zum Ausprobieren der Positivliste: `%SETUP% allow-child --app appstart-testapp --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestHelper.exe"`. Danach startet das Hilfsprogramm, die Eingabeaufforderung dagegen beendet AppStart sofort.
 
 Vor der ersten Prüfung steht beim Kindprozess «Noch nicht geprüft» mit dem Kennzeichen «Offen». «Erneut prüfen» wiederholt die Anzeigen und zeigt «Geprüft um 10:42:17». Im Feld «Testwert» (Vorgabe «Testwert 42») lässt sich ein Wert eingeben; «In Registry und Datei speichern» schreibt ihn und zeigt «Gespeichert um 10:42:30» oder «Speichern fehlgeschlagen: …».
 

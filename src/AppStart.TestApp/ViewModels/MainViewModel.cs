@@ -46,8 +46,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _env = env;
         TestValue = env.ReadStoredTestValue() ?? Texts.DefaultTestValue;
-        Rows = [Account, Admin, Registry, Files, ChildProcess];
+        Rows = [Account, Admin, Registry, Files, ChildProcess, Helper];
         ChildProcess.Set(Texts.ChildNotTested, CheckState.Pending, Texts.BadgePending);
+        Helper.Set(Texts.ChildNotTested, CheckState.Pending, Texts.BadgePending);
         Recheck();
     }
 
@@ -60,6 +61,8 @@ public sealed partial class MainViewModel : ObservableObject
     public StatusRow Files { get; } = new(Texts.RowFiles);
 
     public StatusRow ChildProcess { get; } = new(Texts.RowChild);
+
+    public StatusRow Helper { get; } = new(Texts.RowHelper);
 
     public ObservableCollection<StatusRow> Rows { get; }
 
@@ -115,11 +118,36 @@ public sealed partial class MainViewModel : ObservableObject
             case ChildProcessOutcome.BlockedByJob:
                 ChildProcess.Set(Texts.ChildBlocked, CheckState.Ok, Texts.BadgeOk);
                 break;
+            case ChildProcessOutcome.TerminatedByService:
+                ChildProcess.Set(Texts.ChildTerminated, CheckState.Ok, Texts.BadgeOk);
+                break;
             case ChildProcessOutcome.Started:
                 ChildProcess.Set(Texts.ChildStarted, CheckState.Failed, Texts.BadgeBreakout);
                 break;
             default:
                 ChildProcess.Set(string.Format(Texts.ChildFailed, detail), CheckState.Warning, Texts.BadgeCheck);
+                break;
+        }
+    }
+
+    /// <summary>«Erlaubtes Hilfsprogramm starten»: shows what the configured mode does with a helper (task 6.1).</summary>
+    [RelayCommand]
+    public void StartHelper()
+    {
+        var (outcome, detail) = _env.TryStartHelper();
+        switch (outcome)
+        {
+            case ChildProcessOutcome.Ran:
+                Helper.Set(string.Format(Texts.HelperRan, detail), CheckState.Ok, Texts.BadgeAllowed);
+                break;
+            case ChildProcessOutcome.BlockedByJob:
+                Helper.Set(Texts.HelperBlocked, CheckState.Warning, Texts.BadgeBlocked);
+                break;
+            case ChildProcessOutcome.TerminatedByService:
+                Helper.Set(Texts.HelperTerminated, CheckState.Warning, Texts.BadgeBlocked);
+                break;
+            default:
+                Helper.Set(string.Format(Texts.ChildFailed, detail), CheckState.Failed, Texts.BadgeCheck);
                 break;
         }
     }

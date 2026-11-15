@@ -30,6 +30,16 @@ public static class Texts
     public const string ChildBlocked = "Start blockiert durch Job-Objekt";
     public const string ChildStarted = "Gestartet – Ausbruch möglich";
     public const string ChildFailed = "Start fehlgeschlagen: {0}";
+    public const string ChildTerminated = "Von AppStart sofort beendet (nicht erlaubt)";
+
+    // add-allowed-child-processes, task 6.1: own helper program next to the TestApp
+    public const string RowHelper = "Hilfsprogramm (TestHelper)";
+    public const string HelperButton = "Erlaubtes Hilfsprogramm starten";
+    public const string HelperRan = "Gestartet und beendet: {0}";
+    public const string HelperBlocked = "Start blockiert durch Job-Objekt (Modus gesperrt)";
+    public const string HelperTerminated = "Von AppStart sofort beendet (nicht auf der Liste)";
+    public const string BadgeAllowed = "Erlaubt";
+    public const string BadgeBlocked = "Gesperrt";
 
     public const string TestValueLabel = "Testwert";
     public const string DefaultTestValue = "Testwert 42";

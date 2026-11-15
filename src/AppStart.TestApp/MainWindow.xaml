@@ -81,8 +81,12 @@
 
     <!-- Actions -->
     <Grid Grid.Row="4">
-      <Button HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}"
-              Content="{x:Static local:Texts.CommandPromptButton}" Command="{Binding StartCommandPromptCommand}" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+        <Button Style="{StaticResource SecondaryButton}"
+                Content="{x:Static local:Texts.CommandPromptButton}" Command="{Binding StartCommandPromptCommand}" />
+        <Button Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                Content="{x:Static local:Texts.HelperButton}" Command="{Binding StartHelperCommand}" />
+      </StackPanel>
       <Button HorizontalAlignment="Right" Style="{StaticResource PrimaryButton}" IsDefault="True"
               Content="{x:Static local:Texts.RecheckButton}" Command="{Binding RecheckCommand}" />
     </Grid>
