@@ -32,7 +32,7 @@ public static class Texts
     public const string ChildFailed = "Start fehlgeschlagen: {0}";
 
     public const string TestValueLabel = "Testwert";
-    public const string DefaultTestValue = "Messung 42 – 12.3456 g";
+    public const string DefaultTestValue = "Testwert 42";
     public const string SaveButton = "In Registry und Datei speichern";
     public const string CommandPromptButton = "Eingabeaufforderung starten";
     public const string RecheckButton = "Erneut prüfen";

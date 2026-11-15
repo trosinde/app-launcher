@@ -2,7 +2,7 @@ schema: spec-driven
 
 context: |
   Projektkontext, Tech Stack und nicht verhandelbare Sicherheitsregeln stehen in openspec/project.md – vor jedem Artefakt lesen.
-  Quelle der Anforderungen: docs/konzept/option3-appstart.md (Konzept Option 3).
+  Quelle der Anforderungen: docs/konzept/konzept.md (Konzept Start-Dienst).
   Verbindliche UI-Vorlage: docs/ui-designs/ (AppStart – UI-Entwürfe).
   Artefakte (Proposal, Specs, Tasks, Handbuch) auf Deutsch, Code und Kommentare auf Englisch.
 
