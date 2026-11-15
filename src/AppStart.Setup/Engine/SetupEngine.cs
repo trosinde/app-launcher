@@ -382,11 +382,41 @@ public sealed class SetupEngine(
                 sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(20));
             }
 
+            // Right after setup created "AppStart Users" the service may still be waiting for the group
+            // (it retries every 10 s). Wait for the pipe; restart the service once if it does not appear.
+            if (!WaitForPipe(TimeSpan.FromSeconds(12)))
+            {
+                sc.Stop();
+                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(20));
+                sc.Start();
+                sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(20));
+                if (!WaitForPipe(TimeSpan.FromSeconds(10)))
+                {
+                    return new(SetupEngineTexts.ServiceFailed, false, SetupEngineTexts.PipeMissing);
+                }
+            }
+
             return new(SetupEngineTexts.ServiceRunning, true);
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ServiceProcess.TimeoutException or System.ComponentModel.Win32Exception)
         {
             return new(SetupEngineTexts.ServiceFailed, false, ex.Message);
         }
+    }
+
+    private static bool WaitForPipe(TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        do
+        {
+            if (Directory.GetFiles(@"\\.\pipe\").Any(p => string.Equals(Path.GetFileName(p), AppStartConstants.PipeName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            Thread.Sleep(500);
+        }
+        while (DateTime.UtcNow < deadline);
+        return false;
     }
 }

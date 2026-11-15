@@ -26,6 +26,7 @@ public static class SetupEngineTexts
 
     public const string ServiceRunning = "Dienst AppStart läuft, Start automatisch";
     public const string ServiceFailed = "Dienst AppStart läuft nicht";
+    public const string PipeMissing = "Die Pipe des Dienstes ist nicht erreichbar. Ereignisprotokoll (Quelle AppStart) prüfen.";
 
     public const string UninstallShortcuts = "Verknüpfungen zurückgestellt, Datenordner und Registry-Keys zurückgesetzt";
     public const string UninstallAccounts = "Konten und Gruppe entfernt";
