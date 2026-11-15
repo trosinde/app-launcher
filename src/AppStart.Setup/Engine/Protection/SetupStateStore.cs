@@ -10,7 +10,7 @@ namespace AppStart.Setup.Engine.Protection;
 /// Loads and saves &lt;base&gt;\setup-state.json (what setup changed and uninstall must undo). Written through
 /// <see cref="IProtectionService.WriteProtectedFile"/>, so it is protected like apps.json.
 /// </summary>
-public sealed class SetupStateStore
+public sealed class SetupStateStore : ISetupStateStore
 {
     public const string FileName = "setup-state.json";
 
