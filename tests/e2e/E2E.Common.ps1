@@ -264,7 +264,28 @@ function Save-WindowShot($window, [string] $file) {
     } catch { Write-Host "  (Bildschirmfoto $file nicht möglich: $($_.Exception.Message))" }
 }
 
+if (-not ('AppStartE2E.User32' -as [type])) {
+    Add-Type -Namespace 'AppStartE2E' -Name 'User32' -MemberDefinition '[DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr hWnd, uint msg, System.IntPtr wParam, System.IntPtr lParam);'
+}
+
 function Close-UiWindow($window) {
+    # The launcher's TaskDialog has only an OK button and no TDF_ALLOW_DIALOG_CANCELLATION: it ignores
+    # WM_CLOSE (WindowPattern.Close), like Alt+F4. And it belongs to another user (the operator), so
+    # pressing OK through UI Automation does not reach it from the admin test. TDM_CLICK_BUTTON(IDOK)
+    # posted to the dialog does (a higher integrity level may post to a lower one).
+    try {
+        if ($window.Current.ClassName -eq '#32770') {
+            [void][AppStartE2E.User32]::PostMessage([IntPtr]$window.Current.NativeWindowHandle, 0x0466, [IntPtr]1, [IntPtr]::Zero)
+            Start-Sleep -Milliseconds 300
+        }
+    } catch { }
+    try {
+        $cond = New-Object System.Windows.Automation.AndCondition(
+            (New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Button)),
+            (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, 'OK')))
+        $ok = $window.FindFirst('Descendants', $cond)
+        if ($ok) { $ok.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); return }
+    } catch { }
     try { $window.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() } catch { }
 }
 
