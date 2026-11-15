@@ -76,3 +76,7 @@ Dabei wird der Dienst gestoppt und gelöscht, der Startmenü-Ordner «AppStart»
 > **Hinweis:** Wurde das MSI zuerst deinstalliert, ist `AppStart.Setup.exe` nicht mehr vorhanden. Dann AppStart erneut installieren, `uninstall` ausführen und das MSI erneut deinstallieren.
 
 Nach der Deinstallation starten Bediener die Applikationen wieder wie vorher über die ursprünglichen Verknüpfungen, mit den Rechten ihres eigenen Kontos.
+
+### Versionen und Vorabversionen
+
+Windows Installer vergleicht nur die ersten drei Stellen der Version und kennt keine Vorabversionen. Aus `0.2.0-dev.7` und `0.2.0-dev.8` wird für das MSI beide Male `0.2.0.0`: Das zweite MSI ist dann **kein Update** des ersten. Updates beim Kunden immer mit einer höheren Version ausliefern (z. B. `0.2.0` → `0.2.1`). Vorabversionen derselben Version vorher deinstallieren.
