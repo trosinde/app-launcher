@@ -1,4 +1,3 @@
-#Requires -RunAsAdministrator
 <#
   UAT runner: runs the acceptance scripts of this folder in one elevated session (one UAC prompt)
   and copies their logs and screenshots to a result folder the developer can read.
@@ -15,12 +14,27 @@
 param(
     [string] $MsiPath,
     [string] $ResultDir,
-    [ValidateSet('Acceptance', 'Setup', 'Service', 'Operations')]
+    # Acceptance, Setup, Service, Operations (also comma-separated in one argument, as with -File).
     [string[]] $Suites = @('Acceptance'),
     # Started by the scheduled task "AppStartUAT": parameters come from %LOCALAPPDATA%\AppStartUAT\request.json.
     [switch] $FromRequest
 )
 $ErrorActionPreference = 'Stop'
+
+# Not elevated: start again elevated (one UAC prompt) with the same parameters and wait.
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    $relaunch = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"")
+    foreach ($p in $PSBoundParameters.GetEnumerator()) {
+        if ($p.Value -is [switch]) { if ($p.Value) { $relaunch += "-$($p.Key)" } }
+        elseif ($p.Value -is [array]) { $relaunch += "-$($p.Key)"; $relaunch += ($p.Value -join ',') }
+        else { $relaunch += "-$($p.Key)"; $relaunch += "`"$($p.Value)`"" }
+    }
+    Write-Host 'Nicht als Administrator gestartet: starte erhöht neu (UAC-Abfrage mit «Ja» bestätigen) ...'
+    $child = Start-Process (Get-Process -Id $PID).Path -Verb RunAs -Wait -PassThru -ArgumentList $relaunch
+    Write-Host "Fertig (Exit-Code $($child.ExitCode))."
+    exit $child.ExitCode
+}
 
 # ---------------------------------------------------------------- unattended runs (test VM only)
 # The scheduled task runs this script elevated without a UAC prompt, started on demand with
@@ -44,9 +58,10 @@ if ($FromRequest) {
     $MsiPath = $request.msiPath
     $Suites = @($request.suites)
     $ResultDir = $request.resultDir
-    foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations') { throw "Unbekannte Suite $s" } }
     if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir muss unter $uatHome liegen." }
 }
+$Suites = @($Suites | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations') { throw "Unbekannte Suite $s" } }
 if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath und ResultDir sind nötig (oder -FromRequest).' }
 if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath muss auf ein MSI zeigen.' }
 $MsiPath = (Resolve-Path $MsiPath).Path
