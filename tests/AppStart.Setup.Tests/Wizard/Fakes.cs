@@ -158,6 +158,10 @@ internal sealed class FakeUi : IUiServices
 
     public void OpenWithShell(string path) => Opened.Add(path);
 
+    public int VerifyViewsShown { get; private set; }
+
+    public void ShowVerifyView(ISetupEngine engine) => VerifyViewsShown++;
+
     public bool PrintReport(VerifyReport report)
     {
         Printed.Add(report);

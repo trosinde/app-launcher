@@ -31,7 +31,7 @@ internal static class CommandLine
         var regKey = new Option<string?>("--reg-key") { Description = CliTexts.RegKeyOption };
         var name = new Option<string?>("--name") { Description = CliTexts.NameOption };
         var add = new Command("add", CliTexts.AddDescription) { exe, dataDir, regKey, name };
-        add.SetAction(r => Print(engineFactory().Add(r.GetValue(exe)!.FullName, r.GetValue(dataDir), r.GetValue(regKey), r.GetValue(name))));
+        add.SetAction(r => Changed(engineFactory, e => e.Add(r.GetValue(exe)!.FullName, r.GetValue(dataDir), r.GetValue(regKey), r.GetValue(name))));
         root.Subcommands.Add(add);
 
         // add-user --name appstart-user [--password-stdin] | --member "<DOMAIN\User>"
@@ -45,12 +45,12 @@ internal static class CommandLine
         // remove --app <AppId> / rehash --app <AppId>
         var removeApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
         var remove = new Command("remove", CliTexts.RemoveDescription) { removeApp };
-        remove.SetAction(r => Print(engineFactory().Remove(r.GetValue(removeApp)!)));
+        remove.SetAction(r => Changed(engineFactory, e => e.Remove(r.GetValue(removeApp)!)));
         root.Subcommands.Add(remove);
 
         var rehashApp = new Option<string>("--app") { Description = CliTexts.AppOption, Required = true };
         var rehash = new Command("rehash", CliTexts.RehashDescription) { rehashApp };
-        rehash.SetAction(r => Print(engineFactory().Rehash(r.GetValue(rehashApp)!)));
+        rehash.SetAction(r => Changed(engineFactory, e => e.Rehash(r.GetValue(rehashApp)!)));
         root.Subcommands.Add(rehash);
 
         var list = new Command("list", CliTexts.ListDescription);
@@ -94,7 +94,7 @@ internal static class CommandLine
         if (member is not null)
         {
             var operators = current.Operators.Append(member).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            return Print(engine.Apply(new SetupRequest(apps, false, null, operators)));
+            return Changed(engine, engine.Apply(new SetupRequest(apps, false, null, operators)));
         }
 
         if (!string.Equals(name, AppStartConstants.OperatorAccountName, StringComparison.OrdinalIgnoreCase))
@@ -110,7 +110,7 @@ internal static class CommandLine
             return 2;
         }
 
-        return Print(engine.Apply(new SetupRequest(apps, true, password, current.Operators)));
+        return Changed(engine, engine.Apply(new SetupRequest(apps, true, password, current.Operators)));
     }
 
     private static int List(SetupEngine engine)
@@ -157,6 +157,22 @@ internal static class CommandLine
             : string.Format(CliTexts.VerifyFailed, report.Deviations));
         Console.WriteLine(string.Format(CliTexts.ReportSaved, reportCopy?.FullName ?? html));
         return report.ExitCode;
+    }
+
+    private static int Changed(Func<SetupEngine> engineFactory, Func<SetupEngine, IReadOnlyList<SetupStepResult>> change)
+    {
+        var engine = engineFactory();
+        return Changed(engine, change(engine));
+    }
+
+    // Task 9.3: every change is followed by an automatic check with a stored report.
+    private static int Changed(SetupEngine engine, IReadOnlyList<SetupStepResult> results)
+    {
+        var changeCode = Print(results);
+        Console.WriteLine();
+        Console.WriteLine(CliTexts.AutoVerify);
+        var verifyCode = Verify(engine, null);
+        return changeCode != 0 ? changeCode : verifyCode;
     }
 
     private static int Print(IReadOnlyList<SetupStepResult> results)

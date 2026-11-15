@@ -31,7 +31,10 @@ internal static class ServiceInstaller
         }
 
         Sc($"start {AppStartConstants.ServiceName}");
-        StartMenu("--create");
+        RunSetup("startmenu --create", TimeSpan.FromSeconds(10));
+
+        // Task 9.3: automatic check after every installation and update; report in ProgramData\AppStart\Reports.
+        RunSetup("verify", TimeSpan.FromSeconds(15));
     }
 
     /// <summary>Uninstall hook (also before an MSI upgrade): stop and delete the service only.</summary>
@@ -39,12 +42,12 @@ internal static class ServiceInstaller
     {
         StopAndWait();
         Sc($"delete {AppStartConstants.ServiceName}");
-        StartMenu("--remove");
+        RunSetup("startmenu --remove", TimeSpan.FromSeconds(10));
     }
 
-    // AppStart's own Start menu entries («AppStart – Einrichtung», «… prüfen») are written by the setup EXE
-    // next to this one, so the shortcut code exists only once. Bounded wait: the hook has 30 s in total.
-    private static void StartMenu(string action)
+    // Start menu entries and the automatic check are done by the setup EXE next to this one, so that code
+    // exists only once. Bounded waits: the whole hook has 30 s (10 s + 15 s + service start).
+    private static void RunSetup(string arguments, TimeSpan timeout)
     {
         var setup = Path.Combine(AppContext.BaseDirectory, "AppStart.Setup.exe");
         if (!File.Exists(setup))
@@ -52,8 +55,8 @@ internal static class ServiceInstaller
             return;
         }
 
-        using var p = Process.Start(new ProcessStartInfo(setup, $"startmenu {action}") { CreateNoWindow = true, UseShellExecute = false });
-        if (p is not null && !p.WaitForExit(15_000))
+        using var p = Process.Start(new ProcessStartInfo(setup, arguments) { CreateNoWindow = true, UseShellExecute = false });
+        if (p is not null && !p.WaitForExit(timeout))
         {
             p.Kill();
         }

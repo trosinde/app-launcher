@@ -15,6 +15,14 @@ public sealed class UiServices : IUiServices
 {
     public Window? Owner { get; set; }
 
+    public void ShowVerifyView(ISetupEngine engine)
+    {
+        var ui = new UiServices();
+        var window = new VerifyWindow(new ViewModels.VerifyViewModel(engine, ui)) { Owner = Owner };
+        ui.Owner = window;
+        window.ShowDialog();
+    }
+
     public IReadOnlyList<string> PickExeFiles()
     {
         var dialog = new OpenFileDialog

@@ -236,6 +236,10 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
 
     private bool CanEditApps => !IsBusy;
 
+    /// <summary>«Einrichtung prüfen» (task 9.2): same verify view as the Start menu entry.</summary>
+    [RelayCommand(CanExecute = nameof(CanEditApps))]
+    private void OpenVerify() => _ui.ShowVerifyView(_engine);
+
     [RelayCommand(CanExecute = nameof(CanEditApps))]
     private async Task AddExeAsync()
     {

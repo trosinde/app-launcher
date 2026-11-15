@@ -20,6 +20,7 @@ public static class SetupTexts
     public const string ButtonNext = "Weiter";
     public const string ButtonFinish = "Fertig";
     public const string ButtonOpenReport = "Prüfbericht öffnen";
+    public const string ButtonVerifySetup = "Einrichtung prüfen";
 
     // ------------------------------------------------------------------ Step 1: applications
     public const string AppsHeading = "Applikationen auswählen";

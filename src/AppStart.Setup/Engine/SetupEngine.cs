@@ -214,7 +214,13 @@ public sealed class SetupEngine(
 
     public VerifyReport Verify() => verifier.Run();
 
-    public string WriteReport(VerifyReport report) => verifier.WriteReport(report, paths.ReportDir);
+    public string WriteReport(VerifyReport report)
+    {
+        // Reports may be the first thing written (automatic check right after the MSI installation), and
+        // operators may create folders in C:\ProgramData: protect C:\ProgramData\AppStart before writing.
+        protection.ProtectConfigDirectory();
+        return verifier.WriteReport(report, paths.ReportDir);
+    }
 
     // ------------------------------------------------------------------ command line operations
 

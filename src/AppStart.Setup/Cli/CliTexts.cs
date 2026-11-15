@@ -39,5 +39,7 @@ public static class CliTexts
     public const string VerifyFailed = "Prüfung nicht bestanden – {0} Abweichung(en). Einsatz nicht abschliessen.";
     public const string ReportSaved = "Prüfbericht: {0}";
 
+    public const string AutoVerify = "Automatische Prüfung nach der Änderung:";
+
     public const string UninstallDescription = "Stellt alles zurück, was das Setup geändert hat (vor der Deinstallation des MSI ausführen).";
 }

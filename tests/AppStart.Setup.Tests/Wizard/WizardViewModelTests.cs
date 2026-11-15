@@ -18,6 +18,15 @@ public sealed class WizardViewModelTests
     private static bool CanNext(WizardViewModel vm) => vm.NextCommand.CanExecute(null);
 
     [Fact]
+    public async Task Verify_button_opens_the_verify_view()
+    {
+        var vm = await CreateAsync();
+        Assert.True(vm.OpenVerifyCommand.CanExecute(null));
+        vm.OpenVerifyCommand.Execute(null);
+        Assert.Equal(1, _ui.VerifyViewsShown);
+    }
+
+    [Fact]
     public async Task Next_IsEnabledOnlyWithAtLeastOneValidSelectedApp()
     {
         var vm = await CreateAsync();

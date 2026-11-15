@@ -51,8 +51,8 @@
 
 ## 9. Prüfung nach Serviceeinsatz
 - [x] 9.1 WPF-Prüfansicht nach UI-Entwurf «Prüfbericht», Bericht drucken und speichern
-- [ ] 9.2 Startmenü-Eintrag «AppStart – Einrichtung prüfen» mit UAC-Abfrage, Knopf im Setup
-- [ ] 9.3 Automatische Prüfung nach Installation, Änderung und Update; Berichte mit Datum und Uhrzeit ablegen
+- [x] 9.2 Startmenü-Eintrag «AppStart – Einrichtung prüfen» mit UAC-Abfrage, Knopf im Setup
+- [x] 9.3 Automatische Prüfung nach Installation, Änderung und Update; Berichte mit Datum und Uhrzeit ablegen
 
 ## 10. Benutzerhandbuch
 - [ ] 10.1 Handbuch als Markdown in docs/manual/ mit allen Kapiteln laut Konzept

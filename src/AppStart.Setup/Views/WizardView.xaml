@@ -410,6 +410,9 @@
       </StackPanel>
 
       <!-- ============================================================ Buttons -->
+      <Button Grid.Row="1" HorizontalAlignment="Left" Margin="0,16,0,0" Style="{StaticResource SecondaryButton}"
+              Content="{x:Static vm:SetupTexts.ButtonVerifySetup}" Command="{Binding OpenVerifyCommand}"
+              Visibility="{Binding IsAppsStep, Converter={StaticResource BoolToVisibility}}" />
       <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
         <Button Style="{StaticResource SecondaryButton}" Content="{x:Static vm:SetupTexts.ButtonCancel}" Command="{Binding CancelCommand}" IsCancel="True"
                 Visibility="{Binding IsAppsStep, Converter={StaticResource BoolToVisibility}}" />

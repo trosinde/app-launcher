@@ -22,4 +22,7 @@ public interface IUiServices
 
     /// <summary>Shows the print dialog and prints the report. False when the user cancelled.</summary>
     bool PrintReport(VerifyReport report);
+
+    /// <summary>Opens the verify view as a dialog (button «Einrichtung prüfen» in the wizard, task 9.2).</summary>
+    void ShowVerifyView(ISetupEngine engine);
 }
