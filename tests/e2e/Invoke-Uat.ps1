@@ -61,7 +61,7 @@ if ($FromRequest) {
     if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir muss unter $uatHome liegen." }
 }
 $Suites = @($Suites | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations') { throw "Unbekannte Suite $s" } }
+foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses') { throw "Unbekannte Suite $s" } }
 if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath und ResultDir sind nötig (oder -FromRequest).' }
 if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath muss auf ein MSI zeigen.' }
 $MsiPath = (Resolve-Path $MsiPath).Path
@@ -86,6 +86,13 @@ Copy-Item (Join-Path $repoE2E '*.ps1') $stage
 Copy-Item (Join-Path $repoSpikes 'Prepare-TestVm.ps1'), (Join-Path $repoSpikes 'Remove-SpikeSetup.ps1') $stage
 Copy-Item $MsiPath $stage
 $msi = Join-Path $stage (Split-Path $MsiPath -Leaf)
+# Bootstrapper next to the MSI (Build-Release.ps1 output): staged too, for /quiet /config as SYSTEM.
+$bootSource = Join-Path (Split-Path $MsiPath) 'AppStart-Setup.exe'
+$boot = $null
+if (Test-Path $bootSource) {
+    Copy-Item $bootSource $stage
+    $boot = Join-Path $stage 'AppStart-Setup.exe'
+}
 
 # -StageDir explicitly: Windows PowerShell 5.1 leaves $PSScriptRoot empty in parameter defaults of
 # advanced scripts started with -File.
@@ -94,6 +101,7 @@ $scripts = @{
     Setup      = @{ File = 'Invoke-SetupE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     Service    = @{ File = 'Invoke-ServiceE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     Operations = @{ File = 'Invoke-OperationsTests.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
+    ChildProcesses = @{ File = 'Invoke-ChildProcessE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) + $(if ($boot) { @('-BootstrapperPath', $boot) } else { @() }) }
 }
 
 $summary = @()
