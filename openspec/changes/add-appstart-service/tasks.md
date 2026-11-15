@@ -23,7 +23,7 @@
 - [x] 4.5 Job-Objekt mit Prozesslimit bei allowChildProcesses false
 
 ## 5. Launcher
-- [ ] 5.1 Native AOT WinExe, Argument --app, Formatprüfung, Meldung bei nicht erreichbarem Dienst
+- [x] 5.1 Native AOT WinExe, Argument --app, Formatprüfung, Meldung bei nicht erreichbarem Dienst
 
 ## 6. Setup
 - [ ] 6.1 WPF-Oberfläche nach UI-Entwürfen (MVVM): Mehrfachauswahl, Datenordner und Registry-Key je App

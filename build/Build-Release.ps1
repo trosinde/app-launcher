@@ -5,7 +5,8 @@
 
 .DESCRIPTION
   1. dotnet restore / build / test (Release)
-  2. publish AppStart.Service (main EXE, Velopack hooks) and AppStart.TestApp (subfolder TestApp)
+  2. publish AppStart.Service (main EXE, Velopack hooks), AppStart.Launcher (Native AOT) and
+     AppStart.TestApp (subfolder TestApp)
   3. vpk pack --msi --instLocation PerMachine --packTitle AppStart  ->  C:\Program Files\AppStart
   4. removes Velopack's per-user Setup.exe and Portable.zip: they install into a folder the user can
      write to (concept: "Nie das per-user-Setup von Velopack verwenden")
@@ -33,7 +34,9 @@ param(
     [string] $CertificateThumbprint,
     [string] $TimestampUrl = 'http://timestamp.digicert.com',
     [string] $OutputDir = 'artifacts/release',
-    [switch] $SkipTests
+    [switch] $SkipTests,
+    # Local builds on machines without the MSVC linker (Visual Studio C++ tools): launcher as JIT single file.
+    [switch] $NoAot
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -68,6 +71,14 @@ try {
 
     Invoke-Step 'Publish AppStart.Service' {
         dotnet publish src/AppStart.Service @common -r win-x64 --self-contained -o $pack
+    }
+    Invoke-Step 'Publish AppStart.Launcher' {
+        if ($NoAot) {
+            Write-Warning 'Launcher without Native AOT (-NoAot): only for local tests, not for releases.'
+            dotnet publish src/AppStart.Launcher @common -r win-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o $pack
+        } else {
+            dotnet publish src/AppStart.Launcher @common -r win-x64 -o $pack
+        }
     }
     Invoke-Step 'Publish AppStart.TestApp' {
         dotnet publish src/AppStart.TestApp @common -r win-x64 --self-contained -p:PublishSingleFile=true `
@@ -125,7 +136,9 @@ try {
             }
             if ($own -and $file.Extension -eq '.exe') { $ownExes++ }
         }
-        if ($ownExes -eq 0) { throw 'No AppStart EXE found in the package (lib/app).' }
+        foreach ($required in 'AppStart.Service.exe', 'AppStart.Launcher.exe') {
+            if (-not ($shipped | Where-Object Name -eq $required)) { throw "$required missing in the package (lib/app)." }
+        }
         Write-Host "Signatures verified: MSI and $($shipped.Count - 1) EXE in the package ($ownExes own)."
     }
 

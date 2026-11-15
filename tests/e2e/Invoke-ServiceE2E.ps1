@@ -59,6 +59,41 @@ function Protect([string] $path, [bool] $dir) {
     Set-Acl -Path $path -AclObject $acl
 }
 
+function New-Shortcut([string] $name, [string] $appId) {
+    # Like AppStart.Setup will do: target = launcher, argument --app, icon from the application EXE.
+    $lnk = Join-Path $StageDir "$name.lnk"
+    $sh = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk)
+    $sh.TargetPath = "$prog\AppStart.Launcher.exe"; $sh.Arguments = "--app $appId"
+    $sh.IconLocation = "$prog\TestApp\AppStart.TestApp.exe,0"; $sh.WorkingDirectory = "$prog\TestApp"; $sh.Save()
+    return $lnk
+}
+
+function Invoke-Launcher([string] $lnk, [string] $shot) {
+    # Starts the shortcut, returns @{ Exit; Title; Texts }. Captures and closes a dialog if one appears.
+    Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing
+    $UIA = [System.Windows.Automation.AutomationElement]
+    $before = @(Get-Process AppStart.Launcher -ErrorAction SilentlyContinue | ForEach-Object Id)
+    Start-Process $lnk
+    $proc = $null; for ($i = 0; $i -lt 20 -and -not $proc; $i++) { Start-Sleep -Milliseconds 250; $proc = Get-Process AppStart.Launcher -ErrorAction SilentlyContinue | Where-Object { $before -notcontains $_.Id } | Select-Object -First 1 }
+    $result = @{ Exit = $null; Title = ''; Texts = '' }
+    if (-not $proc) { $result.Exit = 'gone'; return $result }   # finished before we saw it: success path
+    $null = $proc.Handle   # Windows PowerShell keeps the exit code only if the handle was opened while running
+    $cond = New-Object System.Windows.Automation.PropertyCondition($UIA::ProcessIdProperty, $proc.Id)
+    $w = $null; for ($i = 0; $i -lt 40 -and -not $w -and -not $proc.HasExited; $i++) { Start-Sleep -Milliseconds 250; $w = $UIA::RootElement.FindFirst('Children', $cond) }
+    if ($w) {
+        Start-Sleep -Milliseconds 500
+        $result.Title = $w.Current.Name
+        $result.Texts = ($w.FindAll('Descendants', [System.Windows.Automation.Condition]::TrueCondition) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique) -join ' | '
+        $r = $w.Current.BoundingRectangle; $bmp = New-Object System.Drawing.Bitmap([int]$r.Width, [int]$r.Height)
+        $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen([int]$r.X, [int]$r.Y, 0, 0, $bmp.Size)
+        $bmp.Save((Join-Path $StageDir $shot)); $g.Dispose(); $bmp.Dispose()
+        $w.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
+    }
+    $proc.WaitForExit(10000) | Out-Null
+    $result.Exit = $proc.ExitCode
+    return $result
+}
+
 try {
     Write-Host "== Windows $((Get-CimInstance Win32_OperatingSystem).Version), session $((Get-Process -Id $PID).SessionId)"
     & (Join-Path $StageDir 'Prepare-TestVm.ps1') | Out-Null
@@ -150,8 +185,22 @@ try {
     $r = Send-Request 'START testapp C:\Windows\System32\cmd.exe'
     Check 'Ungültige Anfrage wird ohne Antwort verworfen' ($r -eq '<closed>') $r
 
+    # --- launcher through a real shortcut (title = shortcut name)
+    Get-Process AppStart.TestApp -ErrorAction SilentlyContinue | Stop-Process -Force
+    Start-Sleep -Seconds 3
+    $lnk = New-Shortcut 'AppStart TestApp' 'testapp'
+    $l = Invoke-Launcher $lnk 'e2e-launcher-ok.png'
+    Start-Sleep -Seconds 4
+    $started = Get-CimInstance Win32_Process -Filter "Name='AppStart.TestApp.exe'" | Select-Object -First 1
+    Check 'Launcher über Verknüpfung: Start ohne Fenster' (($l.Exit -eq 0 -or $l.Exit -eq 'gone') -and -not $l.Title -and $started) "exit=$($l.Exit) dialog='$($l.Title)'"
+    Get-Process AppStart.TestApp -ErrorAction SilentlyContinue | Stop-Process -Force
+
     Start-Sleep -Seconds 3
     Write-Config ('0' * 64); Protect $config $false
+    $l = Invoke-Launcher $lnk 'e2e-launcher-denied.png'
+    Check 'Launcher: «Start verweigert» mit Ereignis-ID, Titel = Verknüpfung' ($l.Exit -eq 3 -and $l.Title -eq 'AppStart TestApp' -and $l.Texts -like '*Start verweigert*' -and $l.Texts -like '*Ereignis-ID*') "exit=$($l.Exit) title='$($l.Title)' :: $($l.Texts)"
+
+    Start-Sleep -Seconds 3
     $r = Send-Request 'START testapp'
     Check 'Falsche Prüfsumme -> integrity' ($r -like 'DENIED integrity *') $r
     Check 'Antwort ohne Pfad oder Prüfsumme' ($r -notmatch '\\|[0-9A-F]{64}') $r

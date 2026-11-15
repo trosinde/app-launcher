@@ -18,4 +18,4 @@ Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File', '.\Invoke-Serv
 
 Ergebnis in `e2e-run.txt` (eine Zeile PASS/FAIL je Prüfpunkt), Bildschirmfoto `e2e-testapp.png`.
 
-Letzter Lauf: 15.11.2026, Windows 11 Pro 10.0.26300, MSI 0.1.0-dev.1: 21 PASS, 0 FAIL.
+Letzter Lauf: 15.11.2026, Windows 11 Pro 10.0.26300, MSI 0.1.0-dev.2 (mit Launcher, -NoAot): 23 PASS, 0 FAIL.

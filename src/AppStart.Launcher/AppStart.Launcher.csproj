@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Launcher without rights: sends only "START <AppId>" to the service (task 5.1). Native AOT, no window on success. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyTitle>AppStart Launcher</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.371" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppStart.Core\AppStart.Core.csproj" />
+    <InternalsVisibleTo Include="AppStart.Launcher.Tests" />
+  </ItemGroup>
+
+</Project>

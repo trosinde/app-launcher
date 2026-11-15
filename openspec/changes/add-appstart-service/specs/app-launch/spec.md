@@ -43,3 +43,22 @@ Der Dienst SHALL die EXE vor der Prüfung so öffnen, dass sie bis zum Start des
 #### Scenario: Fremde Signatur
 - **WHEN** die EXE gültig signiert ist, aber von einem anderen Zertifikat als dem in apps.json hinterlegten
 - **THEN** wird der Start verweigert und protokolliert
+
+### Requirement: Launcher ohne Rechte und mit verständlichen Meldungen
+Der Launcher SHALL nur das Argument --app <AppId> annehmen, das Format der AppId vor dem Senden prüfen, START <AppId> über die Pipe senden und bei Erfolg ohne Fenster enden. Bei jedem Fehler zeigt er eine Meldung nach UI-Entwurf mit dem Namen der Verknüpfung als Titel, einer Überschrift, einem Text mit Massnahme und, falls vorhanden, der Ereignis-ID mit Datum und Uhrzeit.
+
+#### Scenario: Dienst nicht erreichbar
+- **WHEN** der Dienst AppStart nicht läuft
+- **THEN** zeigt der Launcher «Start-Dienst nicht erreichbar» mit dem Hinweis, sich an Administrator oder Service zu wenden
+
+#### Scenario: Start verweigert
+- **WHEN** der Dienst mit DENIED integrity antwortet
+- **THEN** zeigt der Launcher «Start verweigert», den Text zur veränderten Applikation und die Ereignis-ID
+
+#### Scenario: Keine Berechtigung
+- **WHEN** der Benutzer nicht Mitglied von AppStart Users ist
+- **THEN** zeigt der Launcher «Keine Berechtigung» und sendet nichts
+
+#### Scenario: Ungültige Verknüpfung
+- **WHEN** der Launcher ohne --app, mit weiteren Argumenten oder mit einer ungültigen AppId gestartet wird
+- **THEN** zeigt er «Ungültige Verknüpfung» und verbindet sich nicht mit dem Dienst
