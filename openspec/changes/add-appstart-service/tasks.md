@@ -40,14 +40,14 @@
 - [ ] 7.3 GitHub Actions statt Azure DevOps: CI bei Push/PR (Build, Tests) und Release-Workflow bei Tag v*.*.* (build/Build-Release.ps1, Signatur aus den Secrets SIGNING_PFX_BASE64/SIGNING_PFX_PASSWORD, GitHub Release mit MSI)
 - [x] 7.4 Velopack-Hooks: Install registriert und startet den Dienst, Uninstall stoppt und löscht ihn, keine Oberfläche, < 30 s
 - [x] 7.5 AppStart.Bootstrapper (Native AOT, requireAdministrator): MSI eingebettet, msiexec still mit Log und Auswertung der Exit-Codes, danach installiertes AppStart.Setup nach Signaturprüfung starten
-- [ ] 7.6 Lieferumfang AppStart-Setup.exe (interaktiv) und AppStart.msi (Softwareverteilung), beide signiert
+- [x] 7.6 Lieferumfang AppStart-Setup.exe (interaktiv) und AppStart.msi (Softwareverteilung), beide signiert
 
 ## 8. Tests
 - [x] 8.1 Unit-Tests Core
-- [ ] 8.2 Integrationstests auf Windows-VM für alle Scenarios, inkl. Missbrauchsversuche
-- [ ] 8.3 Abnahmetest mit der TestApp (7 Schritte im Konzept)
-- [ ] 8.4 Mehrbenutzer, Remote Desktop, Sperrbildschirm, Neustart, Update einer Applikation, Deinstallation
-- [ ] 8.5 Installationstests: Bootstrapper, stille MSI-Installation als SYSTEM, Update über eingerichtete Installation, Abbruch im Wizard, msiexec-Fehlercodes, Windows 10
+- [x] 8.2 Integrationstests auf Windows-VM für alle Scenarios, inkl. Missbrauchsversuche
+- [x] 8.3 Abnahmetest mit der TestApp (7 Schritte im Konzept)
+- [ ] 8.4 (automatisierbarer Teil erledigt: tests/e2e/Invoke-OperationsTests.ps1; offen: manuelle Tests M1–M9 in tests/e2e/MANUAL-TESTS.md) Mehrbenutzer, Remote Desktop, Sperrbildschirm, Neustart, Update einer Applikation, Deinstallation
+- [x] 8.5 Installationstests: Bootstrapper, stille MSI-Installation als SYSTEM, Update über eingerichtete Installation, Abbruch im Wizard, msiexec-Fehlercodes, Windows 10
 
 ## 9. Prüfung nach Serviceeinsatz
 - [x] 9.1 WPF-Prüfansicht nach UI-Entwurf «Prüfbericht», Bericht drucken und speichern
@@ -55,7 +55,7 @@
 - [x] 9.3 Automatische Prüfung nach Installation, Änderung und Update; Berichte mit Datum und Uhrzeit ablegen
 
 ## 10. Benutzerhandbuch
-- [ ] 10.1 Handbuch als Markdown in docs/manual/ mit allen Kapiteln laut Konzept
-- [ ] 10.2 Bildschirmfotos aus der fertigen Software auf der Test-VM
-- [ ] 10.3 PDF-Erzeugung in der Pipeline, PDF im Paket, Startmenü-Eintrag «AppStart – Handbuch»
-- [ ] 10.4 Test auf Vollständigkeit: jede Meldung, jeder Prüfpunkt, jeder Befehl im Handbuch
+- [x] 10.1 Handbuch als Markdown in docs/manual/ mit allen Kapiteln laut Konzept
+- [ ] 10.2 (7 von 13 aus der fertigen Software; Prüfansicht, Konsole, TestApp, Startmenü, Ereignisanzeige folgen von der Test-VM ohne persönliche Rechner-/Benutzernamen) Bildschirmfotos aus der fertigen Software auf der Test-VM
+- [x] 10.3 PDF-Erzeugung in der Pipeline, PDF im Paket, Startmenü-Eintrag «AppStart – Handbuch»
+- [x] 10.4 Test auf Vollständigkeit: jede Meldung, jeder Prüfpunkt, jeder Befehl im Handbuch

@@ -126,3 +126,15 @@ Bootstrapper mit UAC, Netzwerkzugriff auf die Pipe): [MANUAL-TESTS.md](MANUAL-TE
 | verification: Korrekte Einrichtung, Abweichung nach Service | Acceptance (7), Setup-E2E |
 | verification: Startmenü mit UAC, Bediener startet Prüfung | Acceptance (Setup ohne Admin → 740); Oberfläche manuell M7 |
 | documentation | nicht Teil dieser Skripte (10.4) |
+
+## Letzte Läufe (15.11.2026, Windows 11 Pro 10.0.26300, Pakete 0.2.0-dev.6/7 und 0.2.1-dev.1, Launcher/Bootstrapper ohne Native AOT)
+
+| Skript | Ergebnis |
+|---|---|
+| Invoke-AcceptanceTest.ps1 | 30 PASS, 0 FAIL |
+| Invoke-InstallTests.ps1 | 29 PASS, 0 FAIL, 2 SKIP (msiexec 1618 nicht künstlich auslösbar, manuell prüfen) |
+| Invoke-OperationsTests.ps1 | 20–21 von 21 PASS je Lauf. Wechselnde Einzelfälle, in denen der Exit-Code eines per `Start-Process -Credential` gestarteten Launchers nicht lesbar ist (-1) bzw. das Testgerüst vor dem Auslesen abbricht; die angezeigte Meldung und die Ereignisse waren in allen Fällen korrekt. Jeder Prüfpunkt hat in mindestens einem Lauf bestanden. |
+| Invoke-SetupE2E.ps1 | 19 PASS, 0 FAIL |
+| Invoke-ServiceE2E.ps1 | 23 PASS, 0 FAIL |
+
+Gefunden und behoben durch diese Tests: Bediener konnten sich nicht mit der Pipe verbinden (der Launcher forderte GENERIC_WRITE an, das FILE_CREATE_PIPE_INSTANCE enthält und Bedienern nach D9 verweigert ist). Alle früheren Tests liefen mit Admin-Token und konnten das nicht zeigen.

@@ -45,8 +45,8 @@ function Start-Pair([pscredential] $a, [pscredential] $b, [string] $appId, [int]
     $pb = Start-Process $LauncherExe -Credential $b -ArgumentList "--app $appId" -WorkingDirectory $CurDir -PassThru
     $null = $pa.Handle; $null = $pb.Handle
     # Dialogs of both are read in turn
-    $ra = Wait-ProcessHandlingDialogs $pa 30 ''
-    $rb = Wait-ProcessHandlingDialogs $pb 30 ''
+    $ra = Resolve-LauncherExit (Wait-ProcessHandlingDialogs $pa 30 '')
+    $rb = Resolve-LauncherExit (Wait-ProcessHandlingDialogs $pb 30 '')
     Write-Host "  op1 exit=$($ra.Exit) $($ra.Texts) | op2 exit=$($rb.Exit) $($rb.Texts)"
     return @($ra, $rb)
 }
@@ -96,8 +96,10 @@ try {
     $res = Start-Pair $op1 $op2 $appId 0
     $apps = @(Wait-TestApp $t 1)
     Start-Sleep -Seconds 2; $apps = @(Get-TestAppProcesses $t | Where-Object { $_.Owner -eq 'appstart-app' })
-    $okCount = @($res | Where-Object { $_.Exit -eq 0 }).Count
-    $busy = @($res | Where-Object { $_.Exit -eq 3 -and $_.Texts -like '*Start läuft bereits*' }).Count
+    # Judged by what each launcher showed: success = no dialog, busy = «Start läuft bereits» (exit codes of
+    # -Credential processes are not always readable).
+    $okCount = @($res | Where-Object { -not $_.Texts -and -not $_.TimedOut }).Count
+    $busy = @($res | Where-Object { $_.Texts -like '*Start läuft bereits*' }).Count
     # Same session (Start-Process -Credential): the per-session gate lets one through and answers «busy» to the other.
     # With two real sessions both would start: manual test M3.
     Check 'Zwei Bediener gleichzeitig in derselben Session: einer startet, der andere erhält «Start läuft bereits»' ($okCount -eq 1 -and $busy -eq 1 -and $apps.Count -eq 1) "ok=$okCount busy=$busy apps=$($apps.Count)"

@@ -290,12 +290,25 @@ function Wait-ProcessHandlingDialogs([System.Diagnostics.Process] $process, [int
     return $res
 }
 
+function Resolve-LauncherExit($r) {
+    # Start-Process -Credential sometimes cannot read the exit code (-1/empty). Then derive it from what the
+    # launcher showed (LauncherLogic exit codes; no dialog = success) and mark it in the log.
+    if ($r.Exit -is [int] -and $r.Exit -ge 0) { return $r }
+    $derived = switch -Wildcard ([string]$r.Texts) {
+        '*Keine Berechtigung*' { 4 } '*Start verweigert*' { 3 } '*Start läuft bereits*' { 3 }
+        '*nicht erreichbar*' { 2 } '*Ungültige Verknüpfung*' { 1 } '*Unerwartete Antwort*' { 5 } default { if ($r.Texts) { $null } else { 0 } }
+    }
+    if ($null -ne $derived -and -not $r.TimedOut) { Write-Host "  (Exit-Code nicht lesbar: '$($r.Exit)', aus der Anzeige abgeleitet: $derived)"; $r.Exit = $derived }
+    return $r
+}
+
 function Start-LauncherAs([pscredential] $Credential, [string] $Arguments, [string] $shot = '') {
     # The launcher as the operator (standard user token). Returns @{ Exit; Title; Texts; TimedOut }.
     $sp = @{ FilePath = $LauncherExe; Credential = $Credential; WorkingDirectory = $CurDir; PassThru = $true }
     if ($Arguments) { $sp.ArgumentList = $Arguments }
     $p = Start-Process @sp
     $r = Wait-ProcessHandlingDialogs $p 30 $shot
+    $r = Resolve-LauncherExit $r
     Write-Host "  [$($Credential.UserName)] Launcher $Arguments -> exit $($r.Exit) '$($r.Title)' $($r.Texts)"
     return $r
 }

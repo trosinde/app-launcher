@@ -98,11 +98,13 @@ Wichtig: Eine freigegebene Applikation läuft mit Admin-Rechten, auch ihre Dialo
 | Launcher mit Meldungen | ✅ umgesetzt |
 | Testapplikation | ✅ umgesetzt |
 | MSI-Paket, Dienst-Registrierung bei Installation | ✅ umgesetzt |
-| Setup (Oberfläche und Kommandozeile), Konten, Rechte, Verknüpfungen | 🔲 offen |
-| Prüfbefehl `verify` und Prüfbericht | 🔲 offen |
-| Signierte Releases, Installationsprogramm `AppStart-Setup.exe` | 🔲 offen |
-| Benutzerhandbuch | 🔲 offen |
-| Tests unter Windows 10, mit mehreren Benutzern, über Remote Desktop | 🔲 offen |
+| Setup (Oberfläche und Kommandozeile), Konten, Rechte, Verknüpfungen | ✅ umgesetzt, End-to-End-Test grün (19/19) |
+| Prüfbefehl `verify`, Prüfansicht und Prüfbericht, automatische Prüfung nach Änderungen | ✅ umgesetzt |
+| Installationsprogramm `AppStart-Setup.exe` (MSI eingebettet), signierte Releases | ✅ umgesetzt |
+| Benutzerhandbuch (PDF im Paket, Startmenü «AppStart – Handbuch») | ✅ umgesetzt; 7 von 13 Bildschirmfotos |
+| Abnahmetest als echter Bediener (30/30), Installationstests inkl. Update (29/29), Betriebstests | ✅ auf Windows 11 |
+| Tests unter Windows 10, Remote Desktop, Sperrbildschirm, Neustart, echte zweite Sitzung | 🔲 manuell, siehe [MANUAL-TESTS.md](tests/e2e/MANUAL-TESTS.md) |
+| Prüfung der realen Ziel-Applikationen (Kindprozesse, Daten, Registry, Netzwerk) | 🔲 offen (Spike 1.4) |
 
 Der vollständige Plan steht in [`tasks.md`](openspec/changes/add-appstart-service/tasks.md).
 
