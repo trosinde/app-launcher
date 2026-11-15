@@ -4,6 +4,11 @@
              ThemeMode="Light"
              ShutdownMode="OnMainWindowClose">
   <Application.Resources>
-    <!-- Styles and colours of the UI design are added by the wizard (Views/Styles.xaml). -->
+    <!-- Styles and colours of the UI designs (docs/ui-designs), used by the wizard and the verify view. -->
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Views/Styles.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
   </Application.Resources>
 </Application>
