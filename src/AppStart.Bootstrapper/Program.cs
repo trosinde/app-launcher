@@ -48,7 +48,7 @@ internal static class Program
         var ui = parsed.ShowUi;
         try
         {
-            return Run(ui, log);
+            return Run(ui, log, parsed.ConfigPath);
         }
         catch (Exception ex)
         {
@@ -58,11 +58,11 @@ internal static class Program
         }
     }
 
-    private static int Run(bool ui, BootstrapLog log)
+    private static int Run(bool ui, BootstrapLog log, string? configPath)
     {
         var paths = BootstrapperPaths.ForMachine();
         var now = DateTime.Now;
-        log.Write($"AppStart-Setup.exe {typeof(Program).Assembly.GetName().Version} gestartet aus {Environment.ProcessPath}, Modus {(ui ? "interaktiv" : "/quiet")}.");
+        log.Write($"AppStart-Setup.exe {typeof(Program).Assembly.GetName().Version} gestartet aus {Environment.ProcessPath}, Modus {(ui ? "interaktiv" : "/quiet")}{(configPath is null ? string.Empty : ", Antwortdatei " + configPath)}.");
 
         if (!IsElevated())
         {
@@ -131,7 +131,7 @@ internal static class Program
                 log.Write("Gleiche oder neuere Version installiert: Installation übersprungen.");
                 if (!ui)
                 {
-                    return BootstrapperLogic.ExitOk;
+                    return configPath is null ? BootstrapperLogic.ExitOk : RunApply(paths, installed, log, configPath, BootstrapperLogic.ExitOk, now);
                 }
 
                 Dialog.Show(BootstrapperLogic.AlreadyInstalled(installed.Version!, info.ProductVersion!));
@@ -180,7 +180,10 @@ internal static class Program
         var outcome = BootstrapperLogic.EvaluateMsiexec(msiExit, installLog);
         if (!ui)
         {
-            return msiExit;
+            // /quiet /config: set up from the answer file only after a successful installation (design D6).
+            return configPath is not null && outcome.Success
+                ? RunApply(paths, MsiPackage.FindInstalled(upgradeCode) ?? installed, log, configPath, msiExit, now)
+                : msiExit;
         }
 
         if (!outcome.Success)
@@ -218,6 +221,23 @@ internal static class Program
                 Dialog.Show(BootstrapperLogic.SetupStartFailed(setupPath, result.Detail, log.FilePath));
                 return BootstrapperLogic.ExitSetupStartFailed;
         }
+    }
+
+    // /quiet /config: installed AppStart.Setup.exe (signature checked like the wizard) with apply --config, no UI.
+    private static int RunApply(BootstrapperPaths paths, InstalledProduct? installed, BootstrapLog log, string configPath, int msiExit, DateTime now)
+    {
+        var setupPath = SetupStarter.LocateSetup(paths, installed);
+        var applyLog = Path.Combine(paths.LogsDirectory, BootstrapperLogic.ApplyLogFileName(now));
+        var result = SetupStarter.VerifyAndRun(setupPath, SetupStarter.OwnSignerThumbprint(), log,
+            BootstrapperLogic.ApplyArguments(configPath), applyLog, out var applyExit);
+        log.Write($"Einrichtung {setupPath}: {result.Status} ({result.Detail}). Ausgabe: {applyLog}");
+        return result.Status switch
+        {
+            SetupStartStatus.Started => BootstrapperLogic.MapApplyExit(applyExit, msiExit),
+            SetupStartStatus.Missing => BootstrapperLogic.ExitSetupMissing,
+            SetupStartStatus.Untrusted => BootstrapperLogic.ExitSetupUntrusted,
+            _ => BootstrapperLogic.ExitSetupStartFailed,
+        };
     }
 
     private static void DeleteExtracted(string extractionDir, BootstrapLog log)

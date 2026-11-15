@@ -347,13 +347,14 @@ Genau eine Option angeben, sonst Exit-Code 2.
 ## Installationsprogramm AppStart-Setup.exe
 
 ```text
-AppStart-Setup.exe [/quiet | /?]
+AppStart-Setup.exe [/quiet [/config <Antwortdatei>] | /?]
 ```
 
 | Parameter | Wirkung |
 |---|---|
 | (keiner) | Installiert AppStart und startet danach die Einrichtung |
 | `/quiet` (auch `/q`, `-quiet`, `--quiet`) | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec`. |
+| `/config <Antwortdatei>` (auch `-config`, `--config`) | Nur zusammen mit `/quiet`: Nach erfolgreicher Installation (oder wenn dieselbe Version schon installiert ist) führt es das installierte, signaturgeprüfte `AppStart.Setup.exe apply --config <Antwortdatei>` ohne Oberfläche aus und wartet. Der Pfad muss absolut sein und darf keine Anführungszeichen enthalten. Format der Datei: [`apply`](#apply). Ausgabe in `C:\ProgramData\AppStart\Logs\apply-<JJJJMMTT-hhmmss>.log`. |
 | `/?` (auch `/h`, `/help`, `-?`, `-h`, `--help`) | Zeigt die Hilfe. Zusammen mit `/quiet` ungültig. |
 
 Exit-Codes:
@@ -365,7 +366,9 @@ Exit-Codes:
 | 1 | Installiert, aber die Einrichtung konnte nicht gestartet werden |
 | 2 | Installiert, aber `AppStart.Setup.exe` fehlt |
 | 5 | Ohne Administratorrechte gestartet |
-| 87 | Unbekannter Parameter |
+| 10 | `/config`: installiert, aber die Einrichtung endete mit Fehler oder Abweichung (`apply` Exit-Code 1) |
+| 11 | `/config`: installiert, aber die Antwortdatei ist ungültig, nichts eingerichtet (`apply` Exit-Code 2) |
+| 87 | Unbekannter Parameter, `/config` ohne `/quiet`, Pfad fehlt, ist relativ oder enthält Anführungszeichen |
 | 577 | `AppStart.Setup.exe` nicht vom selben Herausgeber signiert |
 | 1602 | Installation abgebrochen |
 | 1603 | Installation fehlgeschlagen, `C:\ProgramData\AppStart` nicht geschützt, Entpacken oder Start von `msiexec` gescheitert, unerwarteter Fehler |

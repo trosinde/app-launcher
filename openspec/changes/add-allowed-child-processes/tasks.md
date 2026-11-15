@@ -22,7 +22,7 @@
 - [x] 4.5 verify und Prüfbericht nach docs/ui-designs/Verify: Hilfsprogramme, Modus all, aktiver Lernmodus
 
 ## 5. Bootstrapper
-- [ ] 5.1 /config <Pfad> nur zusammen mit /quiet; nach erfolgreichem msiexec AppStart.Setup.exe apply --config ohne Oberfläche, signaturgeprüft, Ausgabe in Logs\apply-<Zeit>.log; Exit-Codes gemäss design.md D6 (10 und 11 neu); Hilfe-Text; Tests in BootstrapperLogic
+- [x] 5.1 /config <Pfad> nur zusammen mit /quiet; nach erfolgreichem msiexec AppStart.Setup.exe apply --config ohne Oberfläche, signaturgeprüft, Ausgabe in Logs\apply-<Zeit>.log; Exit-Codes gemäss design.md D6 (10 und 11 neu); Hilfe-Text; Tests in BootstrapperLogic
 
 ## 6. TestApp
 - [ ] 6.1 Knöpfe «Erlaubtes Hilfsprogramm starten» (eigene signierte Helper-EXE im TestApp-Ordner) und «Eingabeaufforderung starten» zeigen das Ergebnis je Modus

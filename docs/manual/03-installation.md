@@ -47,6 +47,7 @@ Fehler- und Hinweismeldungen zeigen eine Überschrift, die Ursache, eine Zeile �
 |---|---|
 | `AppStart-Setup.exe` | Installiert AppStart und startet danach die Einrichtung |
 | `AppStart-Setup.exe /quiet` | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec` (0 oder 3010 = erfolgreich). Ist AppStart schon in derselben oder neueren Version installiert: Exit-Code 0. |
+| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installiert und richtet danach in einem Schritt ohne Oberfläche nach der Antwortdatei ein: Applikationen, Schutz, weitere Programme und Bediener (Format: [Referenz → `apply`](09-referenz.md#apply)). Für die Softwareverteilung als SYSTEM. Exit-Code 0 oder 3010 = eingerichtet, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig; Ausgabe in `C:\ProgramData\AppStart\Logs\apply-….log`. Das lokale Konto `appstart-user` legt die Antwortdatei nicht an (kein Passwort in Dateien). |
 | `AppStart-Setup.exe /?` | Zeigt die Hilfe |
 
 Ohne Installationsprogramm (nur MSI vorhanden): `AppStart-<Version>.msi` per Doppelklick oder `msiexec /i` installieren und danach im Startmenü «AppStart – Einrichtung» öffnen.

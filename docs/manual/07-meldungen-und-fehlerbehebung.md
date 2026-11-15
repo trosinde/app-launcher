@@ -107,7 +107,7 @@ Während der Installation: «AppStart wird installiert …» – «Bitte warten.
 | «Einrichtung nicht gefunden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe fehlt. Die Einrichtung kann nicht starten.» | «Starten Sie AppStart-Setup.exe erneut. Hilft das nicht, wenden Sie sich an den Service.» | 2 | nein |
 | «Einrichtung nicht vertrauenswürdig» | «Die Signatur von C:\Program Files\AppStart\current\AppStart.Setup.exe ist ungültig oder stammt nicht vom Herausgeber dieses Setups. Die Einrichtung wird aus Sicherheitsgründen nicht gestartet.» | «Starten Sie die Einrichtung nicht von Hand. Wenden Sie sich an den Service.» | 577 | nein |
 | «Einrichtung konnte nicht gestartet werden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe konnte nicht gestartet werden: …» | «Starten Sie die Einrichtung über das Startmenü (AppStart – Einrichtung).» | 1 | nein |
-| «Unbekannter Parameter» | «Der Parameter «/x» ist unbekannt.», danach die Hilfe | «Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet oder mit /? für die Hilfe.» | 87 | nein |
+| «Unbekannter Parameter» | «Der Parameter «/x» ist unbekannt.», danach die Hilfe | «Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet, mit /quiet /config \<Antwortdatei> (absoluter Pfad) oder mit /? für die Hilfe.» | 87 | nein |
 | «Unerwarteter Fehler» | «Bei der Installation ist ein unerwarteter Fehler aufgetreten: …» | «Wenden Sie sich mit dem Protokoll an den Service.» | 1603 | nein |
 
 Erläuterungen für den Service:
@@ -127,6 +127,9 @@ AppStart-Setup.exe
 
 AppStart-Setup.exe /quiet
     Installiert nur, ohne Oberfläche und ohne Einrichtung. Der Exit-Code ist der von msiexec (0 oder 3010 = erfolgreich).
+
+AppStart-Setup.exe /quiet /config <Antwortdatei>
+    Installiert und richtet danach ohne Oberfläche nach der Antwortdatei ein (AppStart.Setup.exe apply). Exit-Code 0 oder 3010 = erfolgreich, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig.
 
 AppStart-Setup.exe /?
     Zeigt diese Hilfe.

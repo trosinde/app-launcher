@@ -83,13 +83,15 @@ public static class BootstrapperTexts
         "    Installiert AppStart und startet danach die Einrichtung.\n\n" +
         "AppStart-Setup.exe /quiet\n" +
         "    Installiert nur, ohne Oberfläche und ohne Einrichtung. Der Exit-Code ist der von msiexec (0 oder 3010 = erfolgreich).\n\n" +
+        "AppStart-Setup.exe /quiet /config <Antwortdatei>\n" +
+        "    Installiert und richtet danach ohne Oberfläche nach der Antwortdatei ein (AppStart.Setup.exe apply). Exit-Code 0 oder 3010 = erfolgreich, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig.\n\n" +
         "AppStart-Setup.exe /?\n" +
         "    Zeigt diese Hilfe.";
     public const string HelpFooter = "Protokolle: C:\\ProgramData\\AppStart\\Logs";
 
     public const string InvalidArgumentHeading = "Unbekannter Parameter";
     public const string InvalidArgumentText = "Der Parameter «{0}» ist unbekannt.";
-    public const string InvalidArgumentMeasure = "Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet oder mit /? für die Hilfe.";
+    public const string InvalidArgumentMeasure = "Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet, mit /quiet /config <Antwortdatei> (absoluter Pfad) oder mit /? für die Hilfe.";
 
     public const string UnexpectedHeading = "Unerwarteter Fehler";
     public const string UnexpectedText = "Bei der Installation ist ein unerwarteter Fehler aufgetreten: {0}";
