@@ -26,13 +26,13 @@
 - [x] 5.1 Native AOT WinExe, Argument --app, Formatprüfung, Meldung bei nicht erreichbarem Dienst
 
 ## 6. Setup
-- [ ] 6.1 WPF-Oberfläche nach UI-Entwürfen (MVVM): Mehrfachauswahl, Datenordner und Registry-Key je App
-- [ ] 6.2 Konten appstart-app, appstart-user (optional), Gruppe AppStart Users; Anmelderechte verweigern
-- [ ] 6.3 apps.json schreiben, Rechte setzen auf ProgramData, Datenordner, Registry-Keys
-- [ ] 6.4 Verknüpfungen je App mit Icon der EXE, Originale sichern und ersetzen
-- [ ] 6.5 Dienst registrieren und starten
-- [ ] 6.6 Befehle add, add-user, remove, list, rehash, verify, uninstall
-- [ ] 6.7 Wizard erkennt bestehende Konfiguration (Update) und lässt sich nach Abbruch erneut starten; Startmenü-Eintrag «AppStart – Einrichtung»
+- [x] 6.1 WPF-Oberfläche nach UI-Entwürfen (MVVM): Mehrfachauswahl, Datenordner und Registry-Key je App
+- [x] 6.2 Konten appstart-app, appstart-user (optional), Gruppe AppStart Users; Anmelderechte verweigern
+- [x] 6.3 apps.json schreiben, Rechte setzen auf ProgramData, Datenordner, Registry-Keys
+- [x] 6.4 Verknüpfungen je App mit Icon der EXE, Originale sichern und ersetzen
+- [x] 6.5 Dienst registrieren und starten
+- [x] 6.6 Befehle add, add-user, remove, list, rehash, verify, uninstall
+- [x] 6.7 Wizard erkennt bestehende Konfiguration (Update) und lässt sich nach Abbruch erneut starten; Startmenü-Eintrag «AppStart – Einrichtung»
 
 ## 7. Paket und Build
 - [x] 7.1 Velopack MSI per-machine (--msi --instLocation PerMachine --packTitle AppStart), Auto-Update aus, TestApp im Paket; Einträge in «Apps und Features» prüfen
@@ -50,7 +50,7 @@
 - [ ] 8.5 Installationstests: Bootstrapper, stille MSI-Installation als SYSTEM, Update über eingerichtete Installation, Abbruch im Wizard, msiexec-Fehlercodes, Windows 10
 
 ## 9. Prüfung nach Serviceeinsatz
-- [ ] 9.1 WPF-Prüfansicht nach UI-Entwurf «Prüfbericht», Bericht drucken und speichern
+- [x] 9.1 WPF-Prüfansicht nach UI-Entwurf «Prüfbericht», Bericht drucken und speichern
 - [ ] 9.2 Startmenü-Eintrag «AppStart – Einrichtung prüfen» mit UAC-Abfrage, Knopf im Setup
 - [ ] 9.3 Automatische Prüfung nach Installation, Änderung und Update; Berichte mit Datum und Uhrzeit ablegen
 
