@@ -87,11 +87,13 @@ Copy-Item (Join-Path $repoSpikes 'Prepare-TestVm.ps1'), (Join-Path $repoSpikes '
 Copy-Item $MsiPath $stage
 $msi = Join-Path $stage (Split-Path $MsiPath -Leaf)
 
+# -StageDir explicitly: Windows PowerShell 5.1 leaves $PSScriptRoot empty in parameter defaults of
+# advanced scripts started with -File.
 $scripts = @{
-    Acceptance = @{ File = 'Invoke-AcceptanceTest.ps1'; Args = @('-MsiPath', $msi) }
-    Setup      = @{ File = 'Invoke-SetupE2E.ps1'; Args = @('-MsiPath', $msi) }
-    Service    = @{ File = 'Invoke-ServiceE2E.ps1'; Args = @('-MsiPath', $msi) }
-    Operations = @{ File = 'Invoke-OperationsTests.ps1'; Args = @('-MsiPath', $msi) }
+    Acceptance = @{ File = 'Invoke-AcceptanceTest.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
+    Setup      = @{ File = 'Invoke-SetupE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
+    Service    = @{ File = 'Invoke-ServiceE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
+    Operations = @{ File = 'Invoke-OperationsTests.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
 }
 
 $summary = @()
