@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway spike for add-allowed-child-processes task 1.1: job object with completion port,
+    KILL_ON_JOB_CLOSE, no breakaway. Which processes appear as JOB_OBJECT_MSG_NEW_PROCESS
+    (conhost.exe, WerFault.exe, PDF viewer), how long a denied process runs until TerminateProcess,
+    and whether closing the monitor kills the job. Not product code.
+    Runs as the current user only: no service, no accounts, no rights are changed.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>AppStart.Spike.ChildJob</AssemblyName>
+  </PropertyGroup>
+
+</Project>

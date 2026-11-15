@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lernmodus – Vorschläge übernehmen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+a{color:#0f5299}a:hover{color:#0a3a6e}
+</style>
+</helmet>
+<div style="width: 960px; height: 640px; box-sizing: border-box; background: #f3f3f3; display: flex; flex-direction: column; font-family: 'Segoe UI', system-ui, sans-serif; color: #1b1b1b">
+  <div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 16px; background: #ffffff; border-bottom: 1px solid #e0e0e0">
+    <span style="font-size: 13px">Lernmodus – Applikation A</span>
+    <button aria-label="Schliessen" style="width: 46px; height: 40px; border: 0; background: transparent; font-size: 16px; color: #1b1b1b">✕</button>
+  </div>
+  <main style="flex: 1; padding: 20px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+    <div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600">Vorschläge übernehmen</h1>
+      <p style="margin: 6px 0 0; font-size: 14px; color: #4a4a4a">Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme Applikation A künftig starten darf.</p>
+    </div>
+    <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; display: flex; flex-direction: column">
+      <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 200px; align-items: center; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #4a4a4a; border-bottom: 1px solid #e0e0e0">
+        <span></span><span>Programm</span><span>Prüfung</span><span>Hinweis</span>
+      </div>
+      <label style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 200px; align-items: center; padding: 10px 12px; font-size: 14px">
+        <input type="checkbox" checked style="width: 18px; height: 18px" aria-label="Export übernehmen">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Export.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppA\Export.exe</span></span>
+        <span style="font-size: 13px">Signatur</span>
+        <span style="font-size: 12px; color: #4a4a4a">–</span>
+      </label>
+      <label style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 200px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
+        <input type="checkbox" checked style="width: 18px; height: 18px" aria-label="Updater übernehmen">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Updater.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppA\Updater.exe</span></span>
+        <span style="font-size: 13px">SHA-256</span>
+        <span style="font-size: 12px; color: #6b4e00">nicht signiert</span>
+      </label>
+      <label style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 200px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
+        <input type="checkbox" style="width: 18px; height: 18px" aria-label="Acrobat Reader übernehmen">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">AcroRd32.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Adobe\Reader\AcroRd32.exe</span></span>
+        <span style="font-size: 13px">Signatur</span>
+        <span style="font-size: 12px; color: #6b4e00">kann Dateien öffnen – abwägen</span>
+      </label>
+      <label style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 200px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px; background: #fdf3f2">
+        <input type="checkbox" disabled style="width: 18px; height: 18px" aria-label="cmd nicht übernehmbar">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">cmd.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Windows\System32\cmd.exe</span></span>
+        <span style="font-size: 13px">Signatur</span>
+        <span style="font-size: 12px; color: #9c1f17; font-weight: 600">Eingabeaufforderung – nur von Hand</span>
+      </label>
+    </div>
+    <div style="font-size: 12px; color: #4a4a4a">Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.</div>
+    <div style="margin-top: auto; display: flex; justify-content: flex-end; gap: 8px">
+      <a href="Helpers.dc.html" style="height: 34px; min-width: 96px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px; color: #1b1b1b; display: flex; align-items: center; justify-content: center; text-decoration: none">Verwerfen</a>
+      <a href="Helpers.dc.html" style="height: 34px; padding: 0 16px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 14px; font-weight: 600; display: flex; align-items: center; text-decoration: none">2 Programme übernehmen</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

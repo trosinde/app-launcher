@@ -27,32 +27,28 @@ a{color:#0f5299}a:hover{color:#0a3a6e}
       <div style="padding: 10px 12px; color: #4a4a4a">2  Konten und Gruppe</div>
       <div style="padding: 10px 12px; color: #4a4a4a">3  Zusammenfassung</div>
     </nav>
-    <main style="flex: 1; padding: 24px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+    <main style="flex: 1; padding: 20px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; min-width: 0">
       <div>
         <h1 style="margin: 0; font-size: 22px; font-weight: 600">Applikationen auswählen</h1>
         <p style="margin: 6px 0 0; font-size: 14px; color: #4a4a4a">Diese Applikationen starten Bediener künftig über den Start-Dienst. Jede bekommt eine eigene Verknüpfung mit ihrem Icon.</p>
       </div>
       <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; display: flex; flex-direction: column">
-        <div style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 140px; align-items: center; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #4a4a4a; border-bottom: 1px solid #e0e0e0">
-          <span></span><span></span><span>Applikation</span><span>Prüfung</span>
+        <div style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 110px 150px; align-items: center; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #4a4a4a; border-bottom: 1px solid #e0e0e0">
+          <span></span><span></span><span>Applikation</span><span>Prüfung</span><span>Weitere Programme</span>
         </div>
-        <label style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 140px; align-items: center; padding: 10px 12px; background: #e6f0fa; font-size: 14px">
+        <label style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 110px 150px; align-items: center; padding: 10px 12px; background: #e6f0fa; font-size: 14px">
           <input type="checkbox" checked style="width: 18px; height: 18px">
           <span style="width: 28px; height: 28px; background: #0f5299; border-radius: 4px; display: block" aria-hidden="true"></span>
           <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Applikation A</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppA\AppA.exe</span></span>
           <span style="font-size: 13px">Signatur</span>
+          <span style="font-size: 13px">2 erlaubt</span>
         </label>
-        <label style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 140px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
+        <label style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 110px 150px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
           <input type="checkbox" checked style="width: 18px; height: 18px">
           <span style="width: 28px; height: 28px; background: #2e7d4f; border-radius: 4px; display: block" aria-hidden="true"></span>
           <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Applikation B</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppB\AppB.exe</span></span>
           <span style="font-size: 13px">SHA-256</span>
-        </label>
-        <label style="display: grid; grid-template-columns: 40px 40px minmax(0, 1fr) 140px; align-items: center; padding: 10px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
-          <input type="checkbox" style="width: 18px; height: 18px">
-          <span style="width: 28px; height: 28px; background: #6b6b6b; border-radius: 4px; display: block" aria-hidden="true"></span>
-          <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">AppStart TestApp</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\AppStart\TestApp\AppStart.TestApp.exe</span></span>
-          <span style="font-size: 13px">Signatur</span>
+          <span style="font-size: 13px; color: #4a4a4a">gesperrt</span>
         </label>
         <div style="display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #e0e0e0">
           <button style="height: 32px; padding: 0 14px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 13px">EXE hinzufügen…</button>
@@ -61,18 +57,29 @@ a{color:#0f5299}a:hover{color:#0a3a6e}
       </div>
       <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
         <div style="font-size: 13px; font-weight: 600">Schutz für Applikation A</div>
-        <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) 100px; gap: 8px 10px; align-items: center; font-size: 13px">
+        <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) 190px; gap: 8px 10px; align-items: center; font-size: 13px">
           <label for="dd">Datenordner</label>
           <input id="dd" value="C:\ProgramData\Hersteller\AppA" style="height: 30px; border: 1px solid #c4c4c4; border-radius: 4px; padding: 0 8px; font-size: 13px">
           <button style="height: 30px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 13px">Durchsuchen…</button>
           <label for="rk">Registry-Key</label>
           <input id="rk" value="HKLM\SOFTWARE\Hersteller\AppA" style="height: 30px; border: 1px solid #c4c4c4; border-radius: 4px; padding: 0 8px; font-size: 13px">
           <span style="font-size: 12px; color: #4a4a4a">wird gesperrt</span>
+          <label for="wp">Weitere Programme</label>
+          <select id="wp" style="height: 30px; border: 1px solid #c4c4c4; border-radius: 4px; padding: 0 6px; font-size: 13px; background: #ffffff">
+            <option>Gesperrt (empfohlen)</option>
+            <option selected>Nur erlaubte Hilfsprogramme</option>
+            <option>Alle erlaubt (unsicher)</option>
+          </select>
+          <a href="Helpers.dc.html" style="height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 13px; color: #1b1b1b; text-decoration: none">Hilfsprogramme (2)…</a>
         </div>
+        <div style="font-size: 12px; color: #4a4a4a">Nur Programme auf der Liste dürfen aus Applikation A starten. Alle anderen beendet der Dienst sofort.</div>
       </div>
-      <div style="margin-top: auto; display: flex; justify-content: flex-end; gap: 8px">
-        <button style="height: 34px; min-width: 96px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px">Abbrechen</button>
-        <button style="height: 34px; min-width: 96px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 14px; font-weight: 600">Weiter</button>
+      <div style="margin-top: auto; display: flex; justify-content: space-between; gap: 8px">
+        <button style="height: 34px; padding: 0 16px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px">Einrichtung prüfen</button>
+        <div style="display: flex; gap: 8px">
+          <button style="height: 34px; min-width: 96px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px">Abbrechen</button>
+          <button style="height: 34px; min-width: 96px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 14px; font-weight: 600">Weiter</button>
+        </div>
       </div>
     </main>
   </div>
