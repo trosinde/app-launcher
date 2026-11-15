@@ -1,0 +1,32 @@
+// Accounts (task 6.2): logon rights (LSA), local users and group members (NetApi),
+// name resolution, profile removal and group expansion (Authz).
+LsaOpenPolicy
+LsaClose
+LsaAddAccountRights
+LsaRemoveAccountRights
+LsaEnumerateAccountRights
+LsaFreeMemory
+LsaNtStatusToWinError
+LookupAccountName
+NetUserAdd
+NetLocalGroupAddMembers
+NetLocalGroupDelMembers
+NetLocalGroupGetMembers
+NetApiBufferFree
+DeleteProfile
+AuthzInitializeResourceManager
+AuthzInitializeContextFromSid
+AuthzGetInformationFromContext
+AuthzFreeContext
+AuthzFreeResourceManager
+USER_INFO_1
+LOCALGROUP_MEMBERS_INFO_0
+LOCALGROUP_MEMBERS_INFO_2
+TOKEN_GROUPS
+SID_NAME_USE
+STATUS_OBJECT_NAME_NOT_FOUND
+MAX_PREFERRED_LENGTH
+NERR_UserExists
+NERR_GroupNotFound
+NERR_PasswordTooShort
+WIN32_ERROR
