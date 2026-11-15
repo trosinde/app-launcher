@@ -34,10 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="**\NativeMethods.txt" Exclude="NativeMethods.txt;bin\**;obj\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AppStart.Core\AppStart.Core.csproj" />
     <InternalsVisibleTo Include="AppStart.Setup.Tests" />
   </ItemGroup>
