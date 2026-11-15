@@ -8,8 +8,8 @@ namespace AppStart.Setup.Cli;
 
 /// <summary>
 /// Command line (task 6.6) for silent installation and the service technician:
-/// add, add-user, remove, list, rehash, verify, uninstall. Exit code 0 = success, 1 = failure or
-/// deviation, 2 = wrong usage. Runs elevated (manifest); call it from an elevated shell so that the
+/// add, add-user, remove, list, rehash, verify, uninstall. Exit code 0 = success, 1 = failure, deviation
+/// or invalid arguments (System.CommandLine), 2 = inconsistent options of add-user/startmenu. Runs elevated (manifest); call it from an elevated shell so that the
 /// output appears in that console.
 /// </summary>
 internal static class CommandLine

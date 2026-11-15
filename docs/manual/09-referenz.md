@@ -178,7 +178,7 @@ AppStart.Setup.exe startmenu --remove
 
 | Option | Wirkung |
 |---|---|
-| `--create` | Legt «AppStart – Einrichtung» und «AppStart – Einrichtung prüfen» an (bestehende werden ersetzt) |
+| `--create` | Legt «AppStart – Einrichtung», «AppStart – Einrichtung prüfen» und «AppStart – Handbuch» an (bestehende werden ersetzt) |
 | `--remove` | Löscht den Ordner «AppStart» im Startmenü |
 
 Genau eine Option angeben, sonst Exit-Code 2.

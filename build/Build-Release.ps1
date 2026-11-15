@@ -90,6 +90,8 @@ try {
         dotnet publish src/AppStart.TestApp @common -r win-x64 --self-contained -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $pack 'TestApp')
     }
+    Invoke-Step 'Manual (PDF)' { & (Join-Path $PSScriptRoot 'Build-Manual.ps1') -Version $Version -OutputDir (Join-Path $work 'manual') }
+    Copy-Item (Join-Path $work 'manual/AppStart-Handbuch.pdf') (Join-Path $pack 'AppStart-Handbuch.pdf')
     Get-ChildItem $pack -Recurse -Filter '*.pdb' | Remove-Item
 
     # --- signing setup (no secret on any command line)

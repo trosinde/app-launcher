@@ -316,7 +316,7 @@ public sealed class Verifier : IVerifier
         var findings = new List<string>();
         foreach (var app in apps)
         {
-            var fileName = app.Name + ".lnk";
+            var fileName = Shortcuts.ShortcutNames.ToFileName(app.Name); // same rule as ShortcutService
             var good = false;
             foreach (var folder in new[] { _probe.CommonStartMenuPrograms, _probe.CommonDesktop })
             {

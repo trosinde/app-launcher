@@ -10,6 +10,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/AppStart.Bootstrapper.Tests/AppStart.Bootstrapper.Tests.csproj" />
     <Project Path="tests/AppStart.Core.Tests/AppStart.Core.Tests.csproj" />
+    <Project Path="tests/AppStart.Documentation.Tests/AppStart.Documentation.Tests.csproj" />
     <Project Path="tests/AppStart.Launcher.Tests/AppStart.Launcher.Tests.csproj" />
     <Project Path="tests/AppStart.Service.Tests/AppStart.Service.Tests.csproj" />
     <Project Path="tests/AppStart.Setup.Tests/AppStart.Setup.Tests.csproj" />

@@ -18,7 +18,7 @@ Dieses Dokument hält die technischen Entscheide fest, die aus den Spikes folgen
 
 ### D1 Token für appstart-app per S4U, Logon-Typ Batch
 `LsaRegisterLogonProcess` + `LsaLogonUser` mit `MSV1_0_S4U_LOGON`, Logon-Typ Batch. Liefert sofort ein volles Admin-Token (kein UAC-Split). Kein Passwort, kein DPAPI.
-Voraussetzung: `appstart-app` hat «Als Batchauftrag anmelden» (über die Administratoren). `verify` prüft das.
+Voraussetzung: `appstart-app` hat «Als Batchauftrag anmelden» (Standardrecht der Administratoren). `verify` prüft die Mitgliedschaft in den Administratoren, nicht das Recht selbst; fehlt es, scheitert der Start mit Ereignis 1205.
 Verworfen: Interactive (von S4U nicht unterstützt, 0xC00000A7), Network (kein Vorteil), Passwort mit DPAPI (unnötig, Geheimnis auf Platte).
 Einschränkung: S4U-Token haben keine Netzwerk-Anmeldedaten. Applikationen mit Netzwerkzugriff per Windows-Anmeldung je Applikation prüfen (Spike 1.4).
 
@@ -40,7 +40,7 @@ Install-Hook registriert und startet den Dienst und legt über `AppStart.Setup.e
 Velopack-Hooks dürfen keine Oberfläche zeigen. Gängige Praxis bei Software mit Einrichtungsdialog ist eine Setup.exe, die ein MSI einbettet (wie WiX Burn, InstallShield). Umsetzung als eigener, dünner Bootstrapper:
 - `AppStart-Setup.exe`, Native AOT, Manifest `requireAdministrator`, MSI als eingebettete Ressource.
 - Installiert das MSI still (`msiexec /i … /qn /l*v`), wertet Exit-Codes aus (0, 3010, 1602, 1618, sonstige) und legt das Log ab.
-- Startet danach das **installierte** `C:\Program Files\AppStart\AppStart.Setup.exe` nach Signaturprüfung. Erbt die Admin-Rechte, keine zweite UAC-Abfrage.
+- Startet danach das **installierte** `C:\Program Files\AppStart\current\AppStart.Setup.exe` (Velopack-Layout) nach Signaturprüfung. Erbt die Admin-Rechte, keine zweite UAC-Abfrage.
 - Begründung für die dünne Variante: Eine WPF-Einzeldatei entpackt native Bibliotheken nach `%TEMP%`, das Bediener beschreiben können. Mit Admin-Rechten wäre das ein Einfallstor. Der Bootstrapper selbst lädt nichts nach.
 Verworfen: UI aus dem Hook starten (Anti-Pattern, bei Verteilung als SYSTEM unsichtbar), WiX Burn (zweites Paketwerkzeug), MSI-eigene Dialoge (können die Entwürfe nicht abbilden).
 Lieferumfang: `AppStart-Setup.exe` (interaktiv) und `AppStart.msi` (still), beide signiert.
