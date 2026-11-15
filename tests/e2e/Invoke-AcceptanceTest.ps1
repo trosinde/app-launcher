@@ -141,11 +141,11 @@ try {
     # ------------------------------------------------------------ abuse attempts of the operator (8.2)
     $r = Invoke-AsOperator $op 'config'
     Check 'Missbrauch: apps.json lesen/überschreiben/ersetzen/löschen/umbenennen, neue Datei -> alles verweigert' (
-        $r -eq 'read=DENIED openWrite=DENIED replace=DENIED delete=DENIED rename=DENIED newFile=DENIED') $r
+        $r -match '^read=DENIED openWrite=DENIED replace=DENIED delete=DENIED rename=(DENIED|MISSING) newFile=DENIED$') $r   # MISSING: folder not even listable
     $r = Invoke-AsOperator $op 'pipe'
     Check 'Missbrauch: Bediener darf verbinden, aber keine eigene Pipe-Instanz anlegen' ($r -eq 'connect=ALLOWED createInstance=DENIED') $r
     $r = Invoke-AsOperator $op 'progfiles'
-    $allowed = @(($r -split ' ') | Where-Object { $_ -notlike '*=DENIED' })
+    $allowed = @([regex]::Matches($r, '=(ALLOWED|MISSING|E\d+|ERROR:\S+)'))   # paths contain spaces: match results, not tokens
     Check 'Missbrauch: nichts in C:\Program Files\AppStart schreiben, ersetzen oder umbenennen' ($allowed.Count -eq 0) $r
     $r = Invoke-AsOperator $op 'start-direct' $SetupExe
     Check 'Missbrauch: AppStart.Setup.exe verify als Bediener nur mit Admin-Rechten (740)' ($r -eq 'start=E740') $r

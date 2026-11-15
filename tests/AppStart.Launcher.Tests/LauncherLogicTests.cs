@@ -7,6 +7,16 @@ public class LauncherLogicTests
     private static readonly DateTimeOffset Now = new(2026, 11, 15, 10, 51, 0, TimeSpan.Zero);
 
     [Fact]
+    public void Requested_pipe_rights_are_within_what_operators_are_granted()
+    {
+        const int Granted = 0x12018b;            // design D9, PipeFactory.ClientRights
+        const int FileCreatePipeInstance = 0x4;
+        var requested = (int)PipeClient.ClientRights;
+        Assert.Equal(0, requested & ~Granted);
+        Assert.Equal(0, requested & FileCreatePipeInstance);
+    }
+
+    [Fact]
     public void Only_app_argument_with_valid_id_is_accepted() =>
         Assert.Equal("app-a", LauncherLogic.ParseAppId(["--app", "app-a"]));
 

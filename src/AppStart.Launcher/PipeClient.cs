@@ -10,14 +10,21 @@ internal static class PipeClient
 {
     public static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(3);
 
+    /// <summary>ReadData | WriteData | ReadAttributes | WriteAttributes (message mode) | Synchronize = 0x120183, within 0x12018b.</summary>
+    public const PipeAccessRights ClientRights =
+        PipeAccessRights.ReadData | PipeAccessRights.WriteData | PipeAccessRights.ReadAttributes
+        | PipeAccessRights.WriteAttributes | PipeAccessRights.Synchronize;
+
     /// <summary>The service needs a few seconds for S4U logon and profile load.</summary>
     public static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(30);
 
     public static ClientResult SendStart(string appId)
     {
         // Identification only: the service may read who we are, but cannot act as us.
-        using var pipe = new NamedPipeClientStream(".", AppStartConstants.PipeName, PipeDirection.InOut,
-            PipeOptions.Asynchronous, TokenImpersonationLevel.Identification);
+        // Request exactly what the pipe DACL grants operators (design D9). PipeDirection.InOut would ask for
+        // GENERIC_WRITE, which includes FILE_CREATE_PIPE_INSTANCE and is therefore denied to operators.
+        using var pipe = new NamedPipeClientStream(".", AppStartConstants.PipeName, ClientRights,
+            PipeOptions.Asynchronous, TokenImpersonationLevel.Identification, HandleInheritability.None);
         try
         {
             pipe.Connect((int)ConnectTimeout.TotalMilliseconds);

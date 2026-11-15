@@ -71,7 +71,10 @@ switch ($Action) {
     }
     'pipe' {
         $out.Add((Try-Access 'connect' {
-            $c = New-Object System.IO.Pipes.NamedPipeClientStream('.', 'AppStart', [System.IO.Pipes.PipeDirection]::InOut)
+            # Same rights as the launcher (design D9): no GENERIC_WRITE, which would include FILE_CREATE_PIPE_INSTANCE.
+            $rights = [System.IO.Pipes.PipeAccessRights]'ReadData, WriteData, ReadAttributes, WriteAttributes, Synchronize'
+            $c = New-Object System.IO.Pipes.NamedPipeClientStream('.', 'AppStart', $rights, [System.IO.Pipes.PipeOptions]::None,
+                [System.Security.Principal.TokenImpersonationLevel]::Identification, [System.IO.HandleInheritability]::None)
             try { $c.Connect(3000) } finally { $c.Dispose() }
         }))
         # Pipe squatting: a member of AppStart Users must not create a further server instance (D9).
