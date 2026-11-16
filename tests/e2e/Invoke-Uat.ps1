@@ -14,7 +14,7 @@
 param(
     [string] $MsiPath,
     [string] $ResultDir,
-    # Acceptance, Setup, Service, Operations, ChildProcesses, Install (also comma-separated in one argument, as with -File).
+    # Acceptance, Setup, Service, Operations, ChildProcesses, Install, Manual (also comma-separated in one argument, as with -File).
     [string[]] $Suites = @('Acceptance'),
     # Suite Install only: older MSI installed first, then updated to -MsiPath.
     [string] $PreviousMsiPath,
@@ -64,7 +64,8 @@ if ($FromRequest) {
     if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir muss unter $uatHome liegen." }
 }
 $Suites = @($Suites | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses', 'Install') { throw "Unbekannte Suite $s" } }
+foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses', 'Install', 'Manual') { throw "Unbekannte Suite $s" } }
+if ($Suites -contains 'Manual' -and -not (Test-Path (Join-Path (Split-Path $MsiPath) 'AppStart-Setup.exe'))) { throw 'Suite Manual braucht AppStart-Setup.exe neben dem MSI.' }
 if ($Suites -contains 'Install' -and -not $PreviousMsiPath) { throw 'Suite Install braucht PreviousMsiPath (älteres MSI).' }
 if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath und ResultDir sind nötig (oder -FromRequest).' }
 if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath muss auf ein MSI zeigen.' }
@@ -113,6 +114,8 @@ $scripts = @{
     Service    = @{ File = 'Invoke-ServiceE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     Operations = @{ File = 'Invoke-OperationsTests.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     ChildProcesses = @{ File = 'Invoke-ChildProcessE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) + $(if ($boot) { @('-BootstrapperPath', $boot) } else { @() }) }
+    # Screenshots of the manual (needs the bootstrapper next to the MSI); images land in the result folder.
+    Manual     = @{ File = 'Capture-ManualScreenshots.ps1'; Args = @('-BootstrapperPath', $boot, '-OutputDir', $stage) }
     Install    = @{ File = 'Invoke-InstallTests.ps1'; Args = @('-MsiPath', $previousMsi, '-MsiNextPath', $msi, '-StageDir', $stage) + $(if ($boot) { @('-BootstrapperPath', $boot) } else { @() }) }
 }
 

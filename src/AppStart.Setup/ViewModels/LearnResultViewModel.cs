@@ -81,7 +81,9 @@ public sealed partial class LearnResultViewModel : ObservableObject
 
     public bool IsEmpty => Proposals.Count == 0;
 
-    public string TakeOverText => SetupTexts.Format(SetupTexts.ButtonTakeOverFormat, Proposals.Count(p => p.IsChecked));
+    public string TakeOverText => Proposals.Count(p => p.IsChecked) is var n && n == 1
+        ? SetupTexts.ButtonTakeOverOne
+        : SetupTexts.Format(SetupTexts.ButtonTakeOverFormat, n);
 
     /// <summary>The chosen entries after «übernehmen»; null after «Verwerfen».</summary>
     public IReadOnlyList<AllowedChild>? Selected { get; private set; }

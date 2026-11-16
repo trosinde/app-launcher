@@ -244,7 +244,7 @@ public sealed class HelpersViewModelTests
         var rec = new LearnRecording { AppId = "appa" }.Record(Export, new string('B', 40), new string('1', 64), null, DateTimeOffset.UtcNow);
         var vm = new LearnResultViewModel(_engine, "appa", "Applikation A", rec);
 
-        Assert.Equal("1 Programme übernehmen", vm.TakeOverText);
+        Assert.Equal("1 Programm übernehmen", vm.TakeOverText);
         vm.Proposals[0].IsChecked = false;
         Assert.Equal("0 Programme übernehmen", vm.TakeOverText);
     }

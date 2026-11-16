@@ -117,6 +117,8 @@ In Schritt 1 zeigt die Spalte «Weitere Programme» den Modus jeder Applikation,
 
 Die Änderungen gelten erst, wenn Sie den Assistenten mit «Weiter» abschliessen.
 
+![Setup Schritt 1: Weitere Programme «Nur erlaubte Hilfsprogramme», ein Hilfsprogramm erlaubt](images/setup-weitere-programme.png)
+
 **Dialog «Erlaubte Hilfsprogramme – Applikation A».** Überschrift «Erlaubte Hilfsprogramme», darunter «Diese Programme darf Applikation A starten. Sie laufen dann ebenfalls mit Admin-Rechten. Jedes andere Programm beendet der Dienst sofort und protokolliert es.» Die Liste zeigt je Programm die Prüfung und den Zustand:
 
 | Zustand | Bedeutung |
@@ -133,6 +135,8 @@ Knöpfe: «EXE hinzufügen…», «Lernmodus starten…», «Prüfsumme aktualis
 
 «Übernehmen» gibt die Liste an den Assistenten zurück, «Abbrechen» verwirft die Änderungen im Dialog.
 
+![Dialog «Erlaubte Hilfsprogramme» mit einem nicht signierten Hilfsprogramm](images/hilfsprogramme.png)
+
 ### Lernmodus: Hilfsprogramme ermitteln
 
 Welche Programme eine Applikation braucht, ist oft nicht bekannt. Der Lernmodus zeichnet es auf: Für eine begrenzte Zeit beendet der Dienst bei dieser Applikation nichts, sondern notiert jedes gestartete Programm (Ereignis 1102). Danach gilt wieder der eingestellte Modus, auch in einer noch laufenden Applikation.
@@ -144,6 +148,8 @@ Der Lernmodus ist erst möglich, wenn die Applikation eingerichtet ist. Sonst me
 3. Die Liste «Aufgezeichnete Programme» zeigt «Starts» und «Zuletzt» je Programm, anfangs «Noch nichts aufgezeichnet.»
 4. «Lernmodus beenden» (oder Ablauf der Zeit) führt zu «Vorschläge übernehmen». «Abbrechen, nichts übernehmen» beendet den Lernmodus und löscht die Aufzeichnung. Kann der Lernmodus nicht starten, steht «Der Lernmodus konnte nicht gestartet werden: …» mit dem Grund im Dialog.
 
+![Lernmodus läuft: zwei aufgezeichnete Programme, Restzeit rechts oben](images/lernmodus.png)
+
 **Dialog «Vorschläge übernehmen».** «Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme Applikation A künftig starten darf.» Gültig signierte Programme werden mit Signatur vorgeschlagen, alle anderen mit SHA-256. Die Spalte «Hinweis»:
 
 | Hinweis | Vorauswahl |
@@ -154,7 +160,9 @@ Der Lernmodus ist erst möglich, wenn die Applikation eingerichtet ist. Sonst me
 | «Eingabeaufforderung – nur von Hand», «Shell oder Skript-Host – nur von Hand» | nicht auswählbar |
 | «Ordner für Bediener beschreibbar» | nicht auswählbar |
 
-Unten: «Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.» «2 Programme übernehmen» übernimmt die angehakten in die Liste, «Verwerfen» nichts; beide löschen die Aufzeichnung. Wurde nichts aufgezeichnet: «Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?»
+Unten: «Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.» «2 Programme übernehmen» (bei einem: «1 Programm übernehmen») übernimmt die angehakten in die Liste, «Verwerfen» nichts; beide löschen die Aufzeichnung. Wurde nichts aufgezeichnet: «Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?»
+
+![Vorschläge übernehmen: Hilfsprogramm angehakt, cmd.exe nicht auswählbar](images/lernergebnis.png)
 
 Meldungen des Lernmodus auf der Kommandozeile:
 

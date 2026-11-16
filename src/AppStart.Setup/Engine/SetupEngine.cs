@@ -162,7 +162,7 @@ public sealed class SetupEngine(
 
             protection.WriteProtectedFile(paths.ConfigPath, AppsConfigSerializer.Serialize(config));
             stateStore.Save(state);
-            results.Add(new(string.Format(SetupEngineTexts.AppsReleased, entries.Count), true));
+            results.Add(new(entries.Count == 1 ? SetupEngineTexts.AppReleasedOne : string.Format(SetupEngineTexts.AppsReleased, entries.Count), true));
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

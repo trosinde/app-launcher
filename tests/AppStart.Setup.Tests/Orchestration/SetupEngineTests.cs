@@ -61,7 +61,7 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Single(_state.Current.ShortcutBackups);
         Assert.Contains(@"C:\Program Files\AppStart\current\AppStart.Launcher.exe", _shortcuts.LauncherTargets);
         Assert.All(results.Take(4), r => Assert.True(r.Success, r.Text + r.Detail));
-        Assert.Equal("1 Applikationen freigegeben, Konfiguration geschützt", results[1].Text);
+        Assert.Equal("1 Applikation freigegeben, Konfiguration geschützt", results[1].Text);
     }
 
     [Fact]

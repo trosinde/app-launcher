@@ -14,6 +14,7 @@ public static class SetupEngineTexts
     public const string AccountsFailed = "Konten und Gruppe konnten nicht eingerichtet werden";
 
     public const string AppsReleased = "{0} Applikationen freigegeben, Konfiguration geschützt";
+    public const string AppReleasedOne = "1 Applikation freigegeben, Konfiguration geschützt";
     public const string ConfigFailed = "Konfiguration konnte nicht geschrieben werden";
     public const string ConfigUnreadable = "apps.json ist ungültig: {0}";
     public const string UnknownApp = "Applikation «{0}» ist nicht freigegeben";

@@ -112,6 +112,7 @@ public static class SetupTexts
     public const string LearnResultFooter = "Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.";
     public const string ButtonDiscard = "Verwerfen";
     public const string ButtonTakeOverFormat = "{0} Programme übernehmen";
+    public const string ButtonTakeOverOne = "1 Programm übernehmen";
     public const string LearnResultNothing = "Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?";
 
     // ------------------------------------------------------------------ Step 2: accounts and group

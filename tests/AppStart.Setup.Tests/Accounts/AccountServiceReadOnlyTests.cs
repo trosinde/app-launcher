@@ -93,21 +93,40 @@ public class AccountServiceReadOnlyTests
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
-    public void Facts_need_admin_rights_and_say_so_in_German()
+    public void Facts_are_correct_or_access_denied_in_German()
     {
+        // Elevated, the facts are always readable. Not elevated, it depends on the Windows build: on the earlier dev
+        // machine LsaOpenPolicy was denied; on build 26300 (test VM) the call succeeds without elevation.
+        // Either way: correct facts, or a clean German access-denied error, never anything else.
         using var identity = WindowsIdentity.GetCurrent();
-        if (new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator))
+        AppStart.Setup.Engine.AccountFacts facts;
+        try
         {
-            var facts = new AccountService().GetFacts(identity.User!.Value);
-            Assert.True(facts.Exists);
-            Assert.Equal(identity.User, facts.Sid);
+            facts = new AccountService().GetFacts(identity.User!.Value);
+        }
+        catch (UnauthorizedAccessException ex) when (!new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator))
+        {
+            Assert.Contains("Zugriff verweigert", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("Administratorrechte", ex.Message, StringComparison.Ordinal);
             return;
         }
 
-        // Not elevated: LsaEnumerateAccountRights is denied; the error must be clean and German.
-        var ex = Assert.Throws<UnauthorizedAccessException>(() => new AccountService().GetFacts(identity.User!.Value));
-        Assert.Contains("Zugriff verweigert", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("Administratorrechte", ex.Message, StringComparison.Ordinal);
+        Assert.True(facts.Exists);
+        Assert.Equal(identity.User, facts.Sid);
+    }
+
+    [Fact]
+    public void Access_denied_says_admin_rights_are_needed_in_German()
+    {
+        var win32 = AccountErrors.FromWin32((uint)Windows.Win32.Foundation.WIN32_ERROR.ERROR_ACCESS_DENIED, "Konto lesen");
+        var ntStatus = AccountErrors.FromNtStatus(new Windows.Win32.Foundation.NTSTATUS(unchecked((int)0xC0000022)), "Lokale Sicherheitsrichtlinie öffnen");
+
+        foreach (var ex in new[] { win32, ntStatus })
+        {
+            var denied = Assert.IsType<UnauthorizedAccessException>(ex);
+            Assert.Contains("Zugriff verweigert", denied.Message, StringComparison.Ordinal);
+            Assert.Contains("Administratorrechte", denied.Message, StringComparison.Ordinal);
+        }
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]

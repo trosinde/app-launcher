@@ -179,7 +179,7 @@ Assistent (Schritt 3) und Kommandozeile zeigen je Schritt eine Zeile mit ✓ ode
 |---|---|---|
 | «Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt» / «Konto appstart-app und Gruppe AppStart Users angelegt» | Konten und Gruppe eingerichtet (vorhandene geprüft) | – |
 | «Konten und Gruppe konnten nicht eingerichtet werden» | Konto oder Gruppe konnten nicht angelegt werden; die weiteren Schritte entfallen. Gründe z.B. «Zugriff verweigert. Dafür sind Administratorrechte nötig.», «Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).», «Das Konto «…» wurde nicht gefunden.», «… ist kein Benutzerkonto.» | Grund beheben (Admin-Rechte, anderes Passwort, Konto prüfen), Einrichtung wiederholen |
-| «2 Applikationen freigegeben, Konfiguration geschützt» | `apps.json` geschrieben und geschützt | – |
+| «2 Applikationen freigegeben, Konfiguration geschützt» (bei einer: «1 Applikation freigegeben, Konfiguration geschützt») | `apps.json` geschrieben und geschützt | – |
 | «Konfiguration konnte nicht geschrieben werden» | `C:\ProgramData\AppStart` oder `apps.json` lässt sich nicht schützen oder schreiben, oder eine Angabe ist ungültig (Grund wie beim Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md)). Weitere Schritte entfallen. | Grund beheben. Ist `C:\ProgramData\AppStart` ein Verweis (Junction), Ordner als Administrator prüfen und löschen. |
 | «apps.json ist ungültig: …» | Die bestehende `apps.json` ist beschädigt; das Setup ändert nichts | Datei korrigieren oder aus Sicherung zurückholen |
 | «Applikation «app-x» ist nicht freigegeben» | `remove` oder `rehash` mit unbekannter AppId | AppId mit `list` prüfen |

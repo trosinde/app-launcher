@@ -397,11 +397,11 @@ Akzeptiert genau `--app` und eine gültige AppId, sonst «Ungültige Verknüpfun
 
 ## Soll-Konfiguration apps.json
 
-Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Administratoren (Besitzer Administratoren, Zugriffsliste geschützt, nicht geerbt). Der Dienst liest die Datei bei jeder Startanfrage neu. Das Setup schreibt sie; von Hand nur für `allowChildProcesses` bearbeiten.
+Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Administratoren (Besitzer Administratoren, Zugriffsliste geschützt, nicht geerbt). Der Dienst liest die Datei bei jeder Startanfrage neu. Das Setup schreibt sie; von Hand bearbeiten ist nicht nötig, auch die weiteren Programme setzen Assistent und Kommandozeile (`set-children`, `allow-child`, `deny-child`, `learn`).
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "apps": [
     {
       "id": "app-a",
@@ -411,7 +411,11 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
       "check": "signature",
       "signerThumbprint": "3F2A9C0D8E7B6A5948372615F4E3D2C1B0A99887",
       "sha256": null,
-      "allowChildProcesses": false,
+      "childProcesses": "allowlist",
+      "allowedChildren": [
+        { "exe": "C:\\Program Files\\Hersteller\\AppA\\Export.exe", "check": "signature", "signerThumbprint": "3F2A9C0D8E7B6A5948372615F4E3D2C1B0A99887" },
+        { "exe": "C:\\Program Files\\Hersteller\\AppA\\Updater.exe", "check": "sha256", "sha256": "0C1D2E3F405162738495A6B7C8D9EAFB0C1D2E3F405162738495A6B7C8D9EAFB" }
+      ],
       "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
       "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA"
     },
@@ -423,7 +427,7 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
       "check": "sha256",
       "signerThumbprint": null,
       "sha256": "9B74C9897BAC770FFC029102A200C5DE6A8FD2D3E5B4C6A1F0E9D8C7B6A59483",
-      "allowChildProcesses": false,
+      "childProcesses": "blocked",
       "dataDir": "C:\\ProgramData\\AppStartTest",
       "registryKey": "HKLM\\SOFTWARE\\AppStartTest"
     }
@@ -433,7 +437,7 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
 
 | Feld | Pflicht | Regel |
 |---|---|---|
-| `version` | ja | Immer `1` |
+| `version` | ja | `2`. Version `1` (vor den weiteren Programmen) liest der Dienst weiter, siehe unten. |
 | `apps` | ja | Liste der freigegebenen Applikationen, darf leer sein |
 | `id` | ja | AppId: `a-z`, `0-9` und `-`, 1 bis 32 Zeichen, eindeutig. Steht in der Verknüpfung (`--app`). |
 | `name` | ja | Anzeigename, nicht leer. Name der Verknüpfung `<name>.lnk`. |
@@ -442,11 +446,15 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
 | `check` | ja | `signature`: gültige Authenticode-Signatur und Zertifikat mit `signerThumbprint` (keine Online-Sperrprüfung). `sha256`: Prüfsumme muss exakt stimmen. |
 | `signerThumbprint` | bei `signature` | 40 Hex-Zeichen, sonst `null` |
 | `sha256` | bei `sha256` | 64 Hex-Zeichen, sonst `null` |
-| `allowChildProcesses` | nein | `false` (Standard): Applikation im Job-Objekt, keine weiteren Programme. `true`: kein Job-Objekt. |
+| `childProcesses` | nein | Weitere Programme: `blocked` (Standard, auch wenn das Feld fehlt): Job-Objekt, keine weiteren Programme. `allowlist`: überwachtes Job-Objekt, nur Programme aus `allowedChildren`, alle anderen beendet der Dienst sofort (Ereignis 1206). `all`: kein Job-Objekt; `verify` nennt die Applikation als Hinweis. |
+| `allowedChildren` | bei `allowlist` | Nur bei `allowlist`, dort mindestens ein Eintrag. Je Eintrag `exe` (absoluter lokaler Pfad auf `.exe`, ohne `%`, je Applikation eindeutig), `check` und `signerThumbprint` bzw. `sha256` nach denselben Regeln wie bei der Applikation, optional `allowShell: true`. |
+| `allowShell` | bei Shells | In einem Eintrag von `allowedChildren`: nötig für `cmd.exe`, `powershell.exe`, `pwsh.exe`, `wscript.exe`, `cscript.exe`, `mshta.exe`, `rundll32.exe`, `regsvr32.exe` und `explorer.exe`; bestätigt, dass ein Bediener damit jedes Programm mit Admin-Rechten starten kann. |
 | `dataDir` | nein | Datenordner, absoluter lokaler Pfad, oder `null` |
 | `registryKey` | nein | Key unter `HKLM\`, oder `null` |
 
 Unbekannte Felder, Kommentare und Kommas nach dem letzten Element sind nicht erlaubt; die Datei ist dann ungültig.
+
+**Version 1.** Installationen vor den weiteren Programmen haben `"version": 1` und je Applikation `allowChildProcesses` statt `childProcesses`. Der Dienst liest Version 1 weiter: `false` (oder fehlend) wirkt wie `blocked`, `true` wie `all`. Die erste Änderung durch das Setup (z.B. `rehash`, Assistent) schreibt Version 2 mit demselben Modus. In Version 2 ist `allowChildProcesses` ein Fehler, in Version 1 sind `childProcesses` und `allowedChildren` Fehler.
 
 ## Pfade
 
@@ -459,6 +467,8 @@ Unbekannte Felder, Kommentare und Kommas nach dem letzten Element sind nicht erl
 | `C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe` | Testapplikation | wie oben |
 | `C:\ProgramData\AppStart` | Daten von AppStart | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\apps.json` | Freigaben | Nur SYSTEM und Administratoren |
+| `C:\ProgramData\AppStart\learn.json` | Laufende Lernmodi (AppId, Beginn, Ende). Schreibt nur das Setup (`learn start`/`stop`). Ist sie für Bediener beschreibbar, ignoriert der Dienst sie (Ereignis 1207). | Nur SYSTEM und Administratoren |
+| `C:\ProgramData\AppStart\Learn\<AppId>.json` | Aufzeichnung des Lernmodus je Applikation (Programme, Prüfwerte, Starts). Wird nach `learn apply` bzw. «Verwerfen» gelöscht. | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\setup-state.json` | Was das Setup geändert hat (gesicherte Rechte, angelegte Verknüpfungen), Grundlage für `remove` und `uninstall`. Nicht bearbeiten. | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\ShortcutBackup` | Gesicherte Verknüpfungen, die direkt auf eine EXE zeigten | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\Reports` | Prüfberichte `verify-<JJJJ-MM-TT-hhmmss>.html` und `.json` | Nur SYSTEM und Administratoren |
