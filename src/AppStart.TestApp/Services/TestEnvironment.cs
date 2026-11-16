@@ -67,6 +67,12 @@ public sealed class TestEnvironment : ITestEnvironment
     private const int ErrorNotEnoughQuota = 1816;
     private const int ErrorAccessDenied = 5;
 
+    // Terminated while CreateProcess was still setting the process up (seen on the test VM).
+    private const int ErrorPartialCopy = 299;
+
+    private static bool TerminatedDuringStart(Win32Exception ex) =>
+        ex.NativeErrorCode is ErrorAccessDenied or ErrorPartialCopy;
+
     /// <summary>Exit code the AppStart service uses when it terminates a process that is not allowed (JobMonitor).</summary>
     private const int TerminatedByAppStart = 0xC0DE;
 
@@ -168,7 +174,7 @@ public sealed class TestEnvironment : ITestEnvironment
         {
             return (ChildProcessOutcome.BlockedByJob, ex.Message);
         }
-        catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorAccessDenied)
+        catch (Win32Exception ex) when (TerminatedDuringStart(ex))
         {
             return (ChildProcessOutcome.TerminatedByService, ex.Message); // terminated before CreateProcess returned
         }
@@ -193,6 +199,7 @@ public sealed class TestEnvironment : ITestEnvironment
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8, // the helper writes UTF-8
             })!;
             var output = process.StandardOutput.ReadToEnd().Trim();
             if (!process.WaitForExit(10_000))
@@ -211,7 +218,7 @@ public sealed class TestEnvironment : ITestEnvironment
         {
             return (ChildProcessOutcome.BlockedByJob, ex.Message);
         }
-        catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorAccessDenied)
+        catch (Win32Exception ex) when (TerminatedDuringStart(ex))
         {
             return (ChildProcessOutcome.TerminatedByService, ex.Message);
         }

@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 <#
   E2E of add-allowed-child-processes (task 7.1): every scenario of specs/app-launch, specs/installation and
   specs/verification of the change, in the real service context. TEST VM ONLY; everything is removed again.
@@ -220,20 +220,21 @@ try {
     $app = Open-TestApp $op
     if ($app) {
         Invoke-TestAppButton $app 'Eingabeaufforderung starten'
-        $cmd = @(Get-OperatorCmd)
+        # Not $cmd: PowerShell variable names ignore case, that would overwrite $Cmd (the path).
+        $cmdProcs = @(Get-OperatorCmd)
         Close-TestApp $app
         Start-Sleep -Seconds 3
-        $still = @(Get-OperatorCmd | Where-Object { $cmd.ProcessId -contains $_.ProcessId })
-        Check 'Applikation endet vor dem Hilfsprogramm: erlaubtes cmd.exe läuft nach dem Ende der TestApp weiter' ($cmd.Count -ge 1 -and $still.Count -ge 1) "cmd vorher $($cmd.Count), nachher $($still.Count)"
+        $still = @(Get-OperatorCmd | Where-Object { $cmdProcs.ProcessId -contains $_.ProcessId })
+        Check 'Applikation endet vor dem Hilfsprogramm: erlaubtes cmd.exe läuft nach dem Ende der TestApp weiter' ($cmdProcs.Count -ge 1 -and $still.Count -ge 1) "cmd vorher $($cmdProcs.Count), nachher $($still.Count)"
         Stop-Service AppStart
         Start-Sleep -Seconds 3
-        $after = @(Get-OperatorCmd | Where-Object { $cmd.ProcessId -contains $_.ProcessId })
+        $after = @(Get-OperatorCmd | Where-Object { $cmdProcs.ProcessId -contains $_.ProcessId })
         Check 'Dienst stoppt: Windows beendet alle Prozesse des Job-Objekts (KILL_ON_JOB_CLOSE)' ($still.Count -ge 1 -and $after.Count -eq 0) "nach Stopp $($after.Count)"
         Start-Service AppStart
         Start-Sleep -Seconds 5
     } else { Check 'Applikation endet vor dem Hilfsprogramm: TestApp gestartet' $false }
     Stop-OperatorCmd
-    $r = Invoke-Setup @('deny-child', '--app', $AppId, '--exe', $Cmd) -Quiet
+    $r = Invoke-Setup @('deny-child', '--app', $AppId, '--exe', $Cmd)
     Check 'Vorbereitung: cmd.exe wieder entfernt' ($r.Exit -eq 0) "exit $($r.Exit)"
 
     # ------------------------------------------------------------ mode all (verification «Alle weiteren Programme erlaubt»)

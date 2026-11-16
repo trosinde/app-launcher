@@ -1,4 +1,4 @@
-<#
+﻿<#
   UAT runner: runs the acceptance scripts of this folder in one elevated session (one UAC prompt)
   and copies their logs and screenshots to a result folder the developer can read.
   TEST VM ONLY (same rules as the scripts it runs: AppStart must not be installed, everything is

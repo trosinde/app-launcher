@@ -28,7 +28,7 @@
 - [x] 6.1 (Helper unsigniert, solange das Zertifikat aus add-appstart-service 7.2 fehlt; dann SHA-256) Knöpfe «Erlaubtes Hilfsprogramm starten» (eigene signierte Helper-EXE im TestApp-Ordner) und «Eingabeaufforderung starten» zeigen das Ergebnis je Modus
 
 ## 7. Tests auf der Test-VM
-- [ ] 7.1 E2E (tests/e2e): jedes Szenario aus specs/app-launch, specs/installation und specs/verification, inkl. Dienst-Stopp während laufender Applikation und /quiet /config als SYSTEM
+- [x] 7.1 (29 von 29 bestanden, Protokoll tests/e2e/uat/2026-11-16-child-processes) E2E (tests/e2e): jedes Szenario aus specs/app-launch, specs/installation und specs/verification, inkl. Dienst-Stopp während laufender Applikation und /quiet /config als SYSTEM
 - [ ] 7.2 Update von einer Installation mit apps.json Version 1: Schutz unverändert
 
 ## 8. Dokumentation

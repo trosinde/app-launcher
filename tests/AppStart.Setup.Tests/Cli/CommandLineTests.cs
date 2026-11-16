@@ -161,6 +161,20 @@ public sealed class CommandLineTests : IDisposable
     }
 
     // Spec scenario «Beschreibbarer Ordner»: exit 1, apps.json unchanged.
+    // Found in the UAT on the test VM: allow-child cmd.exe --allow-shell, then deny-child cmd.exe.
+    [Fact]
+    public void Shell_allowed_and_denied_again_with_the_real_cmd()
+    {
+        Released();
+        var cmd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "cmd.exe");
+        var allow = Run("allow-child", "--app", "appa", "--exe", cmd, "--allow-shell");
+        Assert.True(allow.Code == 0, allow.Out + allow.Err);
+
+        var deny = Run("deny-child", "--app", "appa", "--exe", cmd);
+
+        Assert.True(deny.Code == 0, deny.Out + deny.Err);
+    }
+
     [Fact]
     public void Writable_folder_is_exit_1()
     {
