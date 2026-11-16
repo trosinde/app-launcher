@@ -76,26 +76,6 @@ function Close-TestApp($app) {
     Stop-TestApps
 }
 
-function Invoke-TestAppButton($app, [string] $name) {
-    $btn = $app.Window.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, $name)))
-    $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-    Start-Sleep -Seconds 3
-}
-
-function Get-TestAppRow($app, [string] $label) {
-    # Rows are label, value, badge in this order.
-    $texts = @(Get-WindowTextControls $app.Window)
-    $i = [Array]::IndexOf($texts, $label)
-    if ($i -lt 0 -or $i + 2 -ge $texts.Count) { return '' }
-    return "$($texts[$i + 1]) | $($texts[$i + 2])"
-}
-
-function Get-OperatorCmd {
-    return @(Get-CimInstance Win32_Process -Filter "Name='cmd.exe'" | Where-Object { (Get-ProcessOwner $_) -eq 'appstart-app' })
-}
-
-function Stop-OperatorCmd { Get-OperatorCmd | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }
-
 function Find-Events([int] $id, [datetime] $since, [string] $like) {
     return @(Get-AppStartEvents $id $since | Where-Object { $_.Message -like $like })
 }

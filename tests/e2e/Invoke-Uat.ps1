@@ -14,8 +14,10 @@
 param(
     [string] $MsiPath,
     [string] $ResultDir,
-    # Acceptance, Setup, Service, Operations (also comma-separated in one argument, as with -File).
+    # Acceptance, Setup, Service, Operations, ChildProcesses, Install (also comma-separated in one argument, as with -File).
     [string[]] $Suites = @('Acceptance'),
+    # Suite Install only: older MSI installed first, then updated to -MsiPath.
+    [string] $PreviousMsiPath,
     # Started by the scheduled task "AppStartUAT": parameters come from %LOCALAPPDATA%\AppStartUAT\request.json.
     [switch] $FromRequest
 )
@@ -58,10 +60,12 @@ if ($FromRequest) {
     $MsiPath = $request.msiPath
     $Suites = @($request.suites)
     $ResultDir = $request.resultDir
+    $PreviousMsiPath = $request.previousMsiPath
     if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir muss unter $uatHome liegen." }
 }
 $Suites = @($Suites | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses') { throw "Unbekannte Suite $s" } }
+foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses', 'Install') { throw "Unbekannte Suite $s" } }
+if ($Suites -contains 'Install' -and -not $PreviousMsiPath) { throw 'Suite Install braucht PreviousMsiPath (älteres MSI).' }
 if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath und ResultDir sind nötig (oder -FromRequest).' }
 if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath muss auf ein MSI zeigen.' }
 $MsiPath = (Resolve-Path $MsiPath).Path
@@ -93,6 +97,13 @@ if (Test-Path $bootSource) {
     Copy-Item $bootSource $stage
     $boot = Join-Path $stage 'AppStart-Setup.exe'
 }
+$previousMsi = $null
+if ($PreviousMsiPath) {
+    if (-not $PreviousMsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'PreviousMsiPath muss auf ein MSI zeigen.' }
+    New-Item -ItemType Directory -Force (Join-Path $stage 'previous') | Out-Null
+    Copy-Item (Resolve-Path $PreviousMsiPath).Path (Join-Path $stage 'previous')
+    $previousMsi = Join-Path $stage "previous\$(Split-Path $PreviousMsiPath -Leaf)"
+}
 
 # -StageDir explicitly: Windows PowerShell 5.1 leaves $PSScriptRoot empty in parameter defaults of
 # advanced scripts started with -File.
@@ -102,6 +113,7 @@ $scripts = @{
     Service    = @{ File = 'Invoke-ServiceE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     Operations = @{ File = 'Invoke-OperationsTests.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) }
     ChildProcesses = @{ File = 'Invoke-ChildProcessE2E.ps1'; Args = @('-MsiPath', $msi, '-StageDir', $stage) + $(if ($boot) { @('-BootstrapperPath', $boot) } else { @() }) }
+    Install    = @{ File = 'Invoke-InstallTests.ps1'; Args = @('-MsiPath', $previousMsi, '-MsiNextPath', $msi, '-StageDir', $stage) + $(if ($boot) { @('-BootstrapperPath', $boot) } else { @() }) }
 }
 
 $summary = @()

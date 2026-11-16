@@ -254,6 +254,28 @@ function Get-WindowTextControls($window) {
     return @($window.FindAll('Descendants', $cond) | ForEach-Object { $_.Current.Name })
 }
 
+function Invoke-TestAppButton($app, [string] $name) {
+    # $app: @{ Window = <TestApp window> }
+    $btn = $app.Window.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, $name)))
+    $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    Start-Sleep -Seconds 3
+}
+
+function Get-TestAppRow($app, [string] $label) {
+    # Rows of the TestApp are label, value, badge in this order. Returns "value | badge".
+    $texts = @(Get-WindowTextControls $app.Window)
+    $i = [Array]::IndexOf($texts, $label)
+    if ($i -lt 0 -or $i + 2 -ge $texts.Count) { return '' }
+    return "$($texts[$i + 1]) | $($texts[$i + 2])"
+}
+
+function Get-OperatorCmd {
+    # cmd.exe started from an application, i.e. running as appstart-app.
+    return @(Get-CimInstance Win32_Process -Filter "Name='cmd.exe'" | Where-Object { (Get-ProcessOwner $_) -eq 'appstart-app' })
+}
+
+function Stop-OperatorCmd { Get-OperatorCmd | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }
+
 function Save-WindowShot($window, [string] $file) {
     try {
         $r = $window.Current.BoundingRectangle

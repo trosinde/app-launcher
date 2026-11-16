@@ -77,6 +77,12 @@ Launcher ohne `--app` bzw. mit Zusatzargument. Ausgabe `acceptance-run.txt`, `ac
   gestartet aus neuer Datei; genau ein Produkt mit der neuen Version; verify 0; Start als Bediener.
   Die TestApp wird dafür aus einer Kopie in `C:\Program Files\AppStartTestApp` freigegeben (wie eine
   echte Fremdapplikation), weil das Update die TestApp im Paket ersetzt.
+- apps.json Version 1 (add-allowed-child-processes 7.2), nur wenn das erste MSI noch Version 1 schreibt
+  (z. B. aus `main` vor diesem Change): nach dem Update startet der Dienst die TestApp wie `blocked`
+  (cmd.exe blockiert). Die erste Änderung (`rehash --app`) schreibt Version 2 mit `blocked`, SDDL von
+  apps.json gleich. Danach von Hand Version 1 mit `allowChildProcesses: true`: cmd.exe läuft, die
+  Migration ergibt `all`. Zum Schluss `set-children --mode blocked`. Im UAT-Runner als Suite `Install`
+  mit `previousMsiPath` in request.json bzw. `-PreviousMsiPath`.
 - Optional `-BootstrapperPath` (Kopie nach `C:\Users\Public\Downloads`): 1618 über den Bootstrapper
   (Exit ≠ 0, Log in `Logs`, kein Wizard), interaktiver Start mit Abbruch im Wizard (Wizard aus dem
   Programmordner, bleibt installiert, Startmenü-Eintrag, verify ≠ 0), `/quiet` (Exit 0, MSI in

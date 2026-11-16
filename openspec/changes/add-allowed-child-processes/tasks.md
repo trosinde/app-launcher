@@ -29,7 +29,7 @@
 
 ## 7. Tests auf der Test-VM
 - [x] 7.1 (29 von 29 bestanden, Protokoll tests/e2e/uat/2026-11-16-child-processes) E2E (tests/e2e): jedes Szenario aus specs/app-launch, specs/installation und specs/verification, inkl. Dienst-Stopp während laufender Applikation und /quiet /config als SYSTEM
-- [ ] 7.2 Update von einer Installation mit apps.json Version 1: Schutz unverändert
+- [x] 7.2 (38 PASS, 0 FAIL, Protokoll tests/e2e/uat/2026-11-16-update-v1) Update von einer Installation mit apps.json Version 1: Schutz unverändert
 
 ## 8. Dokumentation
 - [ ] 8.1 Handbuch: 03-installation (Antwortdatei, /config), 04-applikationen-verwalten (Weitere Programme, Lernmodus statt Handbearbeitung), 07-meldungen (neue Ereignisse), 09-referenz (Befehle, apps.json v2, Antwortdatei, Exit-Codes); Bildschirmfotos
