@@ -34,7 +34,7 @@ Prüft den Dienst auf echtem Windows: Installation, Pipe-Rechte, Start in der Be
 ./build/Build-Release.ps1 -Version 0.1.0 -CertificateThumbprint <Thumbprint>   # mit installiertem Zertifikat
 ```
 
-Ergebnis in `artifacts/release`: `AppStart-<Version>.msi` und `SHA256SUMS.txt`. Das Skript entfernt das per-user-Setup von Velopack bewusst, weil es in einen für Benutzer beschreibbaren Ordner installiert.
+Ergebnis in `artifacts/release`: `AppStart-<Version>.msi`, `AppStart-Setup.exe`, `AppStart-Handbuch-<Version>.pdf` und `SHA256SUMS.txt`. Das Skript entfernt das per-user-Setup von Velopack bewusst, weil es in einen für Benutzer beschreibbaren Ordner installiert.
 
 Über GitHub Actions:
 

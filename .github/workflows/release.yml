@@ -97,9 +97,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $assets = @(Get-ChildItem artifacts/release -File | Where-Object { $_.Name -match '\.(msi|nupkg|json)$|^AppStart-Setup\.exe$|^RELEASES$|^SHA256SUMS\.txt$' } | ForEach-Object FullName)
+          $assets = @(Get-ChildItem artifacts/release -File | Where-Object { $_.Name -match '\.(msi|nupkg|json)$|^AppStart-Setup\.exe$|^AppStart-Handbuch-.+\.pdf$|^RELEASES$|^SHA256SUMS\.txt$' } | ForEach-Object FullName)
           if (-not ($assets -match '\.msi$')) { throw 'No MSI found in artifacts/release.' }
           if (-not ($assets -match 'AppStart-Setup\.exe$')) { throw 'No AppStart-Setup.exe found in artifacts/release.' }
+          if (-not ($assets -match 'AppStart-Handbuch-.+\.pdf$')) { throw 'No AppStart-Handbuch-<Version>.pdf found in artifacts/release.' }
           $flags = @('--generate-notes', '--verify-tag')
           if ($env:TAG.Contains('-')) { $flags += '--prerelease' }
           gh release create $env:TAG @assets --title "AppStart $env:TAG" @flags

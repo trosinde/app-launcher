@@ -44,6 +44,6 @@ Vor der Einrichtung je Applikation klären und notieren:
 | `AppStart-Setup.exe` | Interaktive Installation: installiert das MSI und öffnet die Einrichtung |
 | `AppStart-<Version>.msi` | Stille Installation über Softwareverteilung (`msiexec`) |
 | `SHA256SUMS.txt` | Prüfsummen der Lieferung |
-| Handbuch (dieses Dokument) | Als PDF installiert, im Startmenü unter «AppStart – Handbuch» |
+| `AppStart-Handbuch-<Version>.pdf` | Dieses Handbuch, zum Lesen vor der Installation. Dieselbe Datei wird mit AppStart installiert und öffnet sich im Startmenü unter «AppStart – Handbuch». |
 
 Alle Programmdateien und das MSI sind mit dem Zertifikat des Herausgebers signiert. Vor der Installation in den Eigenschaften der Datei (Register «Digitale Signaturen») prüfen.
