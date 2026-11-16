@@ -24,6 +24,12 @@ public static class AppStartConstants
     /// <summary>C:\ProgramData\AppStart\apps.json</summary>
     public static string ConfigPath { get; } = Path.Combine(DataDirectory, "apps.json");
 
+    /// <summary>C:\ProgramData\AppStart\learn.json (learn mode, add-allowed-child-processes D3)</summary>
+    public static string LearnStatePath { get; } = Path.Combine(DataDirectory, "learn.json");
+
+    /// <summary>C:\ProgramData\AppStart\Learn (recordings of the learn mode)</summary>
+    public static string LearnDirectory { get; } = Path.Combine(DataDirectory, "Learn");
+
     /// <summary>C:\ProgramData\AppStart\Reports</summary>
     public static string ReportDirectory { get; } = Path.Combine(DataDirectory, "Reports");
 }

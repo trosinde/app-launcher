@@ -47,6 +47,7 @@ Fehler- und Hinweismeldungen zeigen eine Überschrift, die Ursache, eine Zeile �
 |---|---|
 | `AppStart-Setup.exe` | Installiert AppStart und startet danach die Einrichtung |
 | `AppStart-Setup.exe /quiet` | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec` (0 oder 3010 = erfolgreich). Ist AppStart schon in derselben oder neueren Version installiert: Exit-Code 0. |
+| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installiert und richtet danach in einem Schritt ohne Oberfläche nach der Antwortdatei ein: Applikationen, Schutz, weitere Programme und Bediener (Format: [Referenz → `apply`](09-referenz.md#apply)). Für die Softwareverteilung als SYSTEM. Exit-Code 0 oder 3010 = eingerichtet, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig; Ausgabe in `C:\ProgramData\AppStart\Logs\apply-….log`. Das lokale Konto `appstart-user` legt die Antwortdatei nicht an (kein Passwort in Dateien). |
 | `AppStart-Setup.exe /?` | Zeigt die Hilfe |
 
 Ohne Installationsprogramm (nur MSI vorhanden): `AppStart-<Version>.msi` per Doppelklick oder `msiexec /i` installieren und danach im Startmenü «AppStart – Einrichtung» öffnen.
@@ -133,8 +134,8 @@ Zum Schluss das Ergebnis der Prüfung und der Pfad des Berichts:
 
 | Überschrift und Text | Bedeutung |
 |---|---|
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 7 von 8 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 6 von 8 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) beheben, Einrichtung erneut ausführen |
+| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
+| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 8 von 9 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 7 von 9 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) beheben, Einrichtung erneut ausführen |
 | «Einrichtung unvollständig» – «Nicht alle Schritte waren erfolgreich. Die Prüfung zeigt, was fehlt.» | Mindestens eine Zeile mit ✗. Grund in der Zeile, Massnahme im Kapitel [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md) |
 
 Weitere Zeilen, die erscheinen können:
@@ -217,7 +218,10 @@ Fenster «AppStart TestApp», Überschrift «Zustand der Testapplikation», daru
 | «Admin-Rechte» | «Ja», «OK» | «Nein», «Fehler» |
 | «Registry lesen/schreiben» | `HKLM\SOFTWARE\AppStartTest`, «OK» | «Fehler» mit Grund: Key gesperrt ohne `appstart-app` oder Rechte falsch |
 | «Dateien lesen/schreiben» | `C:\ProgramData\AppStartTest`, «OK» | «Fehler» mit Grund |
-| «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt», «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: das Job-Objekt fehlt (`allowChildProcesses` ist `true`). «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
+| «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt» (Modus «gesperrt») oder «Von AppStart sofort beendet (nicht erlaubt)» (Modus «nur erlaubte Hilfsprogramme»), jeweils «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: Modus «alle erlaubt» oder die Eingabeaufforderung steht auf der Liste. «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
+| «Hilfsprogramm (TestHelper)» | nach Klick auf «Erlaubtes Hilfsprogramm starten», je nach Modus der TestApp (siehe [Weitere Programme](04-applikationen-verwalten.md)): «Gestartet und beendet: AppStart TestHelper läuft als …» mit «Erlaubt», wenn `AppStart.TestHelper.exe` erlaubt ist; «Start blockiert durch Job-Objekt (Modus gesperrt)» oder «Von AppStart sofort beendet (nicht auf der Liste)» mit «Gesperrt» | «Start fehlgeschlagen: …» mit «Prüfen» |
+
+Das Hilfsprogramm `AppStart.TestHelper.exe` liegt neben der TestApp. Zum Ausprobieren der Positivliste: `%SETUP% allow-child --app appstart-testapp --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestHelper.exe"`. Danach startet das Hilfsprogramm, die Eingabeaufforderung dagegen beendet AppStart sofort.
 
 Vor der ersten Prüfung steht beim Kindprozess «Noch nicht geprüft» mit dem Kennzeichen «Offen». «Erneut prüfen» wiederholt die Anzeigen und zeigt «Geprüft um 10:42:17». Im Feld «Testwert» (Vorgabe «Testwert 42») lässt sich ein Wert eingeben; «In Registry und Datei speichern» schreibt ihn und zeigt «Gespeichert um 10:42:30» oder «Speichern fehlgeschlagen: …».
 

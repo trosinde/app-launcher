@@ -107,7 +107,7 @@ Während der Installation: «AppStart wird installiert …» – «Bitte warten.
 | «Einrichtung nicht gefunden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe fehlt. Die Einrichtung kann nicht starten.» | «Starten Sie AppStart-Setup.exe erneut. Hilft das nicht, wenden Sie sich an den Service.» | 2 | nein |
 | «Einrichtung nicht vertrauenswürdig» | «Die Signatur von C:\Program Files\AppStart\current\AppStart.Setup.exe ist ungültig oder stammt nicht vom Herausgeber dieses Setups. Die Einrichtung wird aus Sicherheitsgründen nicht gestartet.» | «Starten Sie die Einrichtung nicht von Hand. Wenden Sie sich an den Service.» | 577 | nein |
 | «Einrichtung konnte nicht gestartet werden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe konnte nicht gestartet werden: …» | «Starten Sie die Einrichtung über das Startmenü (AppStart – Einrichtung).» | 1 | nein |
-| «Unbekannter Parameter» | «Der Parameter «/x» ist unbekannt.», danach die Hilfe | «Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet oder mit /? für die Hilfe.» | 87 | nein |
+| «Unbekannter Parameter» | «Der Parameter «/x» ist unbekannt.», danach die Hilfe | «Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet, mit /quiet /config \<Antwortdatei> (absoluter Pfad) oder mit /? für die Hilfe.» | 87 | nein |
 | «Unerwarteter Fehler» | «Bei der Installation ist ein unerwarteter Fehler aufgetreten: …» | «Wenden Sie sich mit dem Protokoll an den Service.» | 1603 | nein |
 
 Erläuterungen für den Service:
@@ -128,6 +128,9 @@ AppStart-Setup.exe
 AppStart-Setup.exe /quiet
     Installiert nur, ohne Oberfläche und ohne Einrichtung. Der Exit-Code ist der von msiexec (0 oder 3010 = erfolgreich).
 
+AppStart-Setup.exe /quiet /config <Antwortdatei>
+    Installiert und richtet danach ohne Oberfläche nach der Antwortdatei ein (AppStart.Setup.exe apply). Exit-Code 0 oder 3010 = erfolgreich, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig.
+
 AppStart-Setup.exe /?
     Zeigt diese Hilfe.
 ```
@@ -146,7 +149,12 @@ Jede Startanfrage steht mit Zeit, Benutzer, Sitzung, AppId und Ergebnis im Proto
 |---|---|---|---|
 | 1000 | Information | Dienst gestartet, Pipe bereit. Text: «Dienst AppStart gestartet, Pipe bereit. Rechte: \<SDDL>» | Keine. Die SDDL muss der [Referenz](09-referenz.md) entsprechen. |
 | 1001 | Information | Dienst beendet. Text: «Dienst AppStart beendet.» | Keine, wenn gewollt (Update, Neustart). Sonst prüfen, wer den Dienst gestoppt hat. |
-| 1100 | Information | Applikation gestartet. Text: «Start ausgeführt. Benutzer: …, Session: …, AppId: …, EXE: …, Prozess: \<PID>.» mit Ergebnis der Prüfung | Keine |
+| 1100 | Information | Applikation gestartet. Text: «Start ausgeführt. Benutzer: …, Session: …, AppId: …, EXE: …, Prozess: \<PID>, weitere Programme: …» mit Modus («gesperrt», «nur erlaubte Hilfsprogramme», «alle erlaubt»), gegebenenfalls «Lernmodus bis …», und Ergebnis der Prüfung | Keine |
+| 1101 | Information | Hilfsprogramm erlaubt: Die Applikation hat ein Programm von ihrer Liste der erlaubten Hilfsprogramme gestartet, oder das Konsolenfenster von Windows (conhost.exe). Text: «Hilfsprogramm erlaubt. Benutzer: …, Session: …, AppId: …, Pfad: …, Prozess: …» | Keine |
+| 1102 | Information | Lernmodus: Programm aufgezeichnet. Text mit Benutzer, AppId, Pfad, Elternprozess und Signatur | Keine. Am Ende des Lernmodus die Vorschläge prüfen und übernehmen. |
+| 1206 | Warnung | Programm beendet: Die Applikation hat ein Programm gestartet, das nicht erlaubt ist, oder dessen Prüfung fehlschlug (z.B. «Prüfsumme stimmt nicht»). Text: «Programm beendet. Benutzer: …, Session: …, AppId: …, Pfad: …, Prozess: …, beendet: ja. Grund: …» | Gehört das Programm zur Applikation, in die Liste der erlaubten Hilfsprogramme aufnehmen bzw. Prüfsumme aktualisieren. Sonst: Versuch, ein fremdes Programm mit Admin-Rechten zu starten, dem Service melden. «beendet: NEIN» sofort dem Service melden. |
+| 1207 | Fehler | Lernmodus ignoriert: `C:\ProgramData\AppStart\learn.json` ist für Bediener beschreibbar oder ungültig. Es gilt die Liste der erlaubten Hilfsprogramme. | `verify` ausführen, Rechte von `C:\ProgramData\AppStart` korrigieren, Lernmodus neu starten. |
+| 1208 | Fehler | Überwachung gestört: Ein neuer Prozess im Job war nicht prüfbar, eine Aufzeichnung im Lernmodus misslang, oder die Überwachung einer Applikation ist ausgefallen (dann werden alle ihre Prozesse beendet). | Grund im Text an den Service melden. |
 | 1200 | Warnung | Abgelehnt: AppId nicht freigegeben (`unknown-app`). Text: «Start verweigert (unknown-app). Vorgang: \<Nummer>, Benutzer: …, Session: …, AppId: …. AppId ist nicht in apps.json freigegeben.» | Applikation freigeben oder Verknüpfung entfernen |
 | 1201 | Warnung | Abgelehnt: Signatur oder SHA-256 falsch (`integrity`). Grund: «SHA-256 weicht ab: …», «Authenticode-Prüfung fehlgeschlagen (0x…)», «Signaturzertifikat nicht lesbar.» oder «Signatur gültig, aber fremdes Zertifikat: …» | Bekanntes Update: `rehash`. Sonst Sicherheitsvorfall. |
 | 1202 | Warnung | Abgelehnt: Konfiguration fehlt, ungültig oder unsicher (`config`). Grund wie beim Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md) | `verify`, Prüfpunkt «apps.json» beheben |
@@ -156,6 +164,8 @@ Jede Startanfrage steht mit Zeit, Benutzer, Sitzung, AppId und Ergebnis im Proto
 | 1300 | Fehler | Pipe existiert bereits, der Dienst startet nicht. Text: «Dienst startet nicht: …». **Sicherheitsereignis:** ein anderes Programm hat `\\.\pipe\AppStart` vor dem Dienst angelegt, um Anfragen abzufangen. | Als Sicherheitsvorfall behandeln. PC neu starten; tritt es wieder auf, Programme im Autostart prüfen, Service informieren. |
 | 1301 | Warnung oder Fehler | Pipe kann nicht angelegt werden. Warnung «Gruppe «AppStart Users» fehlt: AppStart ist noch nicht eingerichtet. Der Dienst wartet und versucht es alle 10 s erneut.» oder Fehler «Dienst startet nicht: Pipe kann nicht angelegt werden. …» | Warnung vor der Einrichtung: normal, Einrichtung abschliessen. Danach: Gruppe fehlt, Einrichtung erneut ausführen und Dienst neu starten. Fehler: Grund lesen, PC neu starten. |
 | 1302 | Fehler oder Warnung | Fehler an der Pipe: «Pipe-Instanz kann nicht angelegt werden, neuer Versuch in 5 s: …» oder «Pipe-Verbindung abgebrochen: …» | Einzeln: harmlos, der Dienst läuft weiter. Gehäuft: Grund an den Service melden. |
+| 1400 | Information | Lernmodus gestartet für eine AppId, mit Ablaufzeit | Keine. Während des Lernmodus den PC nicht unbeaufsichtigt lassen. |
+| 1401 | Information | Lernmodus beendet (von Hand oder abgelaufen). Text: «Lernmodus abgelaufen (…), es gilt wieder der eingestellte Modus.» | Keine |
 
 Der Dienst startet nach einem Absturz automatisch neu (nach 5 s, 5 s und 30 s).
 
@@ -169,7 +179,7 @@ Assistent (Schritt 3) und Kommandozeile zeigen je Schritt eine Zeile mit ✓ ode
 |---|---|---|
 | «Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt» / «Konto appstart-app und Gruppe AppStart Users angelegt» | Konten und Gruppe eingerichtet (vorhandene geprüft) | – |
 | «Konten und Gruppe konnten nicht eingerichtet werden» | Konto oder Gruppe konnten nicht angelegt werden; die weiteren Schritte entfallen. Gründe z.B. «Zugriff verweigert. Dafür sind Administratorrechte nötig.», «Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).», «Das Konto «…» wurde nicht gefunden.», «… ist kein Benutzerkonto.» | Grund beheben (Admin-Rechte, anderes Passwort, Konto prüfen), Einrichtung wiederholen |
-| «2 Applikationen freigegeben, Konfiguration geschützt» | `apps.json` geschrieben und geschützt | – |
+| «2 Applikationen freigegeben, Konfiguration geschützt» (bei einer: «1 Applikation freigegeben, Konfiguration geschützt») | `apps.json` geschrieben und geschützt | – |
 | «Konfiguration konnte nicht geschrieben werden» | `C:\ProgramData\AppStart` oder `apps.json` lässt sich nicht schützen oder schreiben, oder eine Angabe ist ungültig (Grund wie beim Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md)). Weitere Schritte entfallen. | Grund beheben. Ist `C:\ProgramData\AppStart` ein Verweis (Junction), Ordner als Administrator prüfen und löschen. |
 | «apps.json ist ungültig: …» | Die bestehende `apps.json` ist beschädigt; das Setup ändert nichts | Datei korrigieren oder aus Sicherung zurückholen |
 | «Applikation «app-x» ist nicht freigegeben» | `remove` oder `rehash` mit unbekannter AppId | AppId mit `list` prüfen |
@@ -190,7 +200,7 @@ Weitere Gründe beim Zurückstellen: «Die Sicherung «…» der Verknüpfung «
 | Meldung | Bedeutung | Exit-Code |
 |---|---|---|
 | «Automatische Prüfung nach der Änderung:» | Nach `add`, `add-user`, `remove` und `rehash` folgt die Ausgabe von `verify` | 0 oder 1 |
-| «Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
+| «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
 | «Prüfung nicht bestanden – 2 Abweichung(en). Einsatz nicht abschliessen.» | Abweichungen, siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) | 1 |
 | «Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Pfad des Berichts (mit `--report` der angegebene Pfad) | – |
 | «Bitte genau eine Angabe machen: --name appstart-user oder --member "DOMAIN\User".» | `add-user` ohne oder mit beiden Angaben | 2 |

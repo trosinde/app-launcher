@@ -87,7 +87,8 @@ public static class AppCandidates
             Sha256: sha,
             DataDir: existing?.DataDir,
             RegistryKey: existing?.RegistryKey,
-            AllowChildProcesses: existing?.AllowChildProcesses ?? false);
+            ChildProcesses: existing?.ChildProcessMode ?? ChildProcessMode.Blocked,
+            AllowedChildren: existing?.AllowedChildren);
     }
 
     public static AppEntry ToEntry(AppCandidate c) => new()
@@ -99,7 +100,8 @@ public static class AppCandidates
         Check = c.Check,
         SignerThumbprint = c.Check == IntegrityCheck.Signature ? c.SignerThumbprint : null,
         Sha256 = c.Check == IntegrityCheck.Sha256 ? c.Sha256 : null,
-        AllowChildProcesses = c.AllowChildProcesses,
+        ChildProcesses = c.ChildProcesses,
+        AllowedChildren = c.ChildProcesses == ChildProcessMode.Allowlist ? c.AllowedChildren : null,
         DataDir = string.IsNullOrWhiteSpace(c.DataDir) ? null : c.DataDir.Trim(),
         RegistryKey = string.IsNullOrWhiteSpace(c.RegistryKey) ? null : c.RegistryKey.Trim(),
     };

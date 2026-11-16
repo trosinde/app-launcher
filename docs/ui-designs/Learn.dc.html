@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lernmodus läuft</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+a{color:#0f5299}a:hover{color:#0a3a6e}
+</style>
+</helmet>
+<div style="width: 960px; height: 640px; box-sizing: border-box; background: #f3f3f3; display: flex; flex-direction: column; font-family: 'Segoe UI', system-ui, sans-serif; color: #1b1b1b">
+  <div style="height: 40px; display: flex; align-items: center; padding: 0 16px; background: #ffffff; border-bottom: 1px solid #e0e0e0">
+    <span style="font-size: 13px">Lernmodus – Applikation A</span>
+  </div>
+  <main style="flex: 1; padding: 20px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600">Lernmodus läuft</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; color: #4a4a4a">Applikation A ist gestartet. Benutzen Sie jetzt alle Funktionen, die Hilfsprogramme brauchen: Export, Drucken, Update, Hilfe.</p>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; padding: 8px 14px; text-align: center; white-space: nowrap">
+        <div style="font-size: 12px; color: #4a4a4a">endet automatisch in</div>
+        <div style="font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums">24:31</div>
+      </div>
+    </div>
+    <div style="background: #fff4ce; border-radius: 4px; padding: 10px 14px; font-size: 13px">
+      <strong style="font-weight: 600; color: #6b4e00">Während des Lernmodus ist der Schutz für Applikation A schwächer.</strong> Programme werden nicht beendet, nur aufgezeichnet. Den PC dabei nicht unbeaufsichtigt lassen.
+    </div>
+    <div style="background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px; display: flex; flex-direction: column; min-height: 0">
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 120px; align-items: center; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #4a4a4a; border-bottom: 1px solid #e0e0e0">
+        <span>Aufgezeichnete Programme</span><span>Starts</span><span>Zuletzt</span>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 120px; align-items: center; padding: 9px 12px; font-size: 14px">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Export.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppA\Export.exe</span></span>
+        <span style="font-size: 13px">3</span><span style="font-size: 13px">10:41:07</span>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 120px; align-items: center; padding: 9px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">Updater.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Hersteller\AppA\Updater.exe</span></span>
+        <span style="font-size: 13px">1</span><span style="font-size: 13px">10:43:52</span>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 120px; align-items: center; padding: 9px 12px; border-top: 1px solid #eeeeee; font-size: 14px">
+        <span style="display: flex; flex-direction: column; min-width: 0"><strong style="font-weight: 600">AcroRd32.exe</strong><span style="font-size: 12px; color: #4a4a4a">C:\Program Files\Adobe\Reader\AcroRd32.exe</span></span>
+        <span style="font-size: 13px">1</span><span style="font-size: 13px">10:44:10</span>
+      </div>
+    </div>
+    <div style="margin-top: auto; display: flex; justify-content: flex-end; gap: 8px">
+      <a href="Helpers.dc.html" style="height: 34px; padding: 0 16px; border: 1px solid #c4c4c4; background: #ffffff; border-radius: 4px; font-size: 14px; color: #1b1b1b; display: flex; align-items: center; text-decoration: none">Abbrechen, nichts übernehmen</a>
+      <a href="LearnResult.dc.html" style="height: 34px; padding: 0 16px; border: 0; background: #0f5299; color: #ffffff; border-radius: 4px; font-size: 14px; font-weight: 600; display: flex; align-items: center; text-decoration: none">Lernmodus beenden</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -193,7 +193,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedApp))]
-    [NotifyCanExecuteChangedFor(nameof(RemoveAppCommand), nameof(BrowseDataDirCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RemoveAppCommand), nameof(BrowseDataDirCommand), nameof(OpenHelpersCommand))]
     private AppItemViewModel? _selectedApp;
 
     public bool HasSelectedApp => SelectedApp is not null;
@@ -220,6 +220,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
             foreach (AppItemViewModel item in e.NewItems)
             {
                 item.PropertyChanged += OnAppItemChanged;
+                item.ConfirmAllowAll = ConfirmAllowAll; // spec installation «Alle erlaubt»: confirmation first
             }
         }
 
@@ -298,6 +299,25 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
         var index = Apps.IndexOf(SelectedApp);
         Apps.Remove(SelectedApp);
         SelectedApp = Apps.Count == 0 ? null : Apps[Math.Min(index, Apps.Count - 1)];
+    }
+
+    private bool ConfirmAllowAll(AppItemViewModel item) =>
+        _ui.Confirm(SetupTexts.ConfirmAllHeading, SetupTexts.Format(SetupTexts.ConfirmAllTextFormat, item.Name));
+
+    /// <summary>«Hilfsprogramme (n)…»: dialog «Erlaubte Hilfsprogramme»; the list is taken only with «Übernehmen».</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedApp))]
+    private void OpenHelpers()
+    {
+        if (SelectedApp is not { } app)
+        {
+            return;
+        }
+
+        var helpers = new HelpersViewModel(_engine, _ui, app);
+        if (_ui.ShowHelpers(helpers) && helpers.Result is { } result)
+        {
+            app.AllowedChildren = result;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedApp))]

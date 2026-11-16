@@ -78,6 +78,27 @@ public sealed class ExecutableVerifierTests : IDisposable
     }
 
     [Fact]
+    public void Allowed_child_uses_the_same_sha256_rules()
+    {
+        var expected = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(_file)));
+        using var exe = LockedExecutable.Open(_file);
+
+        Assert.True(ExecutableVerifier.Verify(new AllowedChild { Exe = _file, Check = IntegrityCheck.Sha256, Sha256 = expected }, exe).Success);
+        Assert.False(ExecutableVerifier.Verify(new AllowedChild { Exe = _file, Check = IntegrityCheck.Sha256, Sha256 = new string('0', 64) }, exe).Success);
+    }
+
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void Allowed_child_uses_the_same_signature_rules()
+    {
+        var signed = typeof(object).Assembly.Location;
+        using var exe = LockedExecutable.Open(signed);
+        var thumbprint = ExecutableVerifier.TryGetValidSignerThumbprint(exe)!;
+
+        Assert.True(ExecutableVerifier.Verify(new AllowedChild { Exe = signed, Check = IntegrityCheck.Signature, SignerThumbprint = thumbprint }, exe).Success);
+        Assert.False(ExecutableVerifier.Verify(new AllowedChild { Exe = signed, Check = IntegrityCheck.Signature, SignerThumbprint = new string('A', 40) }, exe).Success);
+    }
+
+    [Fact]
     public void Missing_file_cannot_be_opened() =>
         Assert.Throws<FileNotFoundException>(() => LockedExecutable.Open(_file + ".missing"));
 }

@@ -24,6 +24,14 @@ public static class ExecutableVerifier
         _ => IntegrityResult.Fail($"Unbekannte Prüfart {app.Check}."),
     };
 
+    /// <summary>Same rules as for the main EXE (add-allowed-child-processes, design D1).</summary>
+    public static IntegrityResult Verify(AllowedChild child, LockedExecutable exe) => child.Check switch
+    {
+        IntegrityCheck.Sha256 => VerifySha256(exe, child.Sha256!),
+        IntegrityCheck.Signature => VerifySignature(exe, child.SignerThumbprint!),
+        _ => IntegrityResult.Fail($"Unbekannte Prüfart {child.Check}."),
+    };
+
     public static string ComputeSha256(LockedExecutable exe)
     {
         exe.Stream.Position = 0;

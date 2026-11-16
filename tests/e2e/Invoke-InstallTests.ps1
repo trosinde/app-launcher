@@ -77,6 +77,36 @@ function Test-OperatorStart([pscredential] $cred, [string] $appId, [string] $lab
     Stop-TestApps
 }
 
+function Test-ChildCmd([pscredential] $cred, [string] $appId, [string] $label, [string] $expectedRow, [int] $expectedCmd) {
+    # TestApp as the operator, «Eingabeaufforderung starten»: row text and running cmd.exe of appstart-app.
+    Start-Sleep -Seconds 3
+    $t = Get-Date
+    $l = Start-LauncherAs $cred "--app $appId" ''
+    $apps = @(Wait-TestApp $t)
+    $win = if ($apps) { Wait-ProcessWindow $apps[0].Id 20 } else { $null }
+    if (-not $win) { Check $label $false "exit=$($l.Exit) kein TestApp-Fenster"; Stop-TestApps; return }
+    Start-Sleep -Seconds 2
+    $app = @{ Window = $win }
+    Invoke-TestAppButton $app 'Eingabeaufforderung starten'
+    $row = Get-TestAppRow $app 'Kindprozess (cmd.exe)'
+    $cmdCount = @(Get-OperatorCmd).Count
+    Check $label ($row -like $expectedRow -and $cmdCount -eq $expectedCmd) "$row, cmd.exe als appstart-app: $cmdCount"
+    Stop-OperatorCmd
+    Stop-TestApps
+}
+
+function Set-ConfigV1AllowChildren([bool] $allow) {
+    # As an admin edits version 1 by hand: content written in place, the ACL of apps.json stays.
+    $cfg = Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($a in @($cfg.apps)) { $a | Add-Member -NotePropertyName allowChildProcesses -NotePropertyValue $allow -Force }
+    [IO.File]::WriteAllText($ConfigPath, ($cfg | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding($false)))
+}
+
+function Get-ConfigApp([string] $appId) {
+    $cfg = Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    return @{ Version = $cfg.version; App = (@($cfg.apps) | Where-Object { $_.id -eq $appId } | Select-Object -First 1) }
+}
+
 function Get-MsiexecCommandLines {
     return @(Get-CimInstance Win32_Process -Filter "Name='msiexec.exe'" | ForEach-Object { $_.CommandLine } | Where-Object { $_ -match '\.msi' })
 }
@@ -171,6 +201,41 @@ try {
     # Information: would a TestApp released from inside the package survive the update?
     $packagedHashAfter = (Get-FileHash $PackagedTestApp).Hash
     Write-Host "  INFO TestApp im Paket nach Update $(if ($packagedHashAfter -eq $packagedHashBefore) { 'unverändert' } else { 'GEÄNDERT: eine aus dem Paket freigegebene TestApp braucht nach jedem Update rehash' })"
+
+    # ------------------------------------------------------------ 4b. apps.json version 1 after the update
+    # add-allowed-child-processes 7.2: app-launch «Konfiguration Version 1», installation «Update einer
+    # bestehenden Installation» (false -> blocked, true -> all, protection unchanged). Only when the first MSI
+    # still writes version 1.
+    $c = Get-ConfigApp $appId
+    if ($c.Version -eq 1) {
+        $sddlV1 = Get-Sddl $ConfigPath
+        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses false: Dienst startet wie blocked, cmd.exe blockiert' 'Start blockiert durch Job-Objekt*' 0
+        $r = Invoke-Setup @('rehash', '--app', $appId)
+        $c = Get-ConfigApp $appId
+        Check 'Migration false: erste Änderung schreibt Version 2 mit childProcesses blocked, ohne allowChildProcesses' (
+            $r.Exit -eq 0 -and $c.Version -eq 2 -and $c.App.childProcesses -eq 'blocked' -and -not ($c.App.PSObject.Properties.Name -contains 'allowChildProcesses')) "exit $($r.Exit), version $($c.Version), $($c.App.childProcesses)"
+        Check 'Migration false: Rechte von apps.json unverändert' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
+        Test-ChildCmd $op $appId 'Migration false: cmd.exe weiterhin blockiert' 'Start blockiert durch Job-Objekt*' 0
+
+        # Back to version 1 with allowChildProcesses true (hand edit of an existing installation).
+        $cfg = Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $cfg.version = 1
+        foreach ($a in @($cfg.apps)) { $a.PSObject.Properties.Remove('childProcesses'); $a.PSObject.Properties.Remove('allowedChildren') }
+        [IO.File]::WriteAllText($ConfigPath, ($cfg | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding($false)))
+        Set-ConfigV1AllowChildren $true
+        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses true: Dienst startet wie all, cmd.exe läuft' 'Gestartet*' 1
+        $r = Invoke-Setup @('rehash', '--app', $appId)
+        $c = Get-ConfigApp $appId
+        Check 'Migration true: erste Änderung schreibt Version 2 mit childProcesses all' (
+            $r.Exit -eq 0 -and $c.Version -eq 2 -and $c.App.childProcesses -eq 'all' -and -not ($c.App.PSObject.Properties.Name -contains 'allowChildProcesses')) "exit $($r.Exit), version $($c.Version), $($c.App.childProcesses)"
+        Check 'Migration true: Rechte von apps.json unverändert' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
+        Test-ChildCmd $op $appId 'Migration true: cmd.exe läuft weiterhin (all)' 'Gestartet*' 1
+
+        $r = Invoke-Setup @('set-children', '--app', $appId, '--mode', 'blocked')
+        Check 'Nach der Migration: zurück auf blocked, verify Exit-Code 0' ($r.Exit -eq 0 -and (Get-ConfigApp $appId).App.childProcesses -eq 'blocked') "exit $($r.Exit)"
+    } else {
+        Skip 'apps.json Version 1 nach Update' "erstes MSI schreibt Version $($c.Version)"
+    }
 
     # ------------------------------------------------------------ 5. bootstrapper (optional)
     if ($BootstrapperPath) {

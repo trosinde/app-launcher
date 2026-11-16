@@ -254,6 +254,28 @@ function Get-WindowTextControls($window) {
     return @($window.FindAll('Descendants', $cond) | ForEach-Object { $_.Current.Name })
 }
 
+function Invoke-TestAppButton($app, [string] $name) {
+    # $app: @{ Window = <TestApp window> }
+    $btn = $app.Window.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, $name)))
+    $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    Start-Sleep -Seconds 3
+}
+
+function Get-TestAppRow($app, [string] $label) {
+    # Rows of the TestApp are label, value, badge in this order. Returns "value | badge".
+    $texts = @(Get-WindowTextControls $app.Window)
+    $i = [Array]::IndexOf($texts, $label)
+    if ($i -lt 0 -or $i + 2 -ge $texts.Count) { return '' }
+    return "$($texts[$i + 1]) | $($texts[$i + 2])"
+}
+
+function Get-OperatorCmd {
+    # cmd.exe started from an application, i.e. running as appstart-app.
+    return @(Get-CimInstance Win32_Process -Filter "Name='cmd.exe'" | Where-Object { (Get-ProcessOwner $_) -eq 'appstart-app' })
+}
+
+function Stop-OperatorCmd { Get-OperatorCmd | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }
+
 function Save-WindowShot($window, [string] $file) {
     try {
         $r = $window.Current.BoundingRectangle
@@ -264,7 +286,28 @@ function Save-WindowShot($window, [string] $file) {
     } catch { Write-Host "  (Bildschirmfoto $file nicht möglich: $($_.Exception.Message))" }
 }
 
+if (-not ('AppStartE2E.User32' -as [type])) {
+    Add-Type -Namespace 'AppStartE2E' -Name 'User32' -MemberDefinition '[DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr hWnd, uint msg, System.IntPtr wParam, System.IntPtr lParam);'
+}
+
 function Close-UiWindow($window) {
+    # The launcher's TaskDialog has only an OK button and no TDF_ALLOW_DIALOG_CANCELLATION: it ignores
+    # WM_CLOSE (WindowPattern.Close), like Alt+F4. And it belongs to another user (the operator), so
+    # pressing OK through UI Automation does not reach it from the admin test. TDM_CLICK_BUTTON(IDOK)
+    # posted to the dialog does (a higher integrity level may post to a lower one).
+    try {
+        if ($window.Current.ClassName -eq '#32770') {
+            [void][AppStartE2E.User32]::PostMessage([IntPtr]$window.Current.NativeWindowHandle, 0x0466, [IntPtr]1, [IntPtr]::Zero)
+            Start-Sleep -Milliseconds 300
+        }
+    } catch { }
+    try {
+        $cond = New-Object System.Windows.Automation.AndCondition(
+            (New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Button)),
+            (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, 'OK')))
+        $ok = $window.FindFirst('Descendants', $cond)
+        if ($ok) { $ok.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); return }
+    } catch { }
     try { $window.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() } catch { }
 }
 

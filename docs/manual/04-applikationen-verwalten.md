@@ -95,14 +95,112 @@ Prüfen nach dem Update auch:
 - Hat das Update die Rechte von Datenordner oder Registry-Key zurückgesetzt? `verify` meldet es unter «Datenordner je App» bzw. «Registry-Key je App». Behebung wie oben.
 - Liegt die EXE an einem neuen Pfad? Dann mit `remove` die alte Freigabe entziehen und mit `add` die neue EXE freigeben.
 
-## Kindprozesse erlauben
+## Weitere Programme (Hilfsprogramme)
 
-Standard ist `allowChildProcesses: false`: Die Applikation läuft in einem Job-Objekt und kann keine weiteren Programme starten. Braucht eine Applikation nachweislich Kindprozesse (z.B. ein externes Hilfsprogramm), lässt sich das je Applikation in `apps.json` auf `true` setzen. Assistent und Kommandozeile bieten dafür keine Einstellung.
+Manche Applikationen starten eigene Hilfsprogramme, etwa für Export, Update oder PDF-Anzeige. Je Applikation gilt einer von drei Modi:
 
-1. Editor «Als Administrator ausführen», `C:\ProgramData\AppStart\apps.json` öffnen.
-2. Bei der Applikation `"allowChildProcesses": true` setzen, speichern. Die Datei bleibt gültiges JSON (keine Kommentare, keine Kommas am Ende).
-3. `AppStart.Setup.exe verify` ausführen. Prüfpunkt «apps.json» muss erfüllt sein.
+| Modus | Anzeige | Wirkung |
+|---|---|---|
+| `blocked` | gesperrt | Standard. Die Applikation kann keine weiteren Programme starten. |
+| `allowlist` | nur erlaubte Hilfsprogramme | Nur Programme aus der Liste starten, geprüft mit Signatur oder SHA-256. Jedes andere Programm beendet der Dienst sofort (Ereignis 1206). |
+| `all` | alle erlaubt (unsicher) | Jedes Programm startet, auch eine Eingabeaufforderung **mit Admin-Rechten**. Nur nach Abwägung und mit Vermerk im Service and Security Manual. |
 
-> **Warnung:** Mit `true` kann die Applikation über Dialoge wie «Datei öffnen» eine Eingabeaufforderung **mit Admin-Rechten** starten. Nur nach Abwägung und mit Vermerk im Service and Security Manual.
+Das Konsolenfenster von Windows (`conhost.exe` aus `C:\Windows\System32`) ist immer erlaubt; ohne es zeigen Konsolen-Hilfsprogramme kein Fenster.
 
-Der Dienst liest `apps.json` bei jedem Start neu; ein Neustart des Dienstes ist nicht nötig.
+### Im Assistenten
+
+In Schritt 1 zeigt die Spalte «Weitere Programme» den Modus jeder Applikation, z.B. «2 erlaubt», «gesperrt» oder «alle erlaubt». Unter «Schutz für …» wählen Sie bei «Weitere Programme»:
+
+- «Gesperrt (empfohlen)»: Hinweis «Applikation … kann keine weiteren Programme starten.»
+- «Nur erlaubte Hilfsprogramme»: Hinweis «Nur Programme auf der Liste dürfen aus … starten. Alle anderen beendet der Dienst sofort.» Daneben öffnet «Hilfsprogramme (2)…» die Liste. Solange sie leer ist, steht dort «Mindestens ein Hilfsprogramm hinzufügen («Hilfsprogramme…») oder «Gesperrt» wählen.» und «Weiter» bleibt gesperrt.
+- «Alle erlaubt (unsicher)»: Erst nach der Rückfrage «Alle weiteren Programme erlauben?» mit dem Text «Applikation A darf dann jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten. Bediener können so den Schutz umgehen. Nur nach Abwägung und mit Vermerk im Service and Security Manual.» Danach Hinweis «Applikation A darf jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten.»
+
+Die Änderungen gelten erst, wenn Sie den Assistenten mit «Weiter» abschliessen.
+
+![Setup Schritt 1: Weitere Programme «Nur erlaubte Hilfsprogramme», ein Hilfsprogramm erlaubt](images/setup-weitere-programme.png)
+
+**Dialog «Erlaubte Hilfsprogramme – Applikation A».** Überschrift «Erlaubte Hilfsprogramme», darunter «Diese Programme darf Applikation A starten. Sie laufen dann ebenfalls mit Admin-Rechten. Jedes andere Programm beendet der Dienst sofort und protokolliert es.» Die Liste zeigt je Programm die Prüfung und den Zustand:
+
+| Zustand | Bedeutung |
+|---|---|
+| «In Ordnung» | Datei vorhanden, Signatur bzw. Prüfsumme stimmt. |
+| «Prüfsumme neu» | Die Datei hat sich geändert, meist nach einem Update. «Prüfsumme aktualisieren» erfasst sie neu (bei markierten Einträgen, sonst bei allen mit SHA-256). |
+| «Datei fehlt» | Programm deinstalliert oder verschoben. Entfernen oder neu hinzufügen. |
+| «Prüfung fehlgeschlagen» | Signatur ungültig oder Datei nicht lesbar. Entfernen und neu hinzufügen. |
+
+Knöpfe: «EXE hinzufügen…», «Lernmodus starten…», «Prüfsumme aktualisieren», «Entfernen» (markierte Einträge). Ist ein Programm nicht signiert, erscheint der gelbe Hinweis «Updater.exe ist nicht signiert» mit «Nach jedem Update der Applikation stimmt die Prüfsumme nicht mehr und der Start wird blockiert. Dann hier «Prüfsumme aktualisieren».» Unten steht: «Erlaubt sind nur Programme aus Ordnern, in die Bediener nicht schreiben können. Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts nur mit ausdrücklicher Bestätigung.»
+
+- Wählen Sie eine Shell, fragt der Dialog «cmd.exe erlauben?» mit «Dies ist eine Shell oder ein Skript-Host. Wer die Applikation bedient, kann damit jedes Programm mit Admin-Rechten starten.»
+- Liegt das Programm in einem Ordner, den Bediener beschreiben können: «Export.exe kann nicht erlaubt werden: Der Ordner ist für Bediener beschreibbar. Programm in einen geschützten Ordner installieren.»
+
+«Übernehmen» gibt die Liste an den Assistenten zurück, «Abbrechen» verwirft die Änderungen im Dialog.
+
+![Dialog «Erlaubte Hilfsprogramme» mit einem nicht signierten Hilfsprogramm](images/hilfsprogramme.png)
+
+### Lernmodus: Hilfsprogramme ermitteln
+
+Welche Programme eine Applikation braucht, ist oft nicht bekannt. Der Lernmodus zeichnet es auf: Für eine begrenzte Zeit beendet der Dienst bei dieser Applikation nichts, sondern notiert jedes gestartete Programm (Ereignis 1102). Danach gilt wieder der eingestellte Modus, auch in einer noch laufenden Applikation.
+
+Der Lernmodus ist erst möglich, wenn die Applikation eingerichtet ist. Sonst meldet der Dialog «Der Lernmodus ist erst möglich, wenn Applikation A eingerichtet ist. Zuerst den Assistenten abschliessen, dann erneut öffnen.»
+
+1. Im Dialog «Erlaubte Hilfsprogramme» auf «Lernmodus starten…». Es öffnet sich «Lernmodus – Applikation A» mit der Überschrift «Lernmodus läuft» und dem Text «Starten Sie Applikation A jetzt über ihre Verknüpfung und benutzen Sie alle Funktionen, die Hilfsprogramme brauchen: Export, Drucken, Update, Hilfe.» Rechts oben läuft «endet automatisch in» 30:00 ab.
+2. Der gelbe Hinweis «Während des Lernmodus ist der Schutz für Applikation A schwächer. Programme werden nicht beendet, nur aufgezeichnet. Den PC dabei nicht unbeaufsichtigt lassen.» gilt wörtlich.
+3. Die Liste «Aufgezeichnete Programme» zeigt «Starts» und «Zuletzt» je Programm, anfangs «Noch nichts aufgezeichnet.»
+4. «Lernmodus beenden» (oder Ablauf der Zeit) führt zu «Vorschläge übernehmen». «Abbrechen, nichts übernehmen» beendet den Lernmodus und löscht die Aufzeichnung. Kann der Lernmodus nicht starten, steht «Der Lernmodus konnte nicht gestartet werden: …» mit dem Grund im Dialog.
+
+![Lernmodus läuft: zwei aufgezeichnete Programme, Restzeit rechts oben](images/lernmodus.png)
+
+**Dialog «Vorschläge übernehmen».** «Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme Applikation A künftig starten darf.» Gültig signierte Programme werden mit Signatur vorgeschlagen, alle anderen mit SHA-256. Die Spalte «Hinweis»:
+
+| Hinweis | Vorauswahl |
+|---|---|
+| «–» | angehakt |
+| «nicht signiert» | angehakt, Prüfung SHA-256 |
+| «kann Dateien öffnen – abwägen» (z.B. PDF-Anzeige, Browser, Editor) | nicht angehakt. Mit Admin-Rechten kann das Programm beliebige Dateien öffnen und speichern. |
+| «Eingabeaufforderung – nur von Hand», «Shell oder Skript-Host – nur von Hand» | nicht auswählbar |
+| «Ordner für Bediener beschreibbar» | nicht auswählbar |
+
+Unten: «Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.» «2 Programme übernehmen» (bei einem: «1 Programm übernehmen») übernimmt die angehakten in die Liste, «Verwerfen» nichts; beide löschen die Aufzeichnung. Wurde nichts aufgezeichnet: «Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?»
+
+![Vorschläge übernehmen: Hilfsprogramm angehakt, cmd.exe nicht auswählbar](images/lernergebnis.png)
+
+Meldungen des Lernmodus auf der Kommandozeile:
+
+| Meldung | Bedeutung |
+|---|---|
+| «Lernmodus für «app-a» gestartet, endet automatisch um 10:55 Uhr» | Lernmodus läuft (Ereignis 1400). |
+| «Lernmodus für «app-a» beendet» | Von Hand beendet (Ereignis 1401). |
+| «Lernmodus für «app-a» war nicht aktiv» | Nichts zu beenden. |
+| «Dauer des Lernmodus: 5 bis 120 Minuten.» | Ungültige Dauer, nichts geändert. |
+| «Für «app-a» wurde nichts aufgezeichnet. Zuerst learn start und die Applikation benutzen.» | Keine Aufzeichnung vorhanden. |
+| «… steht nicht in der Aufzeichnung.» | Pfad wie in der Aufzeichnung angeben. |
+| «cmd.exe ist eine Shell oder ein Skript-Host und wird nie übernommen. Falls nötig von Hand: allow-child --allow-shell.» | Shells übernimmt der Lernmodus nie. |
+| «Für «app-a» gibt es keine übernehmbaren Vorschläge (nur Shells oder Skript-Hosts aufgezeichnet).» | Nichts zu übernehmen. |
+| «2 Hilfsprogramm(e) aus dem Lernmodus für «app-a» übernommen, Aufzeichnung gelöscht» | Erledigt, Modus «nur erlaubte Hilfsprogramme». |
+
+### Auf der Kommandozeile
+
+Hilfsprogramm erlauben, Modus wird «nur erlaubte Hilfsprogramme»:
+
+```text
+%SETUP% allow-child --app app-a --exe "C:\Program Files\Hersteller\AppA\Export.exe"
+```
+
+Ausgabe: «Hilfsprogramm … für «app-a» erlaubt (Signatur)» bzw. «(SHA-256)» und «Weitere Programme für «app-a»: nur erlaubte Hilfsprogramme». Ist das Programm gültig signiert, gilt die Signatur, sonst die Prüfsumme. Ein Eintrag mit demselben Pfad wird ersetzt.
+
+Hilfsprogramm entfernen: «Hilfsprogramm … für «app-a» entfernt». Beim letzten Eintrag zusätzlich «Letztes Hilfsprogramm entfernt: weitere Programme für «app-a» wieder gesperrt».
+
+Nach einem Update unsignierter Hilfsprogramme stimmt die Prüfsumme nicht mehr und der Dienst beendet sie. `rehash` erfasst sie neu: «Prüfsummen der Hilfsprogramme von «app-a» neu erfasst (1)».
+
+Meldungen, bei denen nichts geändert wird:
+
+| Meldung | Bedeutung |
+|---|---|
+| «… ist eine Shell oder ein Skript-Host. Nur mit ausdrücklicher Bestätigung (--allow-shell) erlaubt.» | Eingabeaufforderung, PowerShell, Explorer, Skript-Hosts, `rundll32.exe`, `regsvr32.exe` und `mshta.exe` erlaubt AppStart nur, wenn Sie es ausdrücklich bestätigen. Damit kann jeder Bediener jedes Programm mit Admin-Rechten starten. |
+| «Hilfsprogramm nicht erlaubt: … liegt in einem Ordner, den Bediener beschreiben können» | Ein Bediener könnte die Datei austauschen. Programm in einen geschützten Ordner (z.B. unter `C:\Program Files`) installieren. |
+| «… ist nicht gültig signiert. Prüfung «signature» nicht möglich, «sha256» verwenden.» | Mit `--check signature` angegeben, die Datei hat aber keine gültige Signatur. |
+| ««…» ist kein Pfad auf eine EXE.», «… existiert nicht.» | Pfad prüfen. |
+| ««nur erlaubte Hilfsprogramme» braucht mindestens ein Hilfsprogramm. Zuerst allow-child ausführen.» | Der Modus lässt sich erst mit mindestens einem Eintrag einstellen. |
+| «Hilfsprogramm … steht nicht in der Liste von «app-a»» | Beim Entfernen oder `rehash --child`: Pfad wie in `list` angeben. |
+
+Modus direkt setzen, z.B. alle erlauben: «Weitere Programme für «app-a»: alle erlaubt (unsicher)». Der Dienst liest `apps.json` bei jedem Start neu; ein Neustart des Dienstes ist nicht nötig.

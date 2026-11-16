@@ -89,6 +89,9 @@ try {
     Invoke-Step 'Publish AppStart.TestApp' {
         dotnet publish src/AppStart.TestApp @common -r win-x64 --self-contained -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $pack 'TestApp')
+        # Helper program of the TestApp (add-allowed-child-processes 6.1), next to AppStart.TestApp.exe.
+        dotnet publish src/AppStart.TestHelper @common -r win-x64 --self-contained -p:PublishSingleFile=true `
+            -p:PublishTrimmed=true -o (Join-Path $pack 'TestApp')
     }
     Invoke-Step 'Manual (PDF)' { & (Join-Path $PSScriptRoot 'Build-Manual.ps1') -Version $Version -OutputDir (Join-Path $work 'manual') }
     Copy-Item (Join-Path $work 'manual/AppStart-Handbuch.pdf') (Join-Path $pack 'AppStart-Handbuch.pdf')

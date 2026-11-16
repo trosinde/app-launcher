@@ -24,15 +24,15 @@ public class VerifierTests
     // ------------------------------------------------------------------ Whole run
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
-    public void Correct_machine_passes_all_eight_checks_with_exit_code_0()
+    public void Correct_machine_passes_all_nine_checks_with_exit_code_0()
     {
         var report = new Machine().Run();
 
         Assert.Equal(
-            ["dienst", "programmordner", "konten", "pipe", "appsjson", "datenordner", "registry", "verknuepfungen"],
+            ["dienst", "programmordner", "konten", "pipe", "appsjson", "datenordner", "hilfsprogramme", "registry", "verknuepfungen"],
             report.Checks.Select(c => c.Id));
         Assert.Equal(
-            ["Dienst", "Programmordner", "Konten", "Pipe", "apps.json", "Datenordner je App", "Registry-Key je App", "Verknüpfungen"],
+            ["Dienst", "Programmordner", "Konten", "Pipe", "apps.json", "Datenordner je App", "Hilfsprogramme je App", "Registry-Key je App", "Verknüpfungen"],
             report.Checks.Select(c => c.Title));
         Assert.All(report.Checks, AssertPassed);
         Assert.Equal(0, report.Deviations);

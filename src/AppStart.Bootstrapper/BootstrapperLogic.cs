@@ -33,8 +33,11 @@ public enum RunMode
     Invalid,
 }
 
-/// <summary>Parsed command line. <see cref="ShowUi"/> is false whenever /quiet was given, even next to an invalid argument.</summary>
-public sealed record ParsedArguments(RunMode Mode, bool ShowUi, string? Invalid = null);
+/// <summary>
+/// Parsed command line. <see cref="ShowUi"/> is false whenever /quiet was given, even next to an invalid argument.
+/// <see cref="ConfigPath"/>: answer file of /config (only with /quiet, add-allowed-child-processes D6).
+/// </summary>
+public sealed record ParsedArguments(RunMode Mode, bool ShowUi, string? Invalid = null, string? ConfigPath = null);
 
 /// <summary>Result of the msiexec run, mapped to what the bootstrapper does next.</summary>
 public sealed record InstallOutcome(bool Success, bool RestartRequired, BootstrapperMessage? Message, int ExitCode);
@@ -69,22 +72,61 @@ public static class BootstrapperLogic
     /// <summary>Generic failure: AppStart is installed but the wizard could not be started.</summary>
     public const int ExitSetupStartFailed = 1;
 
+    /// <summary>/config: installed, but apply ended with 1 (setup with failure or deviation). New, 1 and 2 are taken (design D6).</summary>
+    public const int ExitApplyFailed = 10;
+
+    /// <summary>/config: installed, but apply ended with 2 (answer file invalid, nothing set up).</summary>
+    public const int ExitApplyInvalidFile = 11;
+
     public const string MsiResourceName = "AppStart.msi";
     public const string SetupExeName = "AppStart.Setup.exe";
 
     private static readonly string[] QuietSwitches = ["/quiet", "/q", "-quiet", "--quiet"];
     private static readonly string[] HelpSwitches = ["/?", "/h", "/help", "-?", "-h", "--help"];
+    private static readonly string[] ConfigSwitches = ["/config", "-config", "--config"];
 
     public static ParsedArguments ParseArguments(IReadOnlyList<string> args)
     {
         ArgumentNullException.ThrowIfNull(args);
         var quiet = args.Any(a => QuietSwitches.Contains(a, StringComparer.OrdinalIgnoreCase));
-        var invalid = args.FirstOrDefault(a =>
+
+        // /config <path>: the path is the next argument (design D6).
+        string? configPath = null;
+        var rest = new List<string>();
+        for (var i = 0; i < args.Count; i++)
+        {
+            if (ConfigSwitches.Contains(args[i], StringComparer.OrdinalIgnoreCase))
+            {
+                if (configPath is not null || i + 1 >= args.Count || !IsValidConfigPath(args[i + 1]))
+                {
+                    return new(RunMode.Invalid, !quiet, i + 1 < args.Count ? $"{args[i]} {args[i + 1]}" : args[i]);
+                }
+
+                configPath = args[++i];
+                continue;
+            }
+
+            rest.Add(args[i]);
+        }
+
+        if (configPath is not null && !quiet)
+        {
+            return new(RunMode.Invalid, true, "/config"); // only together with /quiet: no wizard, no dialogs
+        }
+
+        var invalid = rest.FirstOrDefault(a =>
             !QuietSwitches.Contains(a, StringComparer.OrdinalIgnoreCase) && !HelpSwitches.Contains(a, StringComparer.OrdinalIgnoreCase));
 
         if (invalid is not null)
         {
             return new(RunMode.Invalid, !quiet, invalid);
+        }
+
+        if (configPath is not null)
+        {
+            return rest.Any(a => HelpSwitches.Contains(a, StringComparer.OrdinalIgnoreCase))
+                ? new(RunMode.Invalid, false, "/?")
+                : new(RunMode.Quiet, false, null, configPath);
         }
 
         if (args.Any(a => HelpSwitches.Contains(a, StringComparer.OrdinalIgnoreCase)))
@@ -95,6 +137,32 @@ public static class BootstrapperLogic
 
         return quiet ? new(RunMode.Quiet, false) : new(RunMode.Interactive, true);
     }
+
+    /// <summary>Absolute drive path without quotes (the path is handed on to AppStart.Setup.exe, design D6).</summary>
+    public static bool IsValidConfigPath(string? path) =>
+        path is { Length: >= 4 }
+        && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] == '\\'
+        && !path.Contains('"', StringComparison.Ordinal)
+        && path.IndexOfAny(['\0', '\r', '\n']) < 0;
+
+    /// <summary>Arguments for AppStart.Setup.exe after the installation: apply --config "&lt;path&gt;".</summary>
+    public static string ApplyArguments(string configPath) =>
+        IsValidConfigPath(configPath) ? $"apply --config \"{configPath}\"" : throw new ArgumentException("Invalid answer file path.", nameof(configPath));
+
+    /// <summary>Output of apply: apply-yyyyMMdd-HHmmss.log in C:\ProgramData\AppStart\Logs.</summary>
+    public static string ApplyLogFileName(DateTime now) =>
+        "apply-" + now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".log";
+
+    /// <summary>
+    /// Exit code of /quiet /config after a successful msiexec: apply 0 → 0 (3010 when msiexec asked for a restart),
+    /// apply 1 → 10, apply 2 → 11, anything else → 10 (design D6).
+    /// </summary>
+    public static int MapApplyExit(int applyExit, int msiExit) => applyExit switch
+    {
+        0 => msiExit == ExitMsiSuccessRestart ? ExitMsiSuccessRestart : ExitOk,
+        2 => ExitApplyInvalidFile,
+        _ => ExitApplyFailed,
+    };
 
     /// <summary>msiexec log file: install-yyyyMMdd-HHmmss.log (local time).</summary>
     public static string InstallLogFileName(DateTime now) =>

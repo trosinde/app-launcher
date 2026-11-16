@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using AppStart.Core.Configuration;
+using AppStart.Core.Learning;
 using AppStart.Setup.Engine;
 using AppStart.Setup.ViewModels;
 
@@ -82,6 +83,70 @@ internal sealed class FakeSetupEngine : ISetupEngine
     {
         WriteReportCalls++;
         return ReportPath;
+    }
+
+    // ------------------------------------------------------------------ helper programs and learn mode
+
+    /// <summary>Helper paths operators could write (refused).</summary>
+    public HashSet<string> Writable { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Helper paths whose file no longer matches its entry.</summary>
+    public HashSet<string> Changed { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Helper paths that are validly signed.</summary>
+    public HashSet<string> Signed { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public LearnRecording? Recording { get; set; }
+
+    public List<string> LearnCalls { get; } = [];
+
+    public bool StartLearningFails { get; set; }
+
+    public AllowedChild InspectChild(string exePath, bool allowShell)
+    {
+        if (ChildProcessRules.IsShellOrScriptHost(exePath) && !allowShell)
+        {
+            throw new SetupInputException("Shell");
+        }
+
+        return Signed.Contains(exePath)
+            ? new AllowedChild { Exe = exePath, Check = IntegrityCheck.Signature, SignerThumbprint = new string('B', 40), AllowShell = allowShell }
+            : new AllowedChild { Exe = exePath, Check = IntegrityCheck.Sha256, Sha256 = new string('c', 64), AllowShell = allowShell };
+    }
+
+    public IReadOnlyList<string> WriteViolations(string exePath) => Writable.Contains(exePath) ? ["Benutzer hat Schreibrechte."] : [];
+
+    public Core.Integrity.IntegrityResult VerifyChild(AllowedChild entry) =>
+        Changed.Contains(entry.Exe) ? Core.Integrity.IntegrityResult.Fail("SHA-256 weicht ab.") : Core.Integrity.IntegrityResult.Ok("ok");
+
+    public AllowedChild RehashChild(AllowedChild entry)
+    {
+        Changed.Remove(entry.Exe);
+        return entry with { Sha256 = new string('d', 64) };
+    }
+
+    public LearnSession? GetLearnSession(string appId) => LearnCalls.LastOrDefault() == "start:" + appId
+        ? new LearnSession { AppId = appId, StartedUtc = DateTimeOffset.UtcNow, ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30) }
+        : null;
+
+    public IReadOnlyList<SetupStepResult> StartLearning(string appId, int minutes)
+    {
+        LearnCalls.Add("start:" + appId);
+        return StartLearningFails ? [new SetupStepResult("Applikation «x» ist nicht freigegeben", false)] : [new SetupStepResult("Lernmodus gestartet", true)];
+    }
+
+    public IReadOnlyList<SetupStepResult> StopLearning(string appId)
+    {
+        LearnCalls.Add("stop:" + appId);
+        return [new SetupStepResult("Lernmodus beendet", true)];
+    }
+
+    public LearnRecording? GetRecording(string appId) => Recording;
+
+    public void DiscardRecording(string appId)
+    {
+        LearnCalls.Add("discard:" + appId);
+        Recording = null;
     }
 
     public static VerifyReport CreateReport(int deviations)
@@ -167,6 +232,34 @@ internal sealed class FakeUi : IUiServices
         Printed.Add(report);
         return true;
     }
+
+    /// <summary>Answers for Confirm in order; «Nein» when empty.</summary>
+    public Queue<bool> ConfirmAnswers { get; } = new();
+
+    public List<string> Confirmations { get; } = [];
+
+    public bool Confirm(string heading, string text)
+    {
+        Confirmations.Add(heading);
+        return ConfirmAnswers.Count > 0 && ConfirmAnswers.Dequeue();
+    }
+
+    /// <summary>What the «user» does in the helpers dialog; default: close with «Abbrechen».</summary>
+    public Func<HelpersViewModel, bool> OnHelpers { get; set; } = _ => false;
+
+    public Action<LearnViewModel> OnLearn { get; set; } = vm => vm.CancelCommand.Execute(null);
+
+    public Func<LearnResultViewModel, bool> OnLearnResult { get; set; } = vm =>
+    {
+        vm.DiscardCommand.Execute(null);
+        return false;
+    };
+
+    public bool ShowHelpers(HelpersViewModel viewModel) => OnHelpers(viewModel);
+
+    public void ShowLearn(LearnViewModel viewModel) => OnLearn(viewModel);
+
+    public bool ShowLearnResult(LearnResultViewModel viewModel) => OnLearnResult(viewModel);
 }
 
 internal static class SecureText

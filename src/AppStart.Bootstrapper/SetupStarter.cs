@@ -48,8 +48,20 @@ internal static class SetupStarter
         return BootstrapperPaths.SetupExecutable(paths.ResolveInstallRoot(reported));
     }
 
-    public static SetupStartResult VerifyAndStart(string setupPath, string? ownThumbprint, BootstrapLog log)
+    public static SetupStartResult VerifyAndStart(string setupPath, string? ownThumbprint, BootstrapLog log) =>
+        VerifyThenStart(setupPath, ownThumbprint, log, null, null, out _);
+
+    /// <summary>
+    /// /quiet /config (design D6): same signature check, then AppStart.Setup.exe with <paramref name="arguments"/>
+    /// without UI; waits and writes its output to <paramref name="outputLog"/>. <paramref name="exitCode"/> is the
+    /// exit code of apply when the status is Started.
+    /// </summary>
+    public static SetupStartResult VerifyAndRun(string setupPath, string? ownThumbprint, BootstrapLog log, string arguments, string outputLog, out int exitCode) =>
+        VerifyThenStart(setupPath, ownThumbprint, log, arguments, outputLog, out exitCode);
+
+    private static SetupStartResult VerifyThenStart(string setupPath, string? ownThumbprint, BootstrapLog log, string? arguments, string? outputLog, out int exitCode)
     {
+        exitCode = -1;
         LockedExecutable exe;
         try
         {
@@ -87,10 +99,36 @@ internal static class SetupStarter
                     UseShellExecute = false,
                     WorkingDirectory = Path.GetDirectoryName(setupPath)!,
                 };
-                using var process = Process.Start(start);
-                return process is null
-                    ? new(SetupStartStatus.StartFailed, setupPath, "Prozess wurde nicht erstellt.")
-                    : new(SetupStartStatus.Started, setupPath, $"PID {process.Id}");
+                if (arguments is null)
+                {
+                    using var wizard = Process.Start(start);
+                    return wizard is null
+                        ? new(SetupStartStatus.StartFailed, setupPath, "Prozess wurde nicht erstellt.")
+                        : new(SetupStartStatus.Started, setupPath, $"PID {wizard.Id}");
+                }
+
+                // apply without UI: output (stdout and stderr) into the log, wait for the end.
+                start.Arguments = arguments;
+                start.CreateNoWindow = true;
+                start.RedirectStandardOutput = true;
+                start.RedirectStandardError = true;
+                start.StandardOutputEncoding = System.Text.Encoding.UTF8;
+                start.StandardErrorEncoding = System.Text.Encoding.UTF8;
+                using var output = new StreamWriter(outputLog!, append: false, System.Text.Encoding.UTF8) { AutoFlush = true };
+                var gate = new Lock();
+                using var process = new Process { StartInfo = start };
+                process.OutputDataReceived += (_, e) => { if (e.Data is not null) { lock (gate) { output.WriteLine(e.Data); } } };
+                process.ErrorDataReceived += (_, e) => { if (e.Data is not null) { lock (gate) { output.WriteLine(e.Data); } } };
+                if (!process.Start())
+                {
+                    return new(SetupStartStatus.StartFailed, setupPath, "Prozess wurde nicht erstellt.");
+                }
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+                exitCode = process.ExitCode;
+                return new(SetupStartStatus.Started, setupPath, $"{arguments}: Exit-Code {exitCode}");
             }
             catch (Win32Exception ex)
             {

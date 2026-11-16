@@ -62,4 +62,4 @@ Programmdateien liegen in `C:\Program Files\AppStart\current\`. Alle Pfade stehe
 | **Signatur / Thumbprint** | Digitale Signatur der EXE. Der Thumbprint ist der Fingerabdruck des Signaturzertifikats; AppStart akzeptiert nur das bei der Freigabe erfasste Zertifikat. |
 | **SHA-256** | Prüfsumme der EXE für unsignierte Applikationen. Ändert sich bei jedem Update der Applikation. |
 | **Vorgangsnummer** | Zufällige, bis 10-stellige Nummer je abgelehntem Start. Steht in der Meldung des Launchers und im Ereignisprotokoll. |
-| **Prüfbericht** | Ergebnis von `verify` mit acht Prüfpunkten, als HTML und JSON unter `C:\ProgramData\AppStart\Reports` |
+| **Prüfbericht** | Ergebnis von `verify` mit neun Prüfpunkten, als HTML und JSON unter `C:\ProgramData\AppStart\Reports` |

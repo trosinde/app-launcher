@@ -52,7 +52,7 @@ $ViewFile = Join-Path $ViewDir 'AppStartShots.xml'
 $PublicLnk = Join-Path ([Environment]::GetFolderPath('CommonDesktopDirectory')) "$TestAppName.lnk"
 
 $AllShots = @('startmenue.png', 'bootstrapper.png', 'setup-1.png', 'setup-2.png', 'setup-3-laeuft.png', 'setup-3.png',
-    'testapp.png', 'pruefansicht-ok.png', 'pruefansicht-abweichung.png', 'verify-konsole.png',
+    'testapp.png', 'lernmodus.png', 'lernergebnis.png', 'hilfsprogramme.png', 'setup-weitere-programme.png', 'pruefansicht-ok.png', 'pruefansicht-abweichung.png', 'verify-konsole.png',
     'launcher-nicht-erreichbar.png', 'launcher-verweigert.png', 'ereignisanzeige.png')
 $Shots = [ordered]@{}
 foreach ($s in $AllShots) { $Shots[$s] = 'SKIP  nicht erreicht' }
@@ -171,6 +171,25 @@ function Close-Process($process, [int] $timeoutSec = 15) {
     if (-not $process) { return }
     foreach ($w in Get-ProcessWindows $process.Id) { Close-UiWindow $w }
     if (-not $process.WaitForExit($timeoutSec * 1000)) { try { $process.Kill() } catch { } }
+}
+
+function Find-ById($root, [string] $automationId) {
+    return $root.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::AutomationIdProperty, $automationId)))
+}
+
+function Wait-DialogWith([int] $processId, [string] $name, [int] $timeoutSec = 20) {
+    # Window of the process (top level or owned dialog below another window) that contains an element $name.
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    $winCond = New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Window)
+    do {
+        foreach ($top in @(Get-ProcessWindows $processId)) {
+            foreach ($w in @($top) + @($top.FindAll('Descendants', $winCond))) {
+                if (Find-ByName $w $name) { Start-Sleep -Milliseconds 700; return $w }
+            }
+        }
+        Start-Sleep -Milliseconds 300
+    } while ((Get-Date) -lt $deadline)
+    return $null
 }
 
 function Capture-LauncherDialog([pscredential] $op, [string] $lnk, [string] $file, [string] $expect) {
@@ -394,6 +413,95 @@ try {
         Set-ShotSkip @('testapp.png') "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
     } finally { Stop-TestApps }
 
+    # ================================================================ 3b. helper programs and learn mode (add-allowed-child-processes 8.1)
+    Write-Host "`n-- Weitere Programme, Lernmodus"
+    $childFiles = @('lernmodus.png', 'lernergebnis.png', 'hilfsprogramme.png', 'setup-weitere-programme.png')
+    $wiz = $null
+    try {
+        $wiz = Start-Process $SetupExe -WorkingDirectory $CurDir -PassThru
+        $win = Wait-ProcessWindow $wiz.Id 60
+        if (-not $win) { throw 'Fenster «AppStart Setup» erscheint nicht' }
+        if (-not (Wait-Element $win "Schutz für $TestAppName" 60)) { throw 'TestApp erscheint nicht in Schritt 1' }
+        $item = Find-ByName $win $TestAppName ([System.Windows.Automation.ControlType]::ListItem)
+        if ($item) { try { $item.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() } catch { } }
+        Start-Sleep -Milliseconds 500
+
+        # «Weitere Programme»: Nur erlaubte Hilfsprogramme
+        $combo = Find-ById $win 'ChildModeBox'
+        if (-not $combo) { throw 'Auswahl «Weitere Programme» (ChildModeBox) fehlt' }
+        $combo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand()
+        Start-Sleep -Milliseconds 500
+        $opt = Find-ByName $combo 'Nur erlaubte Hilfsprogramme' ([System.Windows.Automation.ControlType]::ListItem)
+        if (-not $opt) { $opt = Find-ByName $UIA::RootElement 'Nur erlaubte Hilfsprogramme' ([System.Windows.Automation.ControlType]::ListItem) }
+        if (-not $opt) { throw 'Eintrag «Nur erlaubte Hilfsprogramme» nicht gefunden' }
+        $opt.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+        try { $combo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Collapse() } catch { }
+        Start-Sleep -Milliseconds 500
+
+        # Dialog «Erlaubte Hilfsprogramme» (still empty) -> Lernmodus starten…
+        $btn = Find-ById $win 'HelpersButton'
+        if (-not $btn) { throw 'Knopf «Hilfsprogramme…» fehlt' }
+        $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        $helpers = Wait-DialogWith $wiz.Id 'Lernmodus starten…' 20
+        if (-not $helpers) { throw 'Dialog «Erlaubte Hilfsprogramme» erscheint nicht' }
+        Invoke-Button $helpers 'Lernmodus starten…'
+        $learn = Wait-DialogWith $wiz.Id 'Lernmodus beenden' 30
+        if (-not $learn) { throw 'Dialog «Lernmodus» erscheint nicht' }
+
+        # The operator uses the application: allowed helper (its grandchild cmd.exe) and the command prompt.
+        Start-Sleep -Seconds 3
+        $t = Get-Date
+        Start-ShortcutAs $op $lnk | Out-Null
+        $apps = @(Wait-TestApp $t 1 30)
+        if (-not $apps) { throw 'TestApp startet im Lernmodus nicht' }
+        $tw = Wait-ProcessWindow $apps[0].Id 30
+        Start-Sleep -Seconds 2
+        Invoke-Button $tw 'Erlaubtes Hilfsprogramm starten'
+        Start-Sleep -Seconds 3
+        Invoke-Button $tw 'Eingabeaufforderung starten'
+        Start-Sleep -Seconds 2
+        Close-UiWindow $tw
+        Stop-TestApps
+        Stop-OperatorCmd
+        Start-Sleep -Seconds 4   # the dialog refreshes every 2 s
+        [void](Save-Shot $learn 'lernmodus.png')
+
+        Invoke-Button $learn 'Lernmodus beenden'
+        $result = Wait-DialogWith $wiz.Id 'Verwerfen' 30
+        if (-not $result) { throw 'Dialog «Vorschläge übernehmen» erscheint nicht' }
+        [void](Save-Shot $result 'lernergebnis.png')
+        # «1 Programm übernehmen» / «{n} Programme übernehmen»: the number depends on what was recorded.
+        $take = @($result.FindAll('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Button)))) |
+            Where-Object { $_.Current.Name -like '*Programm* übernehmen' } | Select-Object -First 1
+        if (-not $take -or -not $take.Current.IsEnabled) { throw 'Knopf «… Programme übernehmen» fehlt oder ist gesperrt' }
+        $take.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+
+        # Back in «Erlaubte Hilfsprogramme» with the TestHelper on the list
+        $helpers = Wait-DialogWith $wiz.Id 'AppStart.TestHelper.exe' 30
+        if (-not $helpers) { throw 'TestHelper steht nach der Übernahme nicht in der Liste' }
+        [void](Save-Shot $helpers 'hilfsprogramme.png')
+        Invoke-Button $helpers 'Übernehmen'
+        Start-Sleep -Seconds 1
+        [void](Save-Shot $win 'setup-weitere-programme.png')
+    } catch {
+        Set-ShotSkip $childFiles "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
+    } finally {
+        Stop-TestApps
+        Stop-OperatorCmd
+        if ($wiz -and -not $wiz.HasExited) {
+            # Leave the wizard without finishing: the list is only in the wizard, apps.json stays as it was.
+            for ($i = 0; $i -lt 3 -and -not $wiz.HasExited; $i++) {
+                foreach ($w in Get-ProcessWindows $wiz.Id) {
+                    $yes = Find-ByName $w 'Ja' ([System.Windows.Automation.ControlType]::Button)
+                    if ($yes) { try { $yes.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() } catch { } } else { Close-UiWindow $w }
+                }
+                $wiz.WaitForExit(5000) | Out-Null
+            }
+            if (-not $wiz.HasExited) { try { $wiz.Kill() } catch { } }
+        }
+        Invoke-Setup @('learn', 'stop', '--app', $appId) -Quiet | Out-Null
+    }
+
     # ================================================================ 4. verify view, console
     Write-Host "`n-- Prüfansicht"
     function Capture-VerifyView([string] $file, [string] $expect) {
@@ -512,8 +620,14 @@ try {
         Start-Process eventvwr.exe -ArgumentList "/v:`"$ViewFile`""
         $mmc = Wait-NewProcess 'mmc' $beforeMmc 30
         if (-not $mmc) { throw 'Ereignisanzeige (mmc.exe) startet nicht' }
-        $w = Wait-ProcessWindow $mmc.Id 30
-        if (-not $w) { throw 'Fenster der Ereignisanzeige nicht gefunden' }
+        # mmc first shows «Snap-In hinzufügen»; wait for the main window.
+        $w = $null
+        $deadline = (Get-Date).AddSeconds(60)
+        while (-not $w -and (Get-Date) -lt $deadline) {
+            $w = @(Get-ProcessWindows $mmc.Id) | Where-Object { $_.Current.Name -like '*Ereignisanzeige*' -or $_.Current.Name -like '*Event Viewer*' } | Select-Object -First 1
+            if (-not $w) { Start-Sleep -Milliseconds 500 }
+        }
+        if (-not $w) { throw 'Hauptfenster der Ereignisanzeige nicht gefunden' }
         try { $w.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).SetWindowVisualState('Maximized') } catch { }
         Start-Sleep -Seconds 4   # view loads its events
         # Select the newest 1201 row (best effort: MMC list rows are ListItem/DataItem with the event ID as a cell)

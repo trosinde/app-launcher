@@ -1,4 +1,5 @@
 using AppStart.Core.Configuration;
+using AppStart.Core.Learning;
 using AppStart.Core.Protocol;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +21,7 @@ public sealed record StartResult(StartOutcome Outcome, string Detail, int Proces
 /// <summary>Opens, verifies and starts an application in a session (Win32 part, see <see cref="SessionLauncher"/>).</summary>
 public interface IAppStarter
 {
-    StartResult Start(AppEntry app, uint sessionId);
+    StartResult Start(AppEntry app, LaunchContext context);
 }
 
 /// <summary>Source of apps.json; read fresh on every request.</summary>
@@ -45,9 +46,12 @@ public sealed class LaunchRequestHandler(
     IAppStarter starter,
     SessionGate gate,
     ILogger<LaunchRequestHandler> log,
-    Func<long>? incidentIds = null)
+    Func<long>? incidentIds = null,
+    ILearnSource? learnSource = null,
+    TimeProvider? time = null)
 {
     private readonly Func<long> _nextIncidentId = incidentIds ?? (() => Random.Shared.NextInt64(1_000_000_000, PipeProtocol.MaxIncidentId + 1));
+    private readonly TimeProvider _time = time ?? TimeProvider.System;
 
     /// <summary>Returns the response bytes, or null when the request is malformed and must be dropped without answer.</summary>
     public byte[]? Handle(ReadOnlySpan<byte> message, RequestContext ctx)
@@ -78,10 +82,12 @@ public sealed class LaunchRequestHandler(
             return Deny(DenyReason.UnknownApp, EventIds.DeniedUnknownApp, ctx, appId, "AppId ist nicht in apps.json freigegeben.");
         }
 
+        var learn = LearnSessionFor(appId, ctx);
+
         StartResult result;
         try
         {
-            result = starter.Start(app, ctx.SessionId);
+            result = starter.Start(app, new LaunchContext(ctx.SessionId, ctx.User, learn));
         }
         catch (Exception ex)
         {
@@ -93,8 +99,9 @@ public sealed class LaunchRequestHandler(
         {
             case StartOutcome.Started:
                 log.LogInformation(EventIds.LaunchSucceeded,
-                    "Start ausgeführt. Benutzer: {User}, Session: {Session}, AppId: {AppId}, EXE: {Exe}, Prozess: {ProcessId}. {Detail}",
-                    ctx.User, ctx.SessionId, appId, app.Exe, result.ProcessId, result.Detail);
+                    "Start ausgeführt. Benutzer: {User}, Session: {Session}, AppId: {AppId}, EXE: {Exe}, Prozess: {ProcessId}, weitere Programme: {Mode}{Learn}. {Detail}",
+                    ctx.User, ctx.SessionId, appId, app.Exe, result.ProcessId, ModeText(app.ChildProcessMode),
+                    learn is null ? string.Empty : $", Lernmodus bis {learn.ExpiresUtc:u}", result.Detail);
                 return PipeProtocol.FormatOk();
             case StartOutcome.IntegrityFailed:
                 return Deny(DenyReason.Integrity, EventIds.DeniedIntegrity, ctx, appId, $"{app.Exe}: {result.Detail}");
@@ -102,6 +109,42 @@ public sealed class LaunchRequestHandler(
                 return Deny(DenyReason.Error, EventIds.LaunchFailed, ctx, appId, $"{app.Exe}: {result.Detail}");
         }
     }
+
+    // design D3: learn.json read on every request; unprotected or invalid = no learn mode + error event.
+    private LearnSession? LearnSessionFor(string appId, RequestContext ctx)
+    {
+        if (learnSource is null)
+        {
+            return null;
+        }
+
+        LearnStateLoadResult loaded;
+        try
+        {
+            loaded = learnSource.Load();
+        }
+        catch (Exception ex)
+        {
+            loaded = new LearnStateLoadResult(LearnStateSerializer.Empty, ex.Message, false);
+        }
+
+        if (!loaded.IsValid)
+        {
+            log.LogError(EventIds.LearnStateIgnored,
+                "Lernmodus ignoriert, es gilt die Positivliste. Benutzer: {User}, AppId: {AppId}. {Detail}",
+                ctx.User, appId, loaded.Error);
+            return null;
+        }
+
+        return loaded.State.ActiveFor(appId, _time.GetUtcNow());
+    }
+
+    private static string ModeText(ChildProcessMode mode) => mode switch
+    {
+        ChildProcessMode.Allowlist => "nur erlaubte Hilfsprogramme",
+        ChildProcessMode.All => "alle erlaubt",
+        _ => "gesperrt",
+    };
 
     private byte[] Deny(DenyReason reason, EventId eventId, RequestContext ctx, string appId, string detail)
     {

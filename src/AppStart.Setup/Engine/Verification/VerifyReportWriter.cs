@@ -93,6 +93,17 @@ public static class VerifyReportWriter
                 sb.Append("</ul><div class=\"expected\">").Append(E(VerificationTexts.ExpectedPrefix)).Append(' ')
                   .Append(E(check.Expected)).Append("</div></td>");
             }
+            else if (check.Findings.Count > 0)
+            {
+                // Notes of a passed check (add-allowed-child-processes: «Alle weiteren Programme erlaubt»).
+                sb.Append("<td class=\"muted\">").Append(E(check.Expected)).Append("<ul>");
+                foreach (var note in check.Findings)
+                {
+                    sb.Append("<li>").Append(E(note)).Append("</li>");
+                }
+
+                sb.Append("</ul></td>");
+            }
             else
             {
                 sb.Append("<td class=\"muted\">").Append(E(check.Expected)).Append("</td>");

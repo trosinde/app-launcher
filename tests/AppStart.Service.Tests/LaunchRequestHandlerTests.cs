@@ -1,5 +1,6 @@
 using System.Text;
 using AppStart.Core.Configuration;
+using AppStart.Core.Learning;
 using AppStart.Core.Protocol;
 using AppStart.Service.Launch;
 using Microsoft.Extensions.Logging;
@@ -36,7 +37,11 @@ public class LaunchRequestHandlerTests
     public void Released_app_is_started_in_the_requesting_session()
     {
         Assert.Equal("OK", Send("START app-a"));
-        Assert.Equal((App, 3u), Assert.Single(_starter.Calls));
+        var call = Assert.Single(_starter.Calls);
+        Assert.Equal(App, call.App);
+        Assert.Equal(3u, call.Context.SessionId);
+        Assert.Equal(@"PC\bediener", call.Context.User);
+        Assert.Null(call.Context.Learn);
         var entry = Assert.Single(_log.Entries);
         Assert.Equal(EventIds.LaunchSucceeded, entry.Id);
         Assert.Contains(@"PC\bediener", entry.Message, StringComparison.Ordinal);
@@ -133,6 +138,64 @@ public class LaunchRequestHandlerTests
         Assert.InRange(r.IncidentId, 1_000_000_000, PipeProtocol.MaxIncidentId);
     }
 
+    // ------------------------------------------------ learn mode (add-allowed-child-processes D3)
+
+    private LaunchRequestHandler WithLearn(FakeLearn learn) =>
+        new(_config, _starter, new SessionGate(_time, TimeSpan.Zero), _log, () => 4711, learn, _time);
+
+    [Fact]
+    public void Active_learn_mode_is_passed_to_the_starter_and_logged()
+    {
+        var learn = new FakeLearn(new LearnStateLoadResult(LearnStateSerializer.Empty.Start("app-a", 30, _time.GetUtcNow()), null, false));
+
+        Assert.NotNull(WithLearn(learn).Handle("START app-a"u8, _ctx));
+
+        Assert.NotNull(Assert.Single(_starter.Calls).Context.Learn);
+        Assert.Contains("Lernmodus bis", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Learn_mode_of_another_app_or_expired_does_not_apply()
+    {
+        var state = LearnStateSerializer.Empty.Start("app-b", 30, _time.GetUtcNow()).Start("app-a", 5, _time.GetUtcNow().AddMinutes(-10));
+        WithLearn(new FakeLearn(new LearnStateLoadResult(state, null, false))).Handle("START app-a"u8, _ctx);
+
+        Assert.Null(Assert.Single(_starter.Calls).Context.Learn);
+    }
+
+    // Spec app-launch, scenario «Manipulierte Steuerdatei».
+    [Fact]
+    public void Unprotected_learn_file_is_ignored_with_error_event_and_the_app_still_starts()
+    {
+        var learn = new FakeLearn(new LearnStateLoadResult(LearnStateSerializer.Empty, @"C:\ProgramData\AppStart\learn.json ist nicht geschützt.", true));
+
+        Assert.Equal("OK", Encoding.ASCII.GetString(WithLearn(learn).Handle("START app-a"u8, _ctx)!));
+
+        Assert.Null(Assert.Single(_starter.Calls).Context.Learn);
+        Assert.Contains(_log.Entries, e => e.Id == EventIds.LearnStateIgnored);
+    }
+
+    [Fact]
+    public void Learn_file_is_read_on_every_request()
+    {
+        var learn = new FakeLearn(new LearnStateLoadResult(LearnStateSerializer.Empty, null, false));
+        var handler = WithLearn(learn);
+        handler.Handle("START app-a"u8, _ctx);
+        handler.Handle("START app-a"u8, _ctx);
+        Assert.Equal(2, learn.Loads);
+    }
+
+    private sealed class FakeLearn(LearnStateLoadResult result) : ILearnSource
+    {
+        public int Loads { get; private set; }
+
+        public LearnStateLoadResult Load()
+        {
+            Loads++;
+            return result;
+        }
+    }
+
     private sealed class FakeConfig : IConfigSource
     {
         public ConfigLoadResult Result { get; set; } = ConfigLoadResult.Ok(new AppsConfig { Version = 1, Apps = [App] });
@@ -148,15 +211,15 @@ public class LaunchRequestHandlerTests
 
     private sealed class FakeStarter : IAppStarter
     {
-        public List<(AppEntry, uint)> Calls { get; } = [];
+        public List<(AppEntry App, LaunchContext Context)> Calls { get; } = [];
 
         public StartResult Next { get; set; } = new(StartOutcome.Started, "SHA-256 stimmt.", 1234);
 
         public bool Throw { get; set; }
 
-        public StartResult Start(AppEntry app, uint sessionId)
+        public StartResult Start(AppEntry app, LaunchContext context)
         {
-            Calls.Add((app, sessionId));
+            Calls.Add((app, context));
             return Throw ? throw new InvalidOperationException("boom") : Next;
         }
     }

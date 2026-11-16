@@ -29,6 +29,15 @@ public static class VerificationTexts
     public const string RegistryTitle = "Registry-Key je App";
     public const string RegistryExpected = "für Bediener nicht lesbar";
 
+    public const string HelpersTitle = "Hilfsprogramme je App";
+    public const string HelpersExpected = "vorhanden, Prüfung bestanden, Ordner für Bediener nicht beschreibbar; kein Lernmodus aktiv; «Alle erlaubt» als Hinweis";
+    public const string HelpersAllAllowed = "Hinweis: Alle weiteren Programme erlaubt ({0})";
+    public const string HelperMissing = "{0}: Hilfsprogramm {1} fehlt";
+    public const string HelperCheckFailed = "{0}: {1} besteht die Prüfung nicht ({2}). Nach einem Update: AppStart.Setup.exe rehash --app {0} --child \"{1}\"";
+    public const string HelperWritable = "{0}: Ordner oder Datei von {1} ist für Bediener beschreibbar";
+    public const string LearnActive = "{0}: Lernmodus aktiv bis {1}. Beenden: AppStart.Setup.exe learn stop --app {0}";
+    public const string LearnStateInvalid = "Steuerdatei des Lernmodus wird vom Dienst ignoriert: {0}";
+
     public const string ShortcutsTitle = "Verknüpfungen";
     public const string ShortcutsExpected = "zeigen auf den Launcher, keine direkte Verknüpfung auf die App-EXE";
 

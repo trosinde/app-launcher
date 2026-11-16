@@ -23,6 +23,25 @@ public sealed class UiServices : IUiServices
         window.ShowDialog();
     }
 
+    public bool Confirm(string heading, string text) =>
+        MessageBox.Show(Owner ?? Application.Current?.MainWindow!, text, heading, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
+        == MessageBoxResult.Yes;
+
+    public bool ShowHelpers(HelpersViewModel viewModel)
+    {
+        var ui = new UiServices();
+        var window = new HelpersWindow(viewModel) { Owner = Owner };
+        ui.Owner = window;
+        // The dialog's own dialogs (file picker, learn mode) belong to it, not to the wizard.
+        viewModel.SetUi(ui);
+        return window.ShowDialog() == true;
+    }
+
+    public void ShowLearn(LearnViewModel viewModel) => new LearnWindow(viewModel) { Owner = Owner }.ShowDialog();
+
+    public bool ShowLearnResult(LearnResultViewModel viewModel) =>
+        new LearnResultWindow(viewModel) { Owner = Owner }.ShowDialog() == true;
+
     public IReadOnlyList<string> PickExeFiles()
     {
         var dialog = new OpenFileDialog

@@ -34,6 +34,7 @@ public sealed class ProtectionService : IProtectionService
 {
     public const string ReportsFolderName = "Reports";
     public const string ShortcutBackupFolderName = "ShortcutBackup";
+    public const string LearnFolderName = "Learn";
 
     private const string FileFullAccess = "FA";
     private const string KeyFullAccess = "KA";
@@ -76,6 +77,7 @@ public sealed class ProtectionService : IProtectionService
                      baseDirectory,
                      Path.Combine(baseDirectory, ReportsFolderName),
                      Path.Combine(baseDirectory, ShortcutBackupFolderName),
+                     Path.Combine(baseDirectory, LearnFolderName), // recordings of the learn mode (design D3)
                  })
         {
             Directory.CreateDirectory(folder);

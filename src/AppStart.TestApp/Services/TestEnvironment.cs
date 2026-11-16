@@ -20,6 +20,12 @@ public enum ChildProcessOutcome
 
     /// <summary>Start failed for another reason.</summary>
     Failed,
+
+    /// <summary>AppStart terminated the process at once (mode allowlist, not on the list): exit code 0xC0DE or access denied at start.</summary>
+    TerminatedByService,
+
+    /// <summary>The program ran and ended normally (helper allowed).</summary>
+    Ran,
 }
 
 /// <summary>Abstraction of everything the test app touches on the machine, so the view model stays testable.</summary>
@@ -42,6 +48,9 @@ public interface ITestEnvironment
     void Save(string testValue);
 
     (ChildProcessOutcome Outcome, string Detail) TryStartCommandPrompt();
+
+    /// <summary>Starts AppStart.TestHelper.exe next to the TestApp and waits for its end.</summary>
+    (ChildProcessOutcome Outcome, string Detail) TryStartHelper();
 }
 
 /// <summary>
@@ -56,6 +65,18 @@ public sealed class TestEnvironment : ITestEnvironment
     public const string TestPassword = "AppStartTest-Passwort-0815";
 
     private const int ErrorNotEnoughQuota = 1816;
+    private const int ErrorAccessDenied = 5;
+
+    // Terminated while CreateProcess was still setting the process up (seen on the test VM).
+    private const int ErrorPartialCopy = 299;
+
+    private static bool TerminatedDuringStart(Win32Exception ex) =>
+        ex.NativeErrorCode is ErrorAccessDenied or ErrorPartialCopy;
+
+    /// <summary>Exit code the AppStart service uses when it terminates a process that is not allowed (JobMonitor).</summary>
+    private const int TerminatedByAppStart = 0xC0DE;
+
+    public const string HelperFileName = "AppStart.TestHelper.exe";
 
     public string AccountName { get; } = WindowsIdentity.GetCurrent().Name;
 
@@ -140,12 +161,66 @@ public sealed class TestEnvironment : ITestEnvironment
         try
         {
             // Visible console on purpose: this is exactly the breakout an operator could attempt.
-            var process = Process.Start(new ProcessStartInfo("cmd.exe") { UseShellExecute = false, CreateNoWindow = false });
-            return (ChildProcessOutcome.Started, $"cmd.exe gestartet (PID {process?.Id})");
+            using var process = Process.Start(new ProcessStartInfo("cmd.exe") { UseShellExecute = false, CreateNoWindow = false })!;
+            // In mode allowlist the service terminates it within milliseconds (Spike 1.1).
+            if (process.WaitForExit(1500) && process.ExitCode == TerminatedByAppStart)
+            {
+                return (ChildProcessOutcome.TerminatedByService, $"cmd.exe beendet (Exit-Code 0x{process.ExitCode:X})");
+            }
+
+            return (ChildProcessOutcome.Started, $"cmd.exe gestartet (PID {process.Id})");
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorNotEnoughQuota)
         {
             return (ChildProcessOutcome.BlockedByJob, ex.Message);
+        }
+        catch (Win32Exception ex) when (TerminatedDuringStart(ex))
+        {
+            return (ChildProcessOutcome.TerminatedByService, ex.Message); // terminated before CreateProcess returned
+        }
+        catch (Win32Exception ex)
+        {
+            return (ChildProcessOutcome.Failed, ex.Message);
+        }
+    }
+
+    public (ChildProcessOutcome Outcome, string Detail) TryStartHelper()
+    {
+        var helper = Path.Combine(AppContext.BaseDirectory, HelperFileName);
+        if (!File.Exists(helper))
+        {
+            return (ChildProcessOutcome.Failed, $"{helper} fehlt");
+        }
+
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(helper)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8, // the helper writes UTF-8
+            })!;
+            var output = process.StandardOutput.ReadToEnd().Trim();
+            if (!process.WaitForExit(10_000))
+            {
+                return (ChildProcessOutcome.Failed, "Keine Antwort nach 10 s");
+            }
+
+            return process.ExitCode switch
+            {
+                0 => (ChildProcessOutcome.Ran, output),
+                TerminatedByAppStart => (ChildProcessOutcome.TerminatedByService, $"Exit-Code 0x{process.ExitCode:X}"),
+                _ => (ChildProcessOutcome.Failed, $"Exit-Code {process.ExitCode}"),
+            };
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorNotEnoughQuota)
+        {
+            return (ChildProcessOutcome.BlockedByJob, ex.Message);
+        }
+        catch (Win32Exception ex) when (TerminatedDuringStart(ex))
+        {
+            return (ChildProcessOutcome.TerminatedByService, ex.Message);
         }
         catch (Win32Exception ex)
         {

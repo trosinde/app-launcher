@@ -23,7 +23,7 @@ Letzter Lauf: 15.11.2026, Windows 11 Pro 10.0.26300, MSI 0.1.0-dev.2 (mit Launch
 ## Setup über die Kommandozeile
 
 `Invoke-SetupE2E.ps1 -MsiPath <msi>` (als Admin): MSI installieren, `add` TestApp mit Datenordner und
-Registry-Key, `add-user`, `list`, `verify` (8 von 8), Start über die angelegte Verknüpfung, absichtliche
+Registry-Key, `add-user`, `list`, `verify` (9 von 9), Start über die angelegte Verknüpfung, absichtliche
 Fehlkonfiguration, `uninstall` (Konten, Verknüpfungen und Rechte zurückgestellt), MSI deinstallieren.
 
 Letzter Lauf: 15.11.2026, MSI 0.2.0-dev.3: 19 PASS, 0 FAIL.
@@ -77,6 +77,12 @@ Launcher ohne `--app` bzw. mit Zusatzargument. Ausgabe `acceptance-run.txt`, `ac
   gestartet aus neuer Datei; genau ein Produkt mit der neuen Version; verify 0; Start als Bediener.
   Die TestApp wird dafür aus einer Kopie in `C:\Program Files\AppStartTestApp` freigegeben (wie eine
   echte Fremdapplikation), weil das Update die TestApp im Paket ersetzt.
+- apps.json Version 1 (add-allowed-child-processes 7.2), nur wenn das erste MSI noch Version 1 schreibt
+  (z. B. aus `main` vor diesem Change): nach dem Update startet der Dienst die TestApp wie `blocked`
+  (cmd.exe blockiert). Die erste Änderung (`rehash --app`) schreibt Version 2 mit `blocked`, SDDL von
+  apps.json gleich. Danach von Hand Version 1 mit `allowChildProcesses: true`: cmd.exe läuft, die
+  Migration ergibt `all`. Zum Schluss `set-children --mode blocked`. Im UAT-Runner als Suite `Install`
+  mit `previousMsiPath` in request.json bzw. `-PreviousMsiPath`.
 - Optional `-BootstrapperPath` (Kopie nach `C:\Users\Public\Downloads`): 1618 über den Bootstrapper
   (Exit ≠ 0, Log in `Logs`, kein Wizard), interaktiver Start mit Abbruch im Wizard (Wizard aus dem
   Programmordner, bleibt installiert, Startmenü-Eintrag, verify ≠ 0), `/quiet` (Exit 0, MSI in

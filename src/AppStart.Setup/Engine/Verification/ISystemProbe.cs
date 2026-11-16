@@ -53,6 +53,12 @@ public interface ISystemProbe
 
     /// <summary>Opens the EXE locked (<see cref="LockedExecutable"/>) and runs <see cref="ExecutableVerifier.Verify"/>.</summary>
     IntegrityResult VerifyExecutable(AppEntry app);
+
+    /// <summary>Same for a helper program (add-allowed-child-processes).</summary>
+    IntegrityResult VerifyChild(AllowedChild child);
+
+    /// <summary><see cref="AppStart.Core.Learning.LearnStateStore.Load"/>: learn.json with its ACL check.</summary>
+    AppStart.Core.Learning.LearnStateLoadResult LoadLearnState(string path);
 }
 
 /// <summary>

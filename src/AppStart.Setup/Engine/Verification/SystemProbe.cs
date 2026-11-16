@@ -209,6 +209,21 @@ public sealed partial class SystemProbe : ISystemProbe
         }
     }
 
+    public IntegrityResult VerifyChild(AllowedChild child)
+    {
+        try
+        {
+            using var exe = LockedExecutable.Open(child.Exe);
+            return ExecutableVerifier.Verify(child, exe);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return IntegrityResult.Fail(ex.Message);
+        }
+    }
+
+    public AppStart.Core.Learning.LearnStateLoadResult LoadLearnState(string path) => AppStart.Core.Learning.LearnStateStore.Load(path);
+
     public IntegrityResult VerifyExecutable(AppEntry app)
     {
         try

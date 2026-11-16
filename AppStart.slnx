@@ -6,6 +6,7 @@
     <Project Path="src/AppStart.Service/AppStart.Service.csproj" />
     <Project Path="src/AppStart.Setup/AppStart.Setup.csproj" />
     <Project Path="src/AppStart.TestApp/AppStart.TestApp.csproj" />
+    <Project Path="src/AppStart.TestHelper/AppStart.TestHelper.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AppStart.Bootstrapper.Tests/AppStart.Bootstrapper.Tests.csproj" />

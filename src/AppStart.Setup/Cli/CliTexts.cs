@@ -41,5 +41,39 @@ public static class CliTexts
 
     public const string AutoVerify = "Automatische Prüfung nach der Änderung:";
 
+    // add-allowed-child-processes, design D4
+    public const string IdOption = "AppId festlegen (a-z, 0-9, -; sonst aus dem Dateinamen). Nur bei einer neuen Freigabe.";
+    public const string ChildProcessesOption = "Weitere Programme: blocked (gesperrt), allowlist (nur erlaubte Hilfsprogramme) oder all (alle erlaubt).";
+    public const string SetChildrenDescription = "Stellt ein, welche weiteren Programme eine Applikation starten darf.";
+    public const string ModeOption = "blocked, allowlist oder all. allowlist braucht mindestens ein Hilfsprogramm.";
+    public const string AllowChildDescription = "Erlaubt einer Applikation ein Hilfsprogramm (Modus wird «nur erlaubte Hilfsprogramme»).";
+    public const string DenyChildDescription = "Entfernt ein Hilfsprogramm aus der Liste (beim letzten wird der Modus wieder «gesperrt»).";
+    public const string ChildExeOption = "Pfad zur EXE des Hilfsprogramms.";
+    public const string CheckOption = "Prüfung signature oder sha256 (ohne Angabe: Signatur, wenn gültig signiert, sonst SHA-256).";
+    public const string AllowShellOption = "Bestätigt, dass eine Shell oder ein Skript-Host erlaubt werden soll (z.B. cmd.exe, powershell.exe).";
+    public const string RehashChildOption = "Nur die Prüfsumme dieses Hilfsprogramms neu erfassen.";
+    public const string ChildModeLine = "Weitere Programme: {0}";
+    public const string CheckSignature = "Signatur";
+    public const string CheckSha256 = "SHA-256";
+    public const string ShellMark = " – Shell oder Skript-Host";
+
+    public const string LearnDescription = "Lernmodus: zeichnet auf, welche Programme eine Applikation startet, und übernimmt sie als Hilfsprogramme.";
+    public const string LearnStartDescription = "Startet den Lernmodus für eine Applikation.";
+    public const string MinutesOption = "Dauer in Minuten (5 bis 120, Standard 30).";
+    public const string LearnStopDescription = "Beendet den Lernmodus sofort.";
+    public const string LearnShowDescription = "Zeigt, was der Lernmodus aufgezeichnet hat.";
+    public const string LearnApplyDescription = "Übernimmt aufgezeichnete Programme als Hilfsprogramme und löscht die Aufzeichnung.";
+    public const string LearnAllOption = "Alle aufgezeichneten Programme ausser Shells und Skript-Hosts.";
+    public const string LearnExeOption = "Nur diese aufgezeichneten Programme (mehrfach möglich).";
+    public const string LearnApplyUsage = "Bitte genau eine Angabe machen: --all oder --exe <Pfad> (mehrfach möglich).";
+    public const string LearnInactive = "Lernmodus für «{0}»: nicht aktiv.";
+    public const string LearnActiveUntil = "Lernmodus für «{0}»: aktiv bis {1}.";
+    public const string LearnEmpty = "Nichts aufgezeichnet.";
+    public const string LearnProgramLine = "    {0} Start(s), Prüfung {1}, zuletzt {2}";
+
+    public const string ApplyDescription = "Richtet AppStart nach einer Antwortdatei ein (stille Installation). Zweimal angewendet ändert nichts.";
+    public const string ConfigOption = "Antwortdatei (JSON) mit Applikationen, Schutz, weiteren Programmen und Bedienern.";
+    public const string ReplaceOption = "Applikationen, die nicht in der Antwortdatei stehen, werden entfernt.";
+
     public const string UninstallDescription = "Stellt alles zurück, was das Setup geändert hat (vor der Deinstallation des MSI ausführen).";
 }

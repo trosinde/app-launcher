@@ -15,7 +15,7 @@ Allgemeines:
 - Das Programm verlangt Admin-Rechte (UAC). Für die Kommandozeile eine Eingabeaufforderung oder PowerShell «Als Administrator ausführen» öffnen; nur dann erscheinen Ausgaben und Passwortabfrage im selben Fenster.
 - `AppStart.Setup.exe` ist ein Windows-Programm. In Batch-Dateien wartet `cmd` auf das Ende; in einer interaktiven Eingabeaufforderung `start "" /wait` voranstellen, damit `%ERRORLEVEL%` den Exit-Code enthält. In PowerShell `Start-Process … -Wait -PassThru` verwenden (Beispiel im Kapitel [Installation](03-installation.md)).
 - Pfade mit Leerzeichen in Anführungszeichen setzen.
-- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab.
+- Ändernde Befehle (`add`, `add-user`, `remove`, `rehash`, `set-children`, `allow-child`, `deny-child`, `learn apply`, `apply`) führen danach automatisch `verify` aus und legen einen Prüfbericht ab. `learn start` und `learn stop` ändern `apps.json` nicht und prüfen nicht automatisch.
 
 Exit-Codes:
 
@@ -23,7 +23,7 @@ Exit-Codes:
 |---|---|
 | 0 | Erfolgreich, Prüfung ohne Abweichung |
 | 1 | Ein Schritt ist fehlgeschlagen, die Prüfung hat Abweichungen gefunden, oder Befehl bzw. Optionen sind ungültig (z.B. Pflichtoption fehlt) |
-| 2 | `add-user`: falsche oder fehlende Angabe, Passwort leer oder verschieden. Assistent: vor der Einrichtung abgebrochen. `startmenu`: weder oder beide Optionen. |
+| 2 | Ungültige Angabe, nichts wurde geändert: `add-user` (falsche oder fehlende Angabe, Passwort leer oder verschieden), `add --id` ungültig oder vergeben, «nur erlaubte Hilfsprogramme» ohne Eintrag, Shell ohne `--allow-shell`, Prüfung `signature` für eine nicht signierte Datei, Dauer des Lernmodus ausserhalb 5–120, `learn apply` ohne oder mit beiden Angaben `--all`/`--exe`. Assistent: vor der Einrichtung abgebrochen. `startmenu`: weder oder beide Optionen. |
 
 Optionen für alle Befehle:
 
@@ -41,6 +41,11 @@ Optionen für alle Befehle:
 | `add-user` | Bedienerkonto anlegen oder Benutzer in die Gruppe aufnehmen |
 | `remove` | Freigabe entziehen |
 | `rehash` | Nach Update der Applikation Signatur bzw. Prüfsumme neu erfassen |
+| `set-children` | Weitere Programme: gesperrt, nur erlaubte Hilfsprogramme oder alle erlaubt |
+| `allow-child` | Hilfsprogramm erlauben |
+| `deny-child` | Hilfsprogramm entfernen |
+| `learn start`, `learn stop`, `learn show`, `learn apply` | Lernmodus |
+| `apply` | Einrichtung nach Antwortdatei (stille Installation) |
 | `list` | Freigaben, Gruppe und Dienst anzeigen |
 | `verify` | Einrichtung prüfen, Prüfbericht ablegen |
 | `uninstall` | Alles zurückstellen (vor der MSI-Deinstallation) |
@@ -51,7 +56,7 @@ Optionen für alle Befehle:
 Gibt eine Applikation frei oder aktualisiert ihre Freigabe.
 
 ```text
-AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"] [--name "<Anzeigename>"]
+AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"] [--name "<Anzeigename>"] [--id <AppId>] [--child-processes blocked|allowlist|all]
 ```
 
 | Option | Pflicht | Beschreibung |
@@ -60,8 +65,10 @@ AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"
 | `--data-dir <Ordner>` | nein | Datenordner (Austauschdateien), wird für Bediener gesperrt. |
 | `--reg-key <Key>` | nein | Registry-Key mit Passwörtern unter HKLM\\, wird für Bediener gesperrt. |
 | `--name <Anzeigename>` | nein | Anzeigename (Name der Verknüpfung). |
+| `--id <AppId>` | nein | AppId festlegen (a-z, 0-9, -; sonst aus dem Dateinamen). Nur bei einer neuen Freigabe. |
+| `--child-processes <Modus>` | nein | Weitere Programme: blocked (gesperrt), allowlist (nur erlaubte Hilfsprogramme) oder all (alle erlaubt). |
 
-Ohne `--name`: Dateibeschreibung, sonst Produktname der EXE, sonst Dateiname. Ist die EXE schon freigegeben, werden Signatur bzw. Prüfsumme neu erfasst und angegebene Werte übernommen; AppId und nicht angegebene Werte bleiben.
+Ohne `--name`: Dateibeschreibung, sonst Produktname der EXE, sonst Dateiname. Ist die EXE schon freigegeben, werden Signatur bzw. Prüfsumme neu erfasst und angegebene Werte übernommen; AppId und nicht angegebene Werte bleiben. Meldungen zu `--id` (Exit-Code 2): «AppId «My App» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis 32 Zeichen.», «AppId «app-a» ist bereits vergeben.», «Die Applikation ist bereits als «app-a» freigegeben; die AppId lässt sich nicht ändern (remove, dann add).» `--child-processes allowlist` geht nur, wenn die Applikation schon Hilfsprogramme hat; sonst zuerst `allow-child`.
 
 Beispiele:
 
@@ -115,14 +122,165 @@ Beispiel: `AppStart.Setup.exe remove --app app-a`
 Erfasst nach einem Update der Applikation Signatur oder Prüfsumme neu.
 
 ```text
-AppStart.Setup.exe rehash --app <AppId>
+AppStart.Setup.exe rehash --app <AppId> [--child "<Pfad>"]
 ```
 
 | Option | Pflicht | Beschreibung |
 |---|---|---|
 | `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--child <Pfad>` | nein | Nur die Prüfsumme dieses Hilfsprogramms neu erfassen. |
 
-Beispiel: `AppStart.Setup.exe rehash --app appstart-testapp`. Wendet zugleich Schutz und Verknüpfungen aller Applikationen erneut an.
+Beispiel: `AppStart.Setup.exe rehash --app appstart-testapp`. Wendet zugleich Schutz und Verknüpfungen aller Applikationen erneut an. Ohne `--child` werden auch die Prüfsummen aller Hilfsprogramme mit SHA-256 neu erfasst; Hilfsprogramme mit Signatur brauchen das nicht.
+
+### `set-children`
+
+Stellt ein, welche weiteren Programme eine Applikation starten darf.
+
+```text
+AppStart.Setup.exe set-children --app <AppId> --mode blocked|allowlist|all
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--mode <Modus>` | ja | blocked, allowlist oder all. allowlist braucht mindestens ein Hilfsprogramm. |
+
+Erklärung der Modi: [Applikationen verwalten → Weitere Programme](04-applikationen-verwalten.md). Mit `blocked` oder `all` wird die Liste der Hilfsprogramme verworfen.
+
+### `allow-child`
+
+Erlaubt einer Applikation ein Hilfsprogramm (Modus wird «nur erlaubte Hilfsprogramme»).
+
+```text
+AppStart.Setup.exe allow-child --app <AppId> --exe "<Pfad>" [--check signature|sha256] [--allow-shell]
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--exe <Pfad>` | ja | Pfad zur EXE des Hilfsprogramms. |
+| `--check <Prüfung>` | nein | Prüfung signature oder sha256 (ohne Angabe: Signatur, wenn gültig signiert, sonst SHA-256). |
+| `--allow-shell` | nein | Bestätigt, dass eine Shell oder ein Skript-Host erlaubt werden soll (z.B. cmd.exe, powershell.exe). |
+
+Exit-Code 1, wenn das Programm in einem Ordner liegt, den Bediener beschreiben können; Exit-Code 2 bei einer Shell ohne `--allow-shell`.
+
+### `deny-child`
+
+Entfernt ein Hilfsprogramm aus der Liste (beim letzten wird der Modus wieder «gesperrt»).
+
+```text
+AppStart.Setup.exe deny-child --app <AppId> --exe "<Pfad>"
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--exe <Pfad>` | ja | Pfad zur EXE des Hilfsprogramms. |
+
+### `learn`
+
+Lernmodus: zeichnet auf, welche Programme eine Applikation startet, und übernimmt sie als Hilfsprogramme. Ablauf und Hinweise: [Applikationen verwalten → Lernmodus](04-applikationen-verwalten.md).
+
+```text
+AppStart.Setup.exe learn start --app <AppId> [--minutes <5–120>]
+AppStart.Setup.exe learn stop  --app <AppId>
+AppStart.Setup.exe learn show  --app <AppId>
+AppStart.Setup.exe learn apply --app <AppId> (--all | --exe "<Pfad>" [--exe "<Pfad>" …])
+```
+
+#### `learn start`
+
+Startet den Lernmodus für eine Applikation.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--minutes <Minuten>` | nein | Dauer in Minuten (5 bis 120, Standard 30). |
+
+#### `learn stop`
+
+Beendet den Lernmodus sofort.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+
+#### `learn show`
+
+Zeigt, was der Lernmodus aufgezeichnet hat.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+
+Ausgabe:
+
+```text
+Lernmodus für «app-a»: aktiv bis 15.11.2026 10:55.
+C:\Program Files\Hersteller\AppA\Export.exe
+    3 Start(s), Prüfung Signatur, zuletzt 15.11.2026 10:41:07
+C:\Windows\System32\cmd.exe – Shell oder Skript-Host
+    1 Start(s), Prüfung Signatur, zuletzt 15.11.2026 10:44:10
+```
+
+Ohne laufenden Lernmodus erste Zeile «Lernmodus für «app-a»: nicht aktiv.», ohne Aufzeichnung «Nichts aufgezeichnet.»
+
+#### `learn apply`
+
+Übernimmt aufgezeichnete Programme als Hilfsprogramme und löscht die Aufzeichnung.
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--app <AppId>` | ja | AppId der Applikation (siehe list). |
+| `--all` | eine von beiden | Alle aufgezeichneten Programme ausser Shells und Skript-Hosts. |
+| `--exe <Pfad>` | eine von beiden | Nur diese aufgezeichneten Programme (mehrfach möglich). |
+
+Ohne oder mit beiden Angaben: «Bitte genau eine Angabe machen: --all oder --exe \<Pfad> (mehrfach möglich).», Exit-Code 2. Setzt den Modus auf «nur erlaubte Hilfsprogramme» und beendet einen noch laufenden Lernmodus.
+
+### `apply`
+
+Richtet AppStart nach einer Antwortdatei ein (stille Installation). Zweimal angewendet ändert nichts.
+
+```text
+AppStart.Setup.exe apply --config "<Datei>" [--replace]
+```
+
+| Option | Pflicht | Beschreibung |
+|---|---|---|
+| `--config <Datei>` | ja | Antwortdatei (JSON) mit Applikationen, Schutz, weiteren Programmen und Bedienern. |
+| `--replace` | nein | Applikationen, die nicht in der Antwortdatei stehen, werden entfernt. |
+
+Der Befehl prüft zuerst die ganze Datei. Bei einem Fehler ändert er nichts, nennt alle Fehler mit Feld (z.B. `apps[0].allowedChildren[1].exe`) und endet mit Exit-Code 2. Fehlt die Datei: «Antwortdatei … nicht gefunden.» Liegt ein Hilfsprogramm in einem Ordner, den Bediener beschreiben können, ändert er ebenfalls nichts (Exit-Code 1). Danach richtet er alles ein wie der Assistent und prüft automatisch. Ohne `--replace` bleiben andere Applikationen und bisherige Mitglieder der Gruppe; mit `--replace` gilt nur, was in der Datei steht.
+
+Format der Antwortdatei (JSON, ohne Kommentare und ohne Kommas am Ende; unbekannte Felder sind Fehler):
+
+```json
+{
+  "version": 1,
+  "apps": [{
+    "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
+    "id": "appa", "name": "Applikation A",
+    "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
+    "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA",
+    "childProcesses": "allowlist",
+    "allowedChildren": [ { "exe": "C:\\Program Files\\Hersteller\\AppA\\Export.exe" } ]
+  }],
+  "operators": [ "DOMAIN\\Bediener-Gruppe" ]
+}
+```
+
+| Feld | Pflicht | Inhalt |
+|---|---|---|
+| `version` | ja | `1` |
+| `apps[].exe` | ja | Absoluter Pfad zur EXE; die Datei muss vorhanden sein. |
+| `apps[].id`, `name` | nein | AppId und Anzeigename wie bei `add --id` und `--name`. |
+| `apps[].dataDir`, `registryKey` | nein | wie bei `add` |
+| `apps[].check` | nein | `signature` oder `sha256`; sonst Signatur, wenn gültig signiert. |
+| `apps[].childProcesses` | nein | `blocked` (Standard), `allowlist` oder `all` |
+| `apps[].allowedChildren[]` | bei `allowlist` | `exe` (Pflicht), `check` (wie oben), `allowShell: true` für Shells und Skript-Hosts |
+| `operators` | nein | Konten oder Gruppen für «AppStart Users» |
+
+Signatur-Thumbprints und Prüfsummen stehen nicht in der Datei; der Befehl liest sie auf dem Zielrechner aus den Dateien. Passwörter gehören nicht in die Datei: Das lokale Bedienerkonto legt weiterhin `add-user --name appstart-user --password-stdin` an.
 
 ### `list`
 
@@ -132,7 +290,7 @@ Zeigt freigegebene Applikationen, Bediener und Dienststatus.
 AppStart.Setup.exe list
 ```
 
-Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-applikationen-verwalten.md). Exit-Code immer 0.
+Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-applikationen-verwalten.md); je Applikation zusätzlich die Zeile «Weitere Programme: …» und darunter die erlaubten Hilfsprogramme mit Prüfung, Shells mit dem Zusatz «– Shell oder Skript-Host». Exit-Code immer 0.
 
 ### `verify`
 
@@ -189,13 +347,14 @@ Genau eine Option angeben, sonst Exit-Code 2.
 ## Installationsprogramm AppStart-Setup.exe
 
 ```text
-AppStart-Setup.exe [/quiet | /?]
+AppStart-Setup.exe [/quiet [/config <Antwortdatei>] | /?]
 ```
 
 | Parameter | Wirkung |
 |---|---|
 | (keiner) | Installiert AppStart und startet danach die Einrichtung |
 | `/quiet` (auch `/q`, `-quiet`, `--quiet`) | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec`. |
+| `/config <Antwortdatei>` (auch `-config`, `--config`) | Nur zusammen mit `/quiet`: Nach erfolgreicher Installation (oder wenn dieselbe Version schon installiert ist) führt es das installierte, signaturgeprüfte `AppStart.Setup.exe apply --config <Antwortdatei>` ohne Oberfläche aus und wartet. Der Pfad muss absolut sein und darf keine Anführungszeichen enthalten. Format der Datei: [`apply`](#apply). Ausgabe in `C:\ProgramData\AppStart\Logs\apply-<JJJJMMTT-hhmmss>.log`. |
 | `/?` (auch `/h`, `/help`, `-?`, `-h`, `--help`) | Zeigt die Hilfe. Zusammen mit `/quiet` ungültig. |
 
 Exit-Codes:
@@ -207,7 +366,9 @@ Exit-Codes:
 | 1 | Installiert, aber die Einrichtung konnte nicht gestartet werden |
 | 2 | Installiert, aber `AppStart.Setup.exe` fehlt |
 | 5 | Ohne Administratorrechte gestartet |
-| 87 | Unbekannter Parameter |
+| 10 | `/config`: installiert, aber die Einrichtung endete mit Fehler oder Abweichung (`apply` Exit-Code 1) |
+| 11 | `/config`: installiert, aber die Antwortdatei ist ungültig, nichts eingerichtet (`apply` Exit-Code 2) |
+| 87 | Unbekannter Parameter, `/config` ohne `/quiet`, Pfad fehlt, ist relativ oder enthält Anführungszeichen |
 | 577 | `AppStart.Setup.exe` nicht vom selben Herausgeber signiert |
 | 1602 | Installation abgebrochen |
 | 1603 | Installation fehlgeschlagen, `C:\ProgramData\AppStart` nicht geschützt, Entpacken oder Start von `msiexec` gescheitert, unerwarteter Fehler |
@@ -236,11 +397,11 @@ Akzeptiert genau `--app` und eine gültige AppId, sonst «Ungültige Verknüpfun
 
 ## Soll-Konfiguration apps.json
 
-Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Administratoren (Besitzer Administratoren, Zugriffsliste geschützt, nicht geerbt). Der Dienst liest die Datei bei jeder Startanfrage neu. Das Setup schreibt sie; von Hand nur für `allowChildProcesses` bearbeiten.
+Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Administratoren (Besitzer Administratoren, Zugriffsliste geschützt, nicht geerbt). Der Dienst liest die Datei bei jeder Startanfrage neu. Das Setup schreibt sie; von Hand bearbeiten ist nicht nötig, auch die weiteren Programme setzen Assistent und Kommandozeile (`set-children`, `allow-child`, `deny-child`, `learn`).
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "apps": [
     {
       "id": "app-a",
@@ -250,7 +411,11 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
       "check": "signature",
       "signerThumbprint": "3F2A9C0D8E7B6A5948372615F4E3D2C1B0A99887",
       "sha256": null,
-      "allowChildProcesses": false,
+      "childProcesses": "allowlist",
+      "allowedChildren": [
+        { "exe": "C:\\Program Files\\Hersteller\\AppA\\Export.exe", "check": "signature", "signerThumbprint": "3F2A9C0D8E7B6A5948372615F4E3D2C1B0A99887" },
+        { "exe": "C:\\Program Files\\Hersteller\\AppA\\Updater.exe", "check": "sha256", "sha256": "0C1D2E3F405162738495A6B7C8D9EAFB0C1D2E3F405162738495A6B7C8D9EAFB" }
+      ],
       "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
       "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA"
     },
@@ -262,7 +427,7 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
       "check": "sha256",
       "signerThumbprint": null,
       "sha256": "9B74C9897BAC770FFC029102A200C5DE6A8FD2D3E5B4C6A1F0E9D8C7B6A59483",
-      "allowChildProcesses": false,
+      "childProcesses": "blocked",
       "dataDir": "C:\\ProgramData\\AppStartTest",
       "registryKey": "HKLM\\SOFTWARE\\AppStartTest"
     }
@@ -272,7 +437,7 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
 
 | Feld | Pflicht | Regel |
 |---|---|---|
-| `version` | ja | Immer `1` |
+| `version` | ja | `2`. Version `1` (vor den weiteren Programmen) liest der Dienst weiter, siehe unten. |
 | `apps` | ja | Liste der freigegebenen Applikationen, darf leer sein |
 | `id` | ja | AppId: `a-z`, `0-9` und `-`, 1 bis 32 Zeichen, eindeutig. Steht in der Verknüpfung (`--app`). |
 | `name` | ja | Anzeigename, nicht leer. Name der Verknüpfung `<name>.lnk`. |
@@ -281,11 +446,15 @@ Pfad: `C:\ProgramData\AppStart\apps.json`. Lesen und schreiben nur SYSTEM und Ad
 | `check` | ja | `signature`: gültige Authenticode-Signatur und Zertifikat mit `signerThumbprint` (keine Online-Sperrprüfung). `sha256`: Prüfsumme muss exakt stimmen. |
 | `signerThumbprint` | bei `signature` | 40 Hex-Zeichen, sonst `null` |
 | `sha256` | bei `sha256` | 64 Hex-Zeichen, sonst `null` |
-| `allowChildProcesses` | nein | `false` (Standard): Applikation im Job-Objekt, keine weiteren Programme. `true`: kein Job-Objekt. |
+| `childProcesses` | nein | Weitere Programme: `blocked` (Standard, auch wenn das Feld fehlt): Job-Objekt, keine weiteren Programme. `allowlist`: überwachtes Job-Objekt, nur Programme aus `allowedChildren`, alle anderen beendet der Dienst sofort (Ereignis 1206). `all`: kein Job-Objekt; `verify` nennt die Applikation als Hinweis. |
+| `allowedChildren` | bei `allowlist` | Nur bei `allowlist`, dort mindestens ein Eintrag. Je Eintrag `exe` (absoluter lokaler Pfad auf `.exe`, ohne `%`, je Applikation eindeutig), `check` und `signerThumbprint` bzw. `sha256` nach denselben Regeln wie bei der Applikation, optional `allowShell: true`. |
+| `allowShell` | bei Shells | In einem Eintrag von `allowedChildren`: nötig für `cmd.exe`, `powershell.exe`, `pwsh.exe`, `wscript.exe`, `cscript.exe`, `mshta.exe`, `rundll32.exe`, `regsvr32.exe` und `explorer.exe`; bestätigt, dass ein Bediener damit jedes Programm mit Admin-Rechten starten kann. |
 | `dataDir` | nein | Datenordner, absoluter lokaler Pfad, oder `null` |
 | `registryKey` | nein | Key unter `HKLM\`, oder `null` |
 
 Unbekannte Felder, Kommentare und Kommas nach dem letzten Element sind nicht erlaubt; die Datei ist dann ungültig.
+
+**Version 1.** Installationen vor den weiteren Programmen haben `"version": 1` und je Applikation `allowChildProcesses` statt `childProcesses`. Der Dienst liest Version 1 weiter: `false` (oder fehlend) wirkt wie `blocked`, `true` wie `all`. Die erste Änderung durch das Setup (z.B. `rehash`, Assistent) schreibt Version 2 mit demselben Modus. In Version 2 ist `allowChildProcesses` ein Fehler, in Version 1 sind `childProcesses` und `allowedChildren` Fehler.
 
 ## Pfade
 
@@ -298,6 +467,8 @@ Unbekannte Felder, Kommentare und Kommas nach dem letzten Element sind nicht erl
 | `C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe` | Testapplikation | wie oben |
 | `C:\ProgramData\AppStart` | Daten von AppStart | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\apps.json` | Freigaben | Nur SYSTEM und Administratoren |
+| `C:\ProgramData\AppStart\learn.json` | Laufende Lernmodi (AppId, Beginn, Ende). Schreibt nur das Setup (`learn start`/`stop`). Ist sie für Bediener beschreibbar, ignoriert der Dienst sie (Ereignis 1207). | Nur SYSTEM und Administratoren |
+| `C:\ProgramData\AppStart\Learn\<AppId>.json` | Aufzeichnung des Lernmodus je Applikation (Programme, Prüfwerte, Starts). Wird nach `learn apply` bzw. «Verwerfen» gelöscht. | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\setup-state.json` | Was das Setup geändert hat (gesicherte Rechte, angelegte Verknüpfungen), Grundlage für `remove` und `uninstall`. Nicht bearbeiten. | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\ShortcutBackup` | Gesicherte Verknüpfungen, die direkt auf eine EXE zeigten | Nur SYSTEM und Administratoren |
 | `C:\ProgramData\AppStart\Reports` | Prüfberichte `verify-<JJJJ-MM-TT-hhmmss>.html` und `.json` | Nur SYSTEM und Administratoren |
