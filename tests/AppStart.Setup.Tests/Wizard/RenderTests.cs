@@ -148,7 +148,7 @@ public sealed class RenderTests
         window.Show();
         try
         {
-            await WpfHost.SettleAsync();
+            await WpfHost.WaitUntilAsync(() => vm.HasReport);
             Assert.True(vm.HasReport);
             Assert.Equal(8, vm.Rows.Count);
             WpfHost.SavePng(view, "wizard-verify.png");
