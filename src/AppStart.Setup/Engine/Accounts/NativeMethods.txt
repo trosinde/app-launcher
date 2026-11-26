@@ -30,3 +30,5 @@ NERR_UserExists
 NERR_GroupNotFound
 NERR_PasswordTooShort
 WIN32_ERROR
+LogonUser
+CloseHandle

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -176,6 +177,11 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
         OperatorAccountExists = snapshot.OperatorAccountExists;
         CreateOperatorAccount = !snapshot.OperatorAccountExists && !snapshot.IsConfigured;
 
+        AdminPasswordWarning = snapshot.AdminsWithoutPasswordOrEmpty.Count == 0
+            ? null
+            : string.Format(CultureInfo.CurrentCulture, SetupTexts.AdminsWithoutPasswordFormat, string.Join(", ", snapshot.AdminsWithoutPasswordOrEmpty));
+
+        _removedMembers.Clear();
         Members.Clear();
         foreach (var op in snapshot.Operators.Where(o => !IsOperatorAccount(o)).Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -203,7 +209,11 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
     public bool AppsStepValid => Apps.Any(a => a.IsSelected) && Apps.Where(a => a.IsSelected).All(a => a.IsValid);
 
     /// <summary>Hint below the list (null when nothing to say).</summary>
-    public string? AppsHint => Apps.Count > 0 && !Apps.Any(a => a.IsSelected) ? SetupTexts.NoAppSelected : null;
+    public string? AppsHint =>
+        Apps.Count > 0 && !Apps.Any(a => a.IsSelected) ? SetupTexts.NoAppSelected
+        : Apps.FirstOrDefault(a => a.IsSelected && a.DataDirInProgramFolder && !a.DataDirRiskAccepted) is { } pending
+            ? string.Format(CultureInfo.CurrentCulture, SetupTexts.DataDirConfirmPendingFormat, pending.Name)
+            : null;
 
     private void OnAppsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
@@ -442,13 +452,29 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
         NewMember = string.Empty;
     }
 
+    /// <summary>spec fix-wizard-findings «Warnung bei Administratoren ohne Passwort»; null when there is none.</summary>
+    [ObservableProperty]
+    private string? _adminPasswordWarning;
+
+    // Members that were in AppStart Users when the wizard opened and were removed from the list.
+    private readonly List<string> _removedMembers = [];
+
+    /// <summary>spec fix-wizard-findings «Bediener entfernen»: any listed member (appstart-user is never listed).</summary>
     [RelayCommand]
     private void RemoveMember(MemberItem? member)
     {
-        if (member is { IsNew: true })
+        if (member is null || !Members.Remove(member))
         {
-            Members.Remove(member);
+            return;
         }
+
+        if (!member.IsNew && !_removedMembers.Contains(member.Account, StringComparer.OrdinalIgnoreCase))
+        {
+            _removedMembers.Add(member.Account);
+        }
+
+        OnPropertyChanged(nameof(MemberError));
+        AddMemberCommand.NotifyCanExecuteChanged();
     }
 
     // ------------------------------------------------------------------ Step 3: apply and verify
@@ -508,7 +534,8 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
             Apps.Where(a => a.IsSelected).Select(a => a.ToCandidate()).ToList(),
             create,
             password,
-            Members.Select(m => m.Account).ToList());
+            Members.Select(m => m.Account).ToList(),
+            _removedMembers.Where(r => !Members.Any(m => m.Account.Equals(r, StringComparison.OrdinalIgnoreCase))).ToList());
     }
 
     private async Task RunSetupAsync()

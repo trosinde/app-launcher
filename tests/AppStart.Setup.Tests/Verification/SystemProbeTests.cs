@@ -126,7 +126,7 @@ public class SystemProbeTests
 
             var report = verifier.Run();
 
-            Assert.Equal(9, report.Checks.Count);
+            Assert.Equal(10, report.Checks.Count);
             Assert.Equal(1, report.ExitCode);
             Assert.Equal(Environment.MachineName, report.Computer);
             Assert.False(string.IsNullOrEmpty(report.Version));

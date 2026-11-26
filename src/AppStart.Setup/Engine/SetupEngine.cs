@@ -81,7 +81,25 @@ public sealed class SetupEngine(
             app.Exists ? accounts.GetOperators() : [],
             app.Exists,
             op.Exists,
-            ServiceRunning());
+            ServiceRunning(),
+            AdminsWithoutPassword());
+    }
+
+    internal static bool IsOperatorAccountName(string account) =>
+        account.Equals(AppStartConstants.OperatorAccountName, StringComparison.OrdinalIgnoreCase)
+        || account.EndsWith(@"\" + AppStartConstants.OperatorAccountName, StringComparison.OrdinalIgnoreCase);
+
+    // Best effort for the wizard warning; verify reports a failing check as a deviation.
+    private IReadOnlyList<string> AdminsWithoutPassword()
+    {
+        try
+        {
+            return [.. accounts.FindAdministratorsWithoutPassword().Select(f => f.Account)];
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return [];
+        }
     }
 
     public AppCandidate Inspect(string exePath)
@@ -125,10 +143,19 @@ public sealed class SetupEngine(
                 }
             }
 
-            foreach (var former in state.AddedGroupMembers.Where(m => !request.AdditionalOperators.Contains(m, StringComparer.OrdinalIgnoreCase)).ToList())
+            // Members setup added that are no longer requested, plus members the wizard removed explicitly
+            // (spec fix-wizard-findings «Bediener entfernen»: also from earlier runs or added by hand).
+            // appstart-user is controlled by its own option only and never removed here.
+            var removals = state.AddedGroupMembers
+                .Where(m => !request.AdditionalOperators.Contains(m, StringComparer.OrdinalIgnoreCase))
+                .Concat(request.RemovedOperatorsOrEmpty)
+                .Where(m => !IsOperatorAccountName(m))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            foreach (var former in removals)
             {
                 accounts.RemoveOperator(former);
-                added.Remove(former);
+                added.RemoveAll(m => string.Equals(m, former, StringComparison.OrdinalIgnoreCase));
             }
 
             state = state with { OperatorAccountCreatedBySetup = state.OperatorAccountCreatedBySetup || created, AddedGroupMembers = added };
@@ -172,6 +199,11 @@ public sealed class SetupEngine(
 
         // 3. Data folders and registry keys
         progress?.Report(SetupEngineTexts.ProgressProtection);
+        foreach (var app in entries.Where(a => DataDirPolicy.OverlapsProgramFolder(a.DataDir, a.Exe)))
+        {
+            results.Add(new(string.Format(SetupEngineTexts.DataDirInProgramFolder, app.Id, app.DataDir), true));
+        }
+
         try
         {
             var backups = state.AclBackups.ToList();

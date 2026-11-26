@@ -58,6 +58,8 @@ internal sealed class FakeAccounts : IAccountService
     public void RemoveOperatorAccount() => OperatorRemoved = true;
     public void RemoveOperatorGroup() => GroupRemoved = true;
     public AccountFacts GetFacts(string accountName) => new(AppAccountEnsured, EngineFakes.AppSid, true, []);
+    public List<AdminPasswordFinding> AdminsWithoutPassword { get; } = [];
+    public IReadOnlyList<AdminPasswordFinding> FindAdministratorsWithoutPassword() => AdminsWithoutPassword;
 }
 
 internal sealed class FakeProtection : IProtectionService

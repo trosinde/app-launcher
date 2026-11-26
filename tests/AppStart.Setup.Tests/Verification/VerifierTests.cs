@@ -24,15 +24,15 @@ public class VerifierTests
     // ------------------------------------------------------------------ Whole run
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
-    public void Correct_machine_passes_all_nine_checks_with_exit_code_0()
+    public void Correct_machine_passes_all_ten_checks_with_exit_code_0()
     {
         var report = new Machine().Run();
 
         Assert.Equal(
-            ["dienst", "programmordner", "konten", "pipe", "appsjson", "datenordner", "hilfsprogramme", "registry", "verknuepfungen"],
+            ["dienst", "programmordner", "konten", "adminpasswort", "pipe", "appsjson", "datenordner", "hilfsprogramme", "registry", "verknuepfungen"],
             report.Checks.Select(c => c.Id));
         Assert.Equal(
-            ["Dienst", "Programmordner", "Konten", "Pipe", "apps.json", "Datenordner je App", "Hilfsprogramme je App", "Registry-Key je App", "Verknüpfungen"],
+            ["Dienst", "Programmordner", "Konten", "Administratoren mit Passwort", "Pipe", "apps.json", "Datenordner je App", "Hilfsprogramme je App", "Registry-Key je App", "Verknüpfungen"],
             report.Checks.Select(c => c.Title));
         Assert.All(report.Checks, AssertPassed);
         Assert.Equal(0, report.Deviations);
@@ -168,6 +168,37 @@ public class VerifierTests
     }
 
     // ------------------------------------------------------------------ 4 Pipe
+
+    // ------------------------------------------------------------------ Administratoren mit Passwort
+
+    // spec: fix-wizard-findings/verification «Admin ohne Passwort»
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void Admin_without_password_is_a_deviation_with_exit_code_1()
+    {
+        var machine = new Machine();
+        machine.Accounts.AdminsWithoutPassword.Add(new AdminPasswordFinding(@"LAB-PC-014\service", null));
+
+        var report = machine.Run();
+
+        AssertDeviation(report.Checks.Single(c => c.Id == "adminpasswort"),
+            @"LAB-PC-014\service ist Administrator und hat kein Passwort. Passwort setzen oder Konto deaktivieren");
+        Assert.Equal(1, report.ExitCode);
+    }
+
+    // spec: fix-wizard-findings/verification «Alle Admins mit Passwort», «Deaktiviertes Konto ohne Passwort»
+    // (the account service only reports enabled accounts)
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void No_admin_without_password_passes() => AssertPassed(new Machine().Run("adminpasswort"));
+
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void Uncheckable_admin_password_is_a_deviation()
+    {
+        var machine = new Machine();
+        machine.Accounts.AdminsWithoutPassword.Add(new AdminPasswordFinding(@"LAB-PC-014\admin2", 1909));
+
+        AssertDeviation(machine.Run("adminpasswort"),
+            @"Passwort von LAB-PC-014\admin2 nicht prüfbar (Windows-Fehler 1909), z.B. weil das Konto gesperrt ist");
+    }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Pipe_with_mapped_generic_rights_passes()

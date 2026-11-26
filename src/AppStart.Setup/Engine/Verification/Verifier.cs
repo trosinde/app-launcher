@@ -16,6 +16,7 @@ public sealed class Verifier : IVerifier
     public const string ServiceCheckId = "dienst";
     public const string ProgramFolderCheckId = "programmordner";
     public const string AccountsCheckId = "konten";
+    public const string AdminPasswordCheckId = "adminpasswort";
     public const string PipeCheckId = "pipe";
     public const string AppsJsonCheckId = "appsjson";
     public const string DataDirCheckId = "datenordner";
@@ -89,6 +90,7 @@ public sealed class Verifier : IVerifier
             Check(ServiceCheckId, VerificationTexts.ServiceTitle, VerificationTexts.ServiceExpected, CheckService),
             Check(ProgramFolderCheckId, VerificationTexts.ProgramFolderTitle, VerificationTexts.ProgramFolderExpected, CheckProgramFolder),
             Check(AccountsCheckId, VerificationTexts.AccountsTitle, VerificationTexts.AccountsExpected, CheckAccounts),
+            Check(AdminPasswordCheckId, VerificationTexts.AdminPasswordTitle, VerificationTexts.AdminPasswordExpected, CheckAdminPasswords),
             Check(PipeCheckId, VerificationTexts.PipeTitle, VerificationTexts.PipeExpected, CheckPipe),
             Check(AppsJsonCheckId, VerificationTexts.AppsJsonTitle, VerificationTexts.AppsJsonExpected, () => CheckAppsJson(strictConfig)),
             Check(DataDirCheckId, VerificationTexts.DataDirTitle, VerificationTexts.DataDirExpected, () => CheckDataDirs(apps, appAccount)),
@@ -194,6 +196,14 @@ public sealed class Verifier : IVerifier
 
         return findings;
     }
+
+    // spec fix-wizard-findings, verification: Administratoren mit Passwort
+    private List<string> CheckAdminPasswords() =>
+        _accounts.FindAdministratorsWithoutPassword()
+            .Select(f => f.Win32Error is { } error
+                ? Format(VerificationTexts.AdminPasswordUncheckable, f.Account, error)
+                : Format(VerificationTexts.AdminWithoutPassword, f.Account))
+            .ToList();
 
     private List<string> CheckPipe()
     {

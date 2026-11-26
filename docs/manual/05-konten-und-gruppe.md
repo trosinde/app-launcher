@@ -55,10 +55,14 @@ Nur Benutzerkonten können aufgenommen werden, keine Gruppen wie «Jeder» oder 
 
 ## Benutzer aus der Gruppe entfernen
 
-- **Im Assistenten:** Schritt 2, beim Konto «Mitglied entfernen», dann «Weiter». Das gilt für Mitglieder, die über das Setup aufgenommen wurden.
+- **Im Assistenten:** Schritt 2, beim Konto auf ✕ («Mitglied entfernen») klicken, dann «Weiter». Das gilt für jedes Mitglied der Gruppe, auch für Konten aus früheren Einrichtungen und für von Hand eingetragene. Unter der Liste steht: «Mit ✕ entfernte Mitglieder nimmt das Setup beim Übernehmen aus der Gruppe. Die Änderung wirkt nach der nächsten Anmeldung des Benutzers.» `appstart-user` steht nicht in der Liste; es bleibt Mitglied, solange das Konto existiert.
 - **Von Hand:** «Computerverwaltung» → «Lokale Benutzer und Gruppen» → «Gruppen» → `AppStart Users` → Mitglied entfernen. Oder in PowerShell als Administrator: `Remove-LocalGroupMember -Group "AppStart Users" -Member "DOMAIN\bediener01"`.
 
 Die Kommandozeile hat keinen Befehl zum Entfernen einzelner Mitglieder.
+
+## Warnung: Administratoren ohne Passwort
+
+Hat ein aktiviertes Konto in der Gruppe Administratoren kein Passwort, zeigt Schritt 2 einen gelben Kasten, z.B. «Administratoren ohne Passwort: PC-014\service. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.» Die Einrichtung ist trotzdem möglich. Passwort setzen: `net user <Konto> *` in einer Eingabeaufforderung «Als Administrator ausführen», oder das Konto deaktivieren. Siehe Prüfpunkt [Administratoren mit Passwort](06-pruefung-nach-serviceeinsatz.md#adminpasswort).
 
 ## Regeln für den Betrieb
 

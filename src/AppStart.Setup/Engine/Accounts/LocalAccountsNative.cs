@@ -256,4 +256,25 @@ internal static unsafe class LocalAccountsNative
             PInvoke.AuthzFreeResourceManager(manager);
         }
     }
+
+    /// <summary>
+    /// Network logon of a local account with an empty password; returns 0 on success (token closed right away)
+    /// or the Win32 error. Never creates a session or profile.
+    /// </summary>
+    public static uint LogonWithEmptyPassword(string samName)
+    {
+        fixed (char* user = samName)
+        fixed (char* domain = ".")
+        fixed (char* password = string.Empty)
+        {
+            HANDLE token;
+            if (!PInvoke.LogonUser(user, domain, password, LOGON32_LOGON.LOGON32_LOGON_NETWORK, LOGON32_PROVIDER.LOGON32_PROVIDER_DEFAULT, &token))
+            {
+                return (uint)Marshal.GetLastPInvokeError();
+            }
+
+            PInvoke.CloseHandle(token);
+            return 0;
+        }
+    }
 }

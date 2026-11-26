@@ -10,6 +10,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject>AppStart.Setup.Program</StartupObject>
     <AssemblyTitle>AppStart Setup</AssemblyTitle>
+    <ApplicationIcon>$(AppStartIcon)</ApplicationIcon>
     <!-- WPF0001: ThemeMode (Fluent) is experimental in .NET 10; the concept fixes Fluent. -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>

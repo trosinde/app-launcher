@@ -17,6 +17,19 @@ public class AccountServiceReadOnlyTests
         Assert.DoesNotContain(AccountService.AppAccountDeniedRights, r => r.Contains("Batch", StringComparison.Ordinal));
     }
 
+    // spec: fix-wizard-findings/verification «Admin ohne Passwort», «Alle Admins mit Passwort»
+    [Theory]
+    [InlineData(0u, "Empty")]
+    [InlineData(1327u, "Empty")] // blank password limited to console logon
+    [InlineData(1385u, "Empty")] // logon type not granted
+    [InlineData(1330u, "Empty")] // password expired
+    [InlineData(1907u, "Empty")] // password must change
+    [InlineData(1326u, "HasPassword")]
+    [InlineData(1909u, "Unknown")] // locked out
+    [InlineData(5u, "Unknown")]
+    public void Empty_password_logon_result_is_classified(uint error, string expected) =>
+        Assert.Equal(expected, AccountService.ClassifyEmptyPasswordLogon(error).ToString());
+
     [Fact]
     public void Builtin_groups_are_addressed_by_sid()
     {

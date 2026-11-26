@@ -181,6 +181,57 @@ public sealed class AccountService : IAccountService
         return new AccountFacts(true, resolved.Sid, IsLocalAdministrator(resolved), rights);
     }
 
+    public IReadOnlyList<AdminPasswordFinding> FindAdministratorsWithoutPassword()
+    {
+        var findings = new List<AdminPasswordFinding>();
+        using var context = MachineContext();
+        using var searcher = new PrincipalSearcher(new UserPrincipal(context));
+        foreach (var principal in searcher.FindAll())
+        {
+            using (principal)
+            {
+                if (principal is not UserPrincipal { Enabled: true, Sid: { } sid } user
+                    || !LocalAccountsNative.GetEffectiveGroups(sid).Contains(AdministratorsSid))
+                {
+                    continue;
+                }
+
+                var error = LocalAccountsNative.LogonWithEmptyPassword(user.SamAccountName);
+                var qualified = $"{machineName}\\{user.SamAccountName}";
+                switch (ClassifyEmptyPasswordLogon(error))
+                {
+                    case EmptyPasswordLogon.Empty:
+                        findings.Add(new AdminPasswordFinding(qualified, null));
+                        break;
+                    case EmptyPasswordLogon.Unknown:
+                        findings.Add(new AdminPasswordFinding(qualified, error));
+                        break;
+                }
+            }
+        }
+
+        return findings;
+    }
+
+    internal enum EmptyPasswordLogon
+    {
+        HasPassword,
+        Empty,
+        Unknown,
+    }
+
+    /// <summary>
+    /// Result of LogonUser with an empty password. Windows returns these errors only after the password matched:
+    /// account restriction (blank passwords limited to console logon), logon type not granted, logon hours,
+    /// workstation, expired or must-change password. Only a logon failure proves a password is set.
+    /// </summary>
+    internal static EmptyPasswordLogon ClassifyEmptyPasswordLogon(uint error) => error switch
+    {
+        0 or 1327 or 1385 or 1328 or 1329 or 1330 or 1907 => EmptyPasswordLogon.Empty,
+        1326 => EmptyPasswordLogon.HasPassword,
+        _ => EmptyPasswordLogon.Unknown,
+    };
+
     /// <summary>Parses and resolves an account name or SID string; null when the account does not exist. No admin rights needed.</summary>
     internal ResolvedAccount? Resolve(string account)
     {

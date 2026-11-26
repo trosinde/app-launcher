@@ -116,7 +116,7 @@ try {
     Invoke-Step 'Restore tools (vpk)' { dotnet tool restore }
     Invoke-Step 'vpk pack --msi (PerMachine)' {
         dotnet vpk pack --packId AppStart --packVersion $Version --packDir $pack --mainExe AppStart.Service.exe `
-            --packTitle AppStart --packAuthors AppStart --msi --instLocation PerMachine --shortcuts '' --outputDir $OutputDir @signArgs
+            --packTitle AppStart --packAuthors AppStart --icon (Join-Path $root 'assets/icon/AppStart.ico') --msi --instLocation PerMachine --shortcuts '' --outputDir $OutputDir @signArgs
     }
 
     # --- release content: only the per-machine MSI and the update packages

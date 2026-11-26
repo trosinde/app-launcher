@@ -99,7 +99,7 @@ public class ReportTests
         Assert.Contains("Einsatz nicht abschliessen", html);
         Assert.Contains(@"Konten: LAB-PC-014\appstart-user ist Mitglied der Administratoren", html);
         Assert.Contains("Korrigieren und Prüfung wiederholen: <code>AppStart.Setup.exe verify</code>", html);
-        Assert.Equal(8, CountOf(html, ">Erfüllt<"));
+        Assert.Equal(9, CountOf(html, ">Erfüllt<"));
         Assert.Equal(1, CountOf(html, ">Abweichung<"));
         Assert.DoesNotContain("Prüfung bestanden –", html); // green summary box (the check point «Hilfsprogramme» says «Prüfung bestanden,» in its Soll)
         Assert.Contains("Unterschrift Servicetechniker", html);
@@ -113,10 +113,10 @@ public class ReportTests
     {
         var html = VerifyReportWriter.RenderHtml(new Machine().Run());
 
-        Assert.Contains("Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt", html);
+        Assert.Contains("Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt", html);
         Assert.Contains(">Keine Abweichung<", html);
         Assert.DoesNotContain("Einsatz nicht abschliessen", html);
-        Assert.Equal(9, CountOf(html, ">Erfüllt<"));
+        Assert.Equal(10, CountOf(html, ">Erfüllt<"));
     }
 
     [Fact]

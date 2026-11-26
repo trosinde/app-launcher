@@ -47,8 +47,19 @@ public sealed partial class AppItemViewModel : ObservableObject
     private bool _isSelected;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DataDirError), nameof(IsValid))]
+    [NotifyPropertyChangedFor(nameof(DataDirError), nameof(DataDirInProgramFolder), nameof(IsValid))]
     private string _dataDir;
+
+    // A new folder needs a new confirmation.
+    partial void OnDataDirChanged(string value) => DataDirRiskAccepted = false;
+
+    /// <summary>spec fix-wizard-findings «Warnung bei Datenordner im Programmordner».</summary>
+    public bool DataDirInProgramFolder => IsValidDataDir(DataDir) && DataDirPolicy.OverlapsProgramFolder(DataDir, ExePath);
+
+    /// <summary>Checkbox «Risiko verstanden …»; «Weiter» stays disabled while the warning is open.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsValid))]
+    private bool _dataDirRiskAccepted;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RegistryKeyError), nameof(IsValid))]
@@ -142,7 +153,8 @@ public sealed partial class AppItemViewModel : ObservableObject
     /// <summary>Validation message for the registry key, null when valid (empty is allowed).</summary>
     public string? RegistryKeyError => IsValidRegistryKey(RegistryKey) ? null : SetupTexts.RegistryKeyInvalid;
 
-    public bool IsValid => DataDirError is null && RegistryKeyError is null && ChildError is null;
+    public bool IsValid => DataDirError is null && RegistryKeyError is null && ChildError is null
+        && (!DataDirInProgramFolder || DataDirRiskAccepted);
 
     public static bool IsValidRegistryKey(string? key)
     {

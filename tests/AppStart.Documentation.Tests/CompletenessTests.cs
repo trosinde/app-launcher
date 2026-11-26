@@ -225,7 +225,7 @@ public sealed partial class CompletenessTests
         var ids = typeof(Verifier).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.IsLiteral && f.Name.EndsWith("CheckId", StringComparison.Ordinal))
             .ToList();
-        Assert.Equal(9, ids.Count);
+        Assert.Equal(10, ids.Count);
         foreach (var field in ids)
         {
             var stem = field.Name[..^"CheckId".Length];

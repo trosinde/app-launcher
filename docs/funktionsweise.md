@@ -210,6 +210,7 @@ Das Setup führt in drei Schritten durch die Einrichtung. Dasselbe geht still ü
 | Dienst | installiert, läuft, Start automatisch, Konto LocalSystem |
 | Programmordner | nur SYSTEM und Administratoren schreiben |
 | Konten | `appstart-app` vorhanden, keine interaktive Anmeldung, Recht «Als Batchauftrag anmelden»; Bediener ohne Admin-Rechte |
+| Administratoren mit Passwort | jedes aktive Konto in der Gruppe Administratoren hat ein Passwort |
 | Pipe | Rechte wie vorgesehen, kein Fernzugriff |
 | `apps.json` | nur SYSTEM und Administratoren; jede EXE besteht die Prüfung |
 | Datenordner je App | nur `appstart-app`, SYSTEM, Administratoren |

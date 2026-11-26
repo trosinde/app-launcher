@@ -101,6 +101,49 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Equal([@"LABOR\bediener02"], _state.Current.AddedGroupMembers);
     }
 
+    // spec: fix-wizard-findings/installation «Warnung bei Datenordner im Programmordner» (command line and answer file)
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void Data_folder_in_program_folder_gives_a_warning_line()
+    {
+        var results = _engine.Apply(Request(App("appa", dataDir: @"C:\Apps\appa\Daten"), App("appb", dataDir: @"C:\ProgramData\appb")));
+
+        var warning = Assert.Single(results, r => r.Text.StartsWith("Warnung: Datenordner", StringComparison.Ordinal));
+        Assert.True(warning.Success);
+        Assert.Equal(
+            @"Warnung: Datenordner C:\Apps\appa\Daten von appa liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. C:\ProgramData\<Hersteller>\<App>",
+            warning.Text);
+    }
+
+    // spec: fix-wizard-findings/installation «Früher hinzugefügten Bediener entfernen»
+    [Fact]
+    public void Members_removed_in_the_wizard_leave_the_group_even_when_added_by_hand()
+    {
+        _accounts.Members.Add(@"LABOR\vonhand");
+
+        _engine.Apply(new SetupRequest([App("appa")], false, null, [], [@"LABOR\vonhand"]));
+
+        Assert.Equal([@"LABOR\vonhand"], _accounts.Removed);
+    }
+
+    // spec: fix-wizard-findings/installation «appstart-user bleibt»
+    [Fact]
+    public void Operator_account_is_never_removed_through_the_member_list()
+    {
+        _engine.Apply(new SetupRequest([App("appa")], false, null, [], [@"LAB-PC-014\appstart-user", "appstart-user"]));
+
+        Assert.Empty(_accounts.Removed);
+    }
+
+    [Fact]
+    public void Command_line_runs_without_removals_keep_members_added_by_hand()
+    {
+        _accounts.Members.Add(@"LABOR\vonhand");
+
+        _engine.Apply(new SetupRequest([App("appa")], false, null, []));
+
+        Assert.Empty(_accounts.Removed);
+    }
+
     [Fact]
     public void Operator_account_created_flag_is_kept_for_uninstall()
     {

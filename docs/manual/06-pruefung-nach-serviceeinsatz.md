@@ -25,7 +25,7 @@ Fenster «AppStart – Einrichtung prüfen». Während der Prüfung steht «Prü
 - Angaben: «Rechner» (Computername), «Datum» (z.B. 15.11.2026 10:42), «Servicetechniker» (angemeldetes Konto), «Version» (z.B. «AppStart 0.2.0»).
 - Tabelle mit den Spalten «Prüfpunkt», «Soll» und «Ergebnis» («Erfüllt» oder «Abweichung»). Bei einer Abweichung steht statt des Solls die gefundene Abweichung, darunter das Soll.
 - Bei Abweichungen ein roter Kasten «Einsatz nicht abschliessen» mit «Abweichungen korrigieren und Prüfung wiederholen:» und dem Befehl `AppStart.Setup.exe verify`.
-- Ohne Abweichung ein grüner Kasten «Einrichtung entspricht dem Soll» mit «Alle 9 Prüfpunkte erfüllt. Der Einsatz kann abgeschlossen werden.»
+- Ohne Abweichung ein grüner Kasten «Einrichtung entspricht dem Soll» mit «Alle 10 Prüfpunkte erfüllt. Der Einsatz kann abgeschlossen werden.»
 - Unten die Felder «Unterschrift Servicetechniker» und «Unterschrift Kunde» für den ausgedruckten Bericht.
 
 ![Prüfansicht mit einer Abweichung](images/pruefansicht-abweichung.png)
@@ -58,7 +58,7 @@ Jede Prüfung legt zwei Dateien unter `C:\ProgramData\AppStart\Reports` ab, bena
 
 | Datei | Inhalt |
 |---|---|
-| `verify-<JJJJ-MM-TT-hhmmss>.html` | Lesbarer Bericht «Prüfbericht AppStart», gleiche Gliederung wie die Prüfansicht. Abweichende Zeilen sind rot; ihr Soll steht nach «Soll:». Bei Abweichungen listet der Kasten «Einsatz nicht abschliessen» alle Abweichungen und endet mit «Korrigieren und Prüfung wiederholen:» `AppStart.Setup.exe verify`. Ohne Abweichung: «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt». |
+| `verify-<JJJJ-MM-TT-hhmmss>.html` | Lesbarer Bericht «Prüfbericht AppStart», gleiche Gliederung wie die Prüfansicht. Abweichende Zeilen sind rot; ihr Soll steht nach «Soll:». Bei Abweichungen listet der Kasten «Einsatz nicht abschliessen» alle Abweichungen und endet mit «Korrigieren und Prüfung wiederholen:» `AppStart.Setup.exe verify`. Ohne Abweichung: «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt». |
 | `verify-<JJJJ-MM-TT-hhmmss>.json` | Dieselben Angaben maschinenlesbar, für Auswertungen |
 
 Mit `verify --report "<Pfad>"` wird der HTML-Bericht zusätzlich an den angegebenen Ort kopiert. Berichte bleiben auch nach `uninstall` erhalten. Für den Einsatz: Bericht ausdrucken und unterschreiben oder die HTML-Datei dem Einsatzrapport beilegen.
@@ -72,6 +72,7 @@ OK          Dienst
 OK          Programmordner
 ABWEICHUNG  Konten
             appstart-user ist Mitglied der Administratoren
+OK          Administratoren mit Passwort
 OK          Pipe
 OK          apps.json
 OK          Datenordner je App
@@ -82,11 +83,11 @@ Prüfung nicht bestanden – 1 Abweichung(en). Einsatz nicht abschliessen.
 Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html
 ```
 
-Ohne Abweichung lautet die vorletzte Zeile «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt.»
+Ohne Abweichung lautet die vorletzte Zeile «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt.»
 
 ![Ausgabe von verify in der Eingabeaufforderung](images/verify-konsole.png)
 
-## Die neun Prüfpunkte
+## Die zehn Prüfpunkte
 
 Je Prüfpunkt: das Soll, jede mögliche Abweichung, wie sie im Bericht steht, mit Ursache und Behebung. Werte in spitzen Klammern ersetzt der Bericht durch die gefundenen Namen und Pfade. Nach jeder Behebung die Prüfung wiederholen.
 
@@ -137,6 +138,18 @@ Geprüft wird `C:\Program Files\AppStart`. Könnte ein Bediener dort schreiben, 
 | «appstart-app: Recht SeDenyRemoteInteractiveLogonRight fehlt (Anmeldung über Remotedesktop verweigern)» | Wie oben, Richtlinie «Anmelden über Remotedesktopdienste verweigern» | Wie oben |
 | «\<Konto> ist Mitglied der Administratoren» | Ein Mitglied von `AppStart Users` (z.B. `appstart-user` oder `DOMAIN\bediener01`) ist Administrator, oft nach einem Serviceeinsatz vergessen. Auch über eine Gruppe (z.B. Domänen-Admins). | Konto aus den Administratoren entfernen («Computerverwaltung» → «Gruppen» → «Administratoren») oder, wenn es Administrator bleiben muss, aus `AppStart Users` entfernen. Benutzer neu anmelden lassen. |
 | «Gruppe «AppStart Users» ist nicht lesbar: \<Grund>» | Gruppe gelöscht oder Domänenkonto eines Mitglieds nicht auflösbar (keine Verbindung zum Domänencontroller) | Gruppe fehlt: Einrichtung erneut ausführen, danach Dienst neu starten. Domäne nicht erreichbar: Netzwerk prüfen, Prüfung wiederholen. |
+
+<a id="adminpasswort"></a>
+### Administratoren mit Passwort
+
+**Soll:** jedes aktive Konto in der Gruppe Administratoren hat ein Passwort
+
+Geprüft werden alle aktivierten lokalen Konten, die direkt oder über eine Gruppe Administrator sind. Ein Administrator ohne Passwort hebt die ganze Absicherung auf: Jeder an diesem PC kann sich damit anmelden, Bediener zu Administratoren machen und `apps.json` ändern. Deaktivierte Konten zählen nicht. Für die Prüfung meldet `verify` jedes Konto einmal mit leerem Passwort an (Netzwerk-Anmeldung, ohne Sitzung). Bei Konten mit Passwort erscheint das im Sicherheitsprotokoll als fehlgeschlagene Anmeldung (Ereignis 4625) und zählt einmal zur Kontosperrung.
+
+| Abweichung | Ursache | Behebung |
+|---|---|---|
+| «\<Konto> ist Administrator und hat kein Passwort. Passwort setzen oder Konto deaktivieren» | Konto ohne Passwort angelegt, oft ein Servicekonto oder das bei der Windows-Einrichtung erstellte Konto | Passwort setzen: «Computerverwaltung» → «Benutzer» → Konto → «Kennwort festlegen», oder in einer Eingabeaufforderung «Als Administrator ausführen»: `net user <Konto> *`. Wird das Konto nicht gebraucht: deaktivieren (`net user <Konto> /active:no`). Prüfung wiederholen. |
+| «Passwort von \<Konto> nicht prüfbar (Windows-Fehler \<Nummer>), z.B. weil das Konto gesperrt ist» | Konto gesperrt (Fehler 1909) oder Anmeldung aus einem anderen Grund nicht möglich | Sperre aufheben («Computerverwaltung» → Konto → «Konto ist gesperrt» abwählen) und Prüfung wiederholen. Ein nicht prüfbares Konto gilt als Abweichung. |
 
 <a id="pipe"></a>
 ### Pipe

@@ -67,9 +67,10 @@ Knöpfe: «Abbrechen» (Schritte 1 und 2), «Zurück» (Schritt 2), «Weiter», 
 1. «EXE hinzufügen…» klicken. Im Dialog «Programmdatei auswählen» (Filter `Programme (*.exe)|*.exe`) eine oder mehrere EXE wählen.
 2. Das Setup liest jede EXE und zeigt sie in der Liste mit den Spalten «Applikation» (Name und Pfad) und «Prüfung». Die Prüfung ist «Signatur», wenn die EXE gültig signiert ist, sonst «SHA-256».
 3. Nur angehakte Applikationen werden freigegeben. Mit «Entfernen» verschwindet die markierte Applikation aus der Liste; nach «Weiter» und Abschluss der Einrichtung wird ihre Freigabe entzogen.
-4. Für die markierte Applikation im Bereich «Schutz für Applikation A» (Name der markierten Applikation) eintragen:
-   - «Datenordner»: Ordner mit Austauschdateien, mit «Durchsuchen…» wählbar (Dialog «Datenordner auswählen»). Leer lassen, wenn es keinen gibt.
-   - «Registry-Key»: Key mit Passwörtern, z.B. `HKLM\SOFTWARE\Hersteller\AppA`. Hinweis rechts: «wird gesperrt».
+4. Für die markierte Applikation im Bereich «Schutz für Applikation A» (Name der markierten Applikation) eintragen. Unter der Überschrift steht: «Datenordner und Registry-Key werden beim Übernehmen gesperrt: Danach haben nur appstart-app, SYSTEM und Administratoren Zugriff, Bediener nicht. Fehlt das Ziel, legt das Setup es an. Bei der Deinstallation kommen die ursprünglichen Rechte zurück. Leer lassen, wenn die Applikation dort nichts speichert; dann wird nichts gesperrt. Beispiele: `C:\ProgramData\<Hersteller>\<App>` und `HKLM\SOFTWARE\<Hersteller>\<App>`.»
+   - «Datenordner»: Ordner, in den die Applikation schreibt (Messwerte, Austauschdateien, Logs), mit «Durchsuchen…» wählbar (Dialog «Datenordner auswählen»). Die Applikation läuft als `appstart-app` und darf dort schreiben; Bediener sehen den Ordner danach nicht mehr. Leer lassen, wenn es keinen gibt.
+   - «Registry-Key»: Key unter `HKLM`, in dem die Applikation Einstellungen oder Passwörter speichert, z.B. `HKLM\SOFTWARE\Hersteller\AppA`. Hinweis rechts: «wird gesperrt». Bediener können ihn danach in regedit nicht öffnen.
+   - **Nicht den Programmordner als Datenordner wählen.** Ist der Datenordner der Ordner der EXE, liegt er darin oder enthält er ihn, erscheint ein gelber Kasten: «Achtung: Dieser Datenordner ist der Programmordner der Applikation, liegt darin oder enthält ihn. appstart-app bekäme Schreibrechte auf EXE und DLLs. Eine ausgetauschte EXE erkennt die Prüfung, ausgetauschte DLLs nicht. Empfohlen ist ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`.» «Weiter» bleibt gesperrt, bis der Ordner geändert oder «Risiko verstanden, diesen Ordner trotzdem verwenden» angehakt ist. Die Zusammenfassung in Schritt 3 und die Kommandozeile melden es zusätzlich als «Warnung: Datenordner … von … liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`».
 5. «Weiter».
 
 Unten links öffnet «Einrichtung prüfen» jederzeit die Prüfansicht mit dem aktuellen Stand, ohne etwas zu ändern (siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md)).
@@ -81,6 +82,7 @@ Hinweise und Fehler in Schritt 1:
 | Meldung | Ursache | Massnahme |
 |---|---|---|
 | «Mindestens eine Applikation auswählen.» | Keine Applikation angehakt. «Weiter» ist gesperrt. | Mindestens eine Applikation anhaken |
+| «Datenordner von Applikation A liegt im Programmordner: ändern oder das Risiko bestätigen.» | Bei einer angehakten Applikation ist die Warnung zum Datenordner offen. «Weiter» ist gesperrt. | Applikation markieren, Datenordner ändern oder das Risiko bestätigen |
 | «Der Datenordner muss ein vollständiger Pfad sein, z.B. C:\ProgramData\Hersteller\App.» | Relativer Pfad oder Netzwerkpfad | Vollständigen Pfad mit Laufwerksbuchstabe angeben |
 | «Der Registry-Key muss mit HKLM\ beginnen.» | Key unter `HKCU` oder ohne Wurzel | Key unter `HKLM\` angeben. Schlüssel des Benutzers (`HKCU`) kann AppStart nicht schützen. |
 | «AppA.exe kann nicht hinzugefügt werden: …» | Die EXE lässt sich nicht lesen oder ist gerade gesperrt; nach dem Doppelpunkt steht der Grund | Pfad und Rechte prüfen, laufende Applikation beenden, erneut hinzufügen |
@@ -134,8 +136,8 @@ Zum Schluss das Ergebnis der Prüfung und der Pfad des Berichts:
 
 | Überschrift und Text | Bedeutung |
 |---|---|
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 8 von 9 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 7 von 9 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) beheben, Einrichtung erneut ausführen |
+| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
+| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 9 von 10 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 8 von 10 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) beheben, Einrichtung erneut ausführen |
 | «Einrichtung unvollständig» – «Nicht alle Schritte waren erfolgreich. Die Prüfung zeigt, was fehlt.» | Mindestens eine Zeile mit ✗. Grund in der Zeile, Massnahme im Kapitel [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md) |
 
 Weitere Zeilen, die erscheinen können:

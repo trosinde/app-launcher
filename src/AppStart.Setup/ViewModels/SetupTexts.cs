@@ -37,6 +37,10 @@ public static class SetupTexts
     public const string ButtonBrowse = "Durchsuchen…";
     public const string RegistryKeyLabel = "Registry-Key";
     public const string RegistryKeyNote = "wird gesperrt";
+    public const string ProtectionExplanation = "Datenordner und Registry-Key werden beim Übernehmen gesperrt: Danach haben nur appstart-app, SYSTEM und Administratoren Zugriff, Bediener nicht. Fehlt das Ziel, legt das Setup es an. Bei der Deinstallation kommen die ursprünglichen Rechte zurück. Leer lassen, wenn die Applikation dort nichts speichert; dann wird nichts gesperrt. Beispiele: C:\\ProgramData\\<Hersteller>\\<App> und HKLM\\SOFTWARE\\<Hersteller>\\<App>.";
+    public const string DataDirInProgramFolderWarning = "Achtung: Dieser Datenordner ist der Programmordner der Applikation, liegt darin oder enthält ihn. appstart-app bekäme Schreibrechte auf EXE und DLLs. Eine ausgetauschte EXE erkennt die Prüfung, ausgetauschte DLLs nicht. Empfohlen ist ein Ordner unter C:\\ProgramData, z.B. C:\\ProgramData\\<Hersteller>\\<App>.";
+    public const string DataDirConfirmPendingFormat = "Datenordner von {0} liegt im Programmordner: ändern oder das Risiko bestätigen.";
+    public const string DataDirAcceptRisk = "Risiko verstanden, diesen Ordner trotzdem verwenden";
     public const string RegistryKeyInvalid = "Der Registry-Key muss mit HKLM\\ beginnen.";
     public const string DataDirInvalid = "Der Datenordner muss ein vollständiger Pfad sein, z.B. C:\\ProgramData\\Hersteller\\App.";
     public const string NoAppSelected = "Mindestens eine Applikation auswählen.";
@@ -135,6 +139,8 @@ public static class SetupTexts
     public const string MemberInputName = "Benutzer hinzufügen";
     public const string ButtonAddMember = "Hinzufügen";
     public const string RemoveMember = "Mitglied entfernen";
+    public const string MembersRemoveNote = "Mit ✕ entfernte Mitglieder nimmt das Setup beim Übernehmen aus der Gruppe. Die Änderung wirkt nach der nächsten Anmeldung des Benutzers.";
+    public const string AdminsWithoutPasswordFormat = "Administratoren ohne Passwort: {0}. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.";
     public const string MemberDuplicate = "Dieses Konto ist bereits in der Liste.";
     public const string MemberInvalid = "Konto als DOMAIN\\Benutzer, .\\Benutzer oder Benutzer angeben.";
 

@@ -17,6 +17,11 @@ public static class VerificationTexts
     public const string AccountsTitle = "Konten";
     public const string AccountsExpected = "appstart-app vorhanden, keine interaktive Anmeldung; Bediener ohne Admin-Rechte";
 
+    public const string AdminPasswordTitle = "Administratoren mit Passwort";
+    public const string AdminPasswordExpected = "jedes aktive Konto in der Gruppe Administratoren hat ein Passwort";
+    public const string AdminWithoutPassword = "{0} ist Administrator und hat kein Passwort. Passwort setzen oder Konto deaktivieren";
+    public const string AdminPasswordUncheckable = "Passwort von {0} nicht prüfbar (Windows-Fehler {1}), z.B. weil das Konto gesperrt ist";
+
     public const string PipeTitle = "Pipe";
     public const string PipeExpected = "Rechte gemäss SDDL, keine Fernzugriffe";
 

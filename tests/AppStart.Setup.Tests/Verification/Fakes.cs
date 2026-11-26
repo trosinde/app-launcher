@@ -36,6 +36,10 @@ internal sealed class FakeAccounts : IAccountService
 
     public void RemoveOperatorAccount() => throw new NotSupportedException();
 
+    public List<AdminPasswordFinding> AdminsWithoutPassword { get; } = [];
+
+    public IReadOnlyList<AdminPasswordFinding> FindAdministratorsWithoutPassword() => AdminsWithoutPassword;
+
     public void RemoveOperatorGroup() => throw new NotSupportedException();
 }
 
