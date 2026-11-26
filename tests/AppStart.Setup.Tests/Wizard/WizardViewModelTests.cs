@@ -253,10 +253,60 @@ public sealed class WizardViewModelTests
         Assert.Equal(string.Empty, vm.NewMember);
         Assert.Equal([@"LABOR\bediener01", @"LABOR\bediener02"], vm.Members.Select(m => m.Account));
 
-        vm.RemoveMemberCommand.Execute(vm.Members[0]); // existing: stays
-        vm.RemoveMemberCommand.Execute(vm.Members[1]); // new: removed
+        vm.RemoveMemberCommand.Execute(vm.Members[1]); // new: removed, nothing to take out of the group
         Assert.Equal([@"LABOR\bediener01"], vm.Members.Select(m => m.Account));
         Assert.Equal([@"LABOR\bediener01"], vm.BuildRequest().AdditionalOperators);
+        Assert.Empty(vm.BuildRequest().RemovedOperatorsOrEmpty);
+    }
+
+    // spec: fix-wizard-findings/installation «Früher hinzugefügten Bediener entfernen»
+    [Fact]
+    public async Task Members_from_earlier_runs_can_be_removed()
+    {
+        _engine.Snapshot = _engine.Snapshot with { Operators = [@"LABOR\bediener01", @"LABOR\bediener02"] };
+        var vm = await CreateAsync();
+
+        vm.RemoveMemberCommand.Execute(vm.Members[0]);
+
+        Assert.Equal([@"LABOR\bediener02"], vm.Members.Select(m => m.Account));
+        var request = vm.BuildRequest();
+        Assert.Equal([@"LABOR\bediener02"], request.AdditionalOperators);
+        Assert.Equal([@"LABOR\bediener01"], request.RemovedOperatorsOrEmpty);
+
+        // Added again before applying: stays a member, nothing removed
+        vm.NewMember = @"LABOR\bediener01";
+        vm.AddMemberCommand.Execute(null);
+        Assert.Empty(vm.BuildRequest().RemovedOperatorsOrEmpty);
+    }
+
+    // spec: fix-wizard-findings/installation «appstart-user bleibt»
+    [Fact]
+    public async Task Operator_account_is_not_in_the_removable_list()
+    {
+        _engine.Snapshot = _engine.Snapshot with { Operators = [@"LAB-PC-014\appstart-user", @"LABOR\bediener01"] };
+        var vm = await CreateAsync();
+
+        Assert.Equal([@"LABOR\bediener01"], vm.Members.Select(m => m.Account));
+    }
+
+    // spec: fix-wizard-findings/installation «Warnung im Assistenten»
+    [Fact]
+    public async Task Admins_without_password_show_a_warning()
+    {
+        _engine.Snapshot = _engine.Snapshot with { AdminsWithoutPassword = [@"LAB-PC-014\service", @"LAB-PC-014\admin2"] };
+        var vm = await CreateAsync();
+
+        Assert.Equal(
+            @"Administratoren ohne Passwort: LAB-PC-014\service, LAB-PC-014\admin2. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.",
+            vm.AdminPasswordWarning);
+        Assert.True(CanNext(vm)); // a warning, not a block
+    }
+
+    [Fact]
+    public async Task No_warning_when_every_admin_has_a_password()
+    {
+        var vm = await CreateAsync();
+        Assert.Null(vm.AdminPasswordWarning);
     }
 
     private async Task<WizardViewModel> RunToSummaryAsync()

@@ -24,6 +24,9 @@
   <SolidColorBrush x:Key="ErrorStrong" Color="#B3261E" />
   <SolidColorBrush x:Key="DeviationRow" Color="#FDF3F2" />
   <SolidColorBrush x:Key="ChipBackground" Color="#EAEEF3" />
+  <SolidColorBrush x:Key="WarningBackground" Color="#FFF4CE" />
+  <SolidColorBrush x:Key="WarningBorder" Color="#E8C15A" />
+  <SolidColorBrush x:Key="WarningForeground" Color="#5C4300" />
   <SolidColorBrush x:Key="IconPlaceholder" Color="#6B6B6B" />
   <SolidColorBrush x:Key="SignatureLine" Color="#1B1B1B" />
 
@@ -47,6 +50,14 @@
     <Setter Property="Stroke" Value="{StaticResource Primary}" />
     <Setter Property="Width" Value="24" />
     <Setter Property="Height" Value="24" />
+  </Style>
+
+  <Style x:Key="WarningBox" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource WarningBackground}" />
+    <Setter Property="BorderBrush" Value="{StaticResource WarningBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="14,12" />
   </Style>
 
   <Style x:Key="Card" TargetType="Border">

@@ -221,6 +221,22 @@
         <TextBlock Text="{x:Static vm:SetupTexts.AccountsHeading}" Style="{StaticResource Heading}" />
         <TextBlock Text="{x:Static vm:SetupTexts.AccountsIntro}" Style="{StaticResource Intro}" />
 
+        <!-- Administrators without password (spec fix-wizard-findings) -->
+        <Border Style="{StaticResource WarningBox}" Margin="0,14,0,0"
+                Visibility="{Binding AdminPasswordWarning, Converter={StaticResource NullToVisibility}}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Viewbox Width="22" Height="22" VerticalAlignment="Top">
+              <Path Style="{StaticResource IconPath}" Stroke="{StaticResource WarningForeground}" Data="{StaticResource ShieldWarnGeometry}" />
+            </Viewbox>
+            <TextBlock Grid.Column="1" Margin="12,0,0,0" Text="{Binding AdminPasswordWarning}" TextWrapping="Wrap" FontSize="13"
+                       Foreground="{StaticResource WarningForeground}" AutomationProperties.LiveSetting="Assertive" />
+          </Grid>
+        </Border>
+
         <!-- App account (always automatic) -->
         <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="16,14">
           <Grid>
@@ -298,7 +314,6 @@
                       <Button Content="✕" FontSize="11" Margin="8,0,0,0" Padding="2,0" Cursor="Hand"
                               Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextSecondary}"
                               ToolTip="{x:Static vm:SetupTexts.RemoveMember}" AutomationProperties.Name="{x:Static vm:SetupTexts.RemoveMember}"
-                              Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}}"
                               Command="{Binding DataContext.RemoveMemberCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}">
                         <Button.Template>
@@ -327,6 +342,7 @@
             </Grid>
             <TextBlock Style="{StaticResource ErrorText}" Margin="0,4,0,0" Text="{Binding MemberError}"
                        Visibility="{Binding MemberError, Converter={StaticResource NullToVisibility}}" />
+            <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0" Text="{x:Static vm:SetupTexts.MembersRemoveNote}" />
           </StackPanel>
         </Border>
       </StackPanel>

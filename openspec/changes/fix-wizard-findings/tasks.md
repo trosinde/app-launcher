@@ -3,9 +3,9 @@
 - [ ] 1.2 Ursache beheben; Test, der IconLocation der erzeugten Verknüpfung gegen die erwartete Quelle prüft
 
 ## 2. Administratoren mit Passwort
-- [ ] 2.1 AccountService: aktivierte Admin-Konten (inkl. verschachtelter Gruppen) ohne Passwort ermitteln; Unit-Tests mit Fakes
-- [ ] 2.2 Verifier: Prüfpunkt «Administratoren mit Passwort», Texte, Bericht; Tests
-- [ ] 2.3 Assistent und apply: Warnung im Schritt «Konten und Gruppe»; Tests
+- [x] 2.1 (Build grün; Testlauf unter Windows in 5.2) AccountService: aktivierte Admin-Konten (inkl. verschachtelter Gruppen) ohne Passwort ermitteln; Unit-Tests mit Fakes
+- [x] 2.2 (Build grün; Testlauf unter Windows in 5.2) Verifier: Prüfpunkt «Administratoren mit Passwort», Texte, Bericht; Tests
+- [x] 2.3 (Build grün; Testlauf unter Windows in 5.2) Assistent: Warnung im Schritt «Konten und Gruppe»; apply über das automatische verify; Tests
 
 ## 3. Datenordner und Registry-Key
 - [ ] 3.1 Erklärtexte und Beispiele an beiden Feldern (SetupTexts, WizardView)
@@ -13,8 +13,8 @@
 - [ ] 3.3 Warnung mit Bestätigung im Assistenten; Warnung in apply und Antwortdatei; Tests
 
 ## 4. Bediener entfernen
-- [ ] 4.1 WizardViewModel: alle Mitglieder ausser appstart-user entfernbar
-- [ ] 4.2 SetupEngine: alle Gruppenmitglieder entfernen, die nicht mehr in der Liste stehen (nicht nur AddedGroupMembers); Tests
+- [x] 4.1 (Build grün; Testlauf unter Windows in 5.2) WizardViewModel: alle Mitglieder ausser appstart-user entfernbar
+- [x] 4.2 (Build grün; Testlauf unter Windows in 5.2) SetupEngine: alle Gruppenmitglieder entfernen, die nicht mehr in der Liste stehen (nicht nur AddedGroupMembers); Tests
 
 ## 5. Abschluss
 - [ ] 5.1 Handbuch: neuer Prüfpunkt, Warnungen, Entfernen von Bedienern; Vollständigkeitstest grün

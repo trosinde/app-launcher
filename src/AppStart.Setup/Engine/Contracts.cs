@@ -79,7 +79,18 @@ public interface IAccountService
 
     /// <summary>Facts for verify: does the account exist, which privileges/rights it holds, is it an admin.</summary>
     AccountFacts GetFacts(string accountName);
+
+    /// <summary>
+    /// Enabled local user accounts that are members of the Administrators (also through nested groups) and have an
+    /// empty password, or whose password could not be checked (fail closed). Spec fix-wizard-findings
+    /// «Administratoren mit Passwort». Each check is one network logon with an empty password; for an account with
+    /// a password it counts as one failed logon.
+    /// </summary>
+    IReadOnlyList<AdminPasswordFinding> FindAdministratorsWithoutPassword();
 }
+
+/// <summary>An administrator account with an empty password (<see cref="Win32Error"/> null) or one that could not be checked.</summary>
+public sealed record AdminPasswordFinding(string Account, uint? Win32Error);
 
 public sealed record AccountFacts(
     bool Exists,
@@ -201,8 +212,12 @@ public sealed record SetupSnapshot(
     IReadOnlyList<string> Operators,
     bool AppAccountExists,
     bool OperatorAccountExists,
-    bool ServiceRunning)
+    bool ServiceRunning,
+    IReadOnlyList<string>? AdminsWithoutPassword = null)
 {
+    /// <summary>Administrators with an empty or uncheckable password (warning in wizard step 2; verify reports them).</summary>
+    public IReadOnlyList<string> AdminsWithoutPasswordOrEmpty => AdminsWithoutPassword ?? [];
+
     public bool IsConfigured => AppAccountExists && Apps.Count > 0;
 }
 
@@ -211,7 +226,12 @@ public sealed record SetupRequest(
     IReadOnlyList<AppCandidate> Apps,
     bool CreateOperatorAccount,
     SecureString? OperatorPassword,
-    IReadOnlyList<string> AdditionalOperators);
+    IReadOnlyList<string> AdditionalOperators,
+    IReadOnlyList<string>? RemovedOperators = null)
+{
+    /// <summary>Members the wizard removed from the list (any member of AppStart Users except appstart-user).</summary>
+    public IReadOnlyList<string> RemovedOperatorsOrEmpty => RemovedOperators ?? [];
+}
 
 /// <summary>One line of the summary in wizard step 3.</summary>
 public sealed record SetupStepResult(string Text, bool Success, string? Detail = null);

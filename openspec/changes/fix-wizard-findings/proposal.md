@@ -7,10 +7,11 @@ Beim Test des Assistenten auf der Test-VM sind vier Punkte aufgefallen:
 
 ## What Changes
 - verify: neuer Prüfpunkt «Administratoren mit Passwort». Jedes aktivierte lokale Konto, das direkt oder über eine Gruppe Mitglied der Administratoren ist und kein Passwort hat, ist eine Abweichung (Exit-Code ≠ 0). Der Bericht nennt die Konten.
-- Assistent und apply: Warnung im Schritt «Konten und Gruppe», wenn solche Konten existieren (keine Blockade, Einrichtung bleibt möglich).
+- Assistent: Warnung im Schritt «Konten und Gruppe», wenn solche Konten existieren (keine Blockade, Einrichtung bleibt möglich). Kommandozeile und Antwortdatei: abgedeckt durch das automatische verify nach jedem ändernden Befehl.
+- Erkennung: je Admin-Konto eine Netzwerk-Anmeldung mit leerem Passwort (LogonUser). Bei Konten mit Passwort zählt das als eine fehlgeschlagene Anmeldung (Ereignis 4625, Kontosperrungszähler); im Handbuch beschrieben.
 - Assistent: Erklärtext zu Datenordner und Registry-Key direkt am Feld (was gesperrt wird, wer danach Zugriff hat, was bei leerem Feld passiert).
 - Assistent: Warnung, wenn der Datenordner der Programmordner der Applikation ist, darin liegt oder ihn enthält. Text: appstart-app bekäme Schreibrechte auf EXE und DLLs; ausgetauschte DLLs erkennt die Hash-/Signaturprüfung nicht; Empfehlung C:\ProgramData\<Hersteller>\<App>. Einrichtung bleibt nach Bestätigung möglich.
-- Assistent: Jedes Mitglied der Gruppe AppStart Users ausser appstart-user lässt sich entfernen, auch Mitglieder aus früheren Läufen oder von Hand eingetragene. Das Setup entfernt beim Übernehmen alle Konten, die nicht mehr in der Liste stehen.
+- Assistent: Jedes Mitglied der Gruppe AppStart Users ausser appstart-user lässt sich entfernen, auch Mitglieder aus früheren Läufen oder von Hand eingetragene. Der Assistent übergibt die entfernten Konten ausdrücklich (SetupRequest.RemovedOperators); Kommandozeile und Antwortdatei entfernen weiterhin nur vom Setup eingetragene Mitglieder.
 - Icon: Ursache auf der Test-VM klären, dann beheben. Die bestehende Anforderung «Verknüpfung je Applikation» bleibt unverändert.
 
 ## Offene Entscheidungen (bitte bei Freigabe bestätigen)

@@ -135,6 +135,8 @@ public static class SetupTexts
     public const string MemberInputName = "Benutzer hinzufügen";
     public const string ButtonAddMember = "Hinzufügen";
     public const string RemoveMember = "Mitglied entfernen";
+    public const string MembersRemoveNote = "Mit ✕ entfernte Mitglieder nimmt das Setup beim Übernehmen aus der Gruppe. Die Änderung wirkt nach der nächsten Anmeldung des Benutzers.";
+    public const string AdminsWithoutPasswordFormat = "Administratoren ohne Passwort: {0}. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.";
     public const string MemberDuplicate = "Dieses Konto ist bereits in der Liste.";
     public const string MemberInvalid = "Konto als DOMAIN\\Benutzer, .\\Benutzer oder Benutzer angeben.";
 
