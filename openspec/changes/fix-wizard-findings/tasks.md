@@ -17,7 +17,7 @@
 - [x] 4.2 SetupEngine: alle Gruppenmitglieder entfernen, die nicht mehr in der Liste stehen (nicht nur AddedGroupMembers); Tests
 
 ## 5. Abschluss
-- [ ] 5.1 Handbuch: neuer Prüfpunkt, Warnungen, Entfernen von Bedienern; Vollständigkeitstest grün
+- [x] 5.1 Handbuch: neuer Prüfpunkt, Warnungen, Entfernen von Bedienern; Vollständigkeitstest grün
 - [ ] 5.2 (CI unter Windows grün am 2026-11-26, Lauf 45803972265; offen: E2E auf der Test-VM) Alle Tests grün, E2E auf der Test-VM
 
 ## 6. AppStart-Icon
