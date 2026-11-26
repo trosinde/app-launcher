@@ -15,7 +15,8 @@ Beiträge sind per Pull Request willkommen. Pushen auf `main` und Mergen kann nu
 
 - Die CI läuft automatisch für deinen Pull Request. Bei ganz neuen GitHub-Konten muss der
   Maintainer den ersten Lauf freigeben.
-- Der Pull Request wird **erst geprüft, wenn alle Pflicht-Checks grün sind**. Schlägt ein Check
+- Der Pull Request wird **erst geprüft, wenn alle Pflicht-Checks grün sind**: «Build and test»
+  (Windows: Build, Tests, Handbuch) und «OpenSpec validate». Schlägt ein Check
   fehl, behebe ihn mit einem weiteren Push auf denselben Branch.
 - Ist `main` weitergelaufen, muss dein Branch vor dem Merge aktualisiert werden („Update branch“
   oder Rebase). Lass „Allow edits by maintainers“ aktiviert, dann kann der Maintainer das übernehmen.

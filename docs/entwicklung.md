@@ -40,8 +40,8 @@ Ergebnis in `artifacts/release`: `AppStart-<Version>.msi`, `AppStart-Setup.exe`,
 
 | Workflow | Auslöser | Ergebnis |
 |---|---|---|
-| [CI](../.github/workflows/ci.yml) | Push auf `main`, Pull Request | Build und Tests auf `windows-latest` |
-| [Release](../.github/workflows/release.yml) | Tag `v*.*.*` | signiertes MSI als GitHub Release (Workflow vorhanden, mit Zertifikat noch nicht erprobt). Zertifikat aus den Secrets `SIGNING_PFX_BASE64` und `SIGNING_PFX_PASSWORD`. Reguläre Releases ohne Zertifikat schlagen fehl, Prereleases (`v0.1.0-dev.1`) dürfen unsigniert sein. |
+| [CI](../.github/workflows/ci.yml) | Push auf `main`, Pull Request | Job «Build and test» auf `windows-latest`: Build, Tests (fehlgeschlagene als Annotationen), Handbuch-HTML (Artefakt `manual-html`). Job «OpenSpec validate» auf `ubuntu-latest`: `openspec validate --all --strict`. Beide sind Pflicht-Checks für `main`. |
+| [Release](../.github/workflows/release.yml) | Tag `v*.*.*` | signiertes MSI, AppStart-Setup.exe, Handbuch-PDF und SHA256SUMS als GitHub Release (seit v0.3.0 im Einsatz). Zertifikat aus den Secrets `SIGNING_PFX_BASE64` und `SIGNING_PFX_PASSWORD`. Reguläre Releases ohne Zertifikat schlagen fehl, Prereleases (`v0.1.0-dev.1`) dürfen unsigniert sein. |
 
 ## Projektstruktur
 
