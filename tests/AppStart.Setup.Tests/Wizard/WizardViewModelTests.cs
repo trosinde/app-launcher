@@ -339,7 +339,11 @@ public sealed class WizardViewModelTests
     [Fact]
     public async Task Admins_without_password_show_a_warning()
     {
-        _engine.Snapshot = _engine.Snapshot with { AdminsWithoutPassword = [@"LAB-PC-014\service", @"LAB-PC-014\admin2"] };
+        _engine.Snapshot = _engine.Snapshot with
+        {
+            Apps = [FakeSetupEngine.Entry("A", @"C:\A\A.exe", IntegrityCheck.Signature)],
+            AdminsWithoutPassword = [@"LAB-PC-014\service", @"LAB-PC-014\admin2"],
+        };
         var vm = await CreateAsync();
 
         Assert.Equal(
