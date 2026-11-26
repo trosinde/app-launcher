@@ -19,3 +19,8 @@
 ## 5. Abschluss
 - [ ] 5.1 Handbuch: neuer Prüfpunkt, Warnungen, Entfernen von Bedienern; Vollständigkeitstest grün
 - [ ] 5.2 Alle Tests grün, E2E auf der Test-VM
+
+## 6. AppStart-Icon
+- [x] 6.1 (Build grün; Testlauf unter Windows in 5.2) Icon als SVG-Quelle in assets/ und daraus AppStart.ico (16, 20, 24, 32, 40, 48, 64, 256 px); Skript zum Neuerzeugen
+- [x] 6.2 (Build grün; Testlauf unter Windows in 5.2) ApplicationIcon in Setup, Service, Launcher, Bootstrapper; Window.Icon in Assistent und Prüfansicht; vpk --icon im Release-Skript
+- [x] 6.3 (Build grün; Testlauf unter Windows in 5.2) Test: jede AppStart-EXE enthält das Icon; Startmenü-Einträge verweisen auf AppStart.Setup.exe,0; README mit Icon

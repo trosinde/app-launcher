@@ -11,5 +11,7 @@
     <Product>AppStart</Product>
     <Version>0.1.0</Version>
     <NeutralLanguage>de-CH</NeutralLanguage>
+    <!-- AppStart icon (spec fix-wizard-findings «Eigenes Icon»); source and generator in assets/icon. -->
+    <AppStartIcon>$(MSBuildThisFileDirectory)assets\icon\AppStart.ico</AppStartIcon>
   </PropertyGroup>
 </Project>

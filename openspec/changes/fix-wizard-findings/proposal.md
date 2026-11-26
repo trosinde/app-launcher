@@ -12,12 +12,14 @@ Beim Test des Assistenten auf der Test-VM sind vier Punkte aufgefallen:
 - Assistent: Erklärtext zu Datenordner und Registry-Key direkt am Feld (was gesperrt wird, wer danach Zugriff hat, was bei leerem Feld passiert).
 - Assistent: Warnung, wenn der Datenordner der Programmordner der Applikation ist, darin liegt oder ihn enthält. Text: appstart-app bekäme Schreibrechte auf EXE und DLLs; ausgetauschte DLLs erkennt die Hash-/Signaturprüfung nicht; Empfehlung C:\ProgramData\<Hersteller>\<App>. Einrichtung bleibt nach Bestätigung möglich.
 - Assistent: Jedes Mitglied der Gruppe AppStart Users ausser appstart-user lässt sich entfernen, auch Mitglieder aus früheren Läufen oder von Hand eingetragene. Der Assistent übergibt die entfernten Konten ausdrücklich (SetupRequest.RemovedOperators); Kommandozeile und Antwortdatei entfernen weiterhin nur vom Setup eingetragene Mitglieder.
-- Icon: Ursache auf der Test-VM klären, dann beheben. Die bestehende Anforderung «Verknüpfung je Applikation» bleibt unverändert.
+- Icon: Ursache auf der Test-VM klären, dann beheben.
+- Neu: eigenes AppStart-Icon für die AppStart-Programme, Fenster, Startmenü-Einträge und das MSI. Die bestehende Anforderung «Verknüpfung je Applikation» bleibt unverändert.
 
 ## Offene Entscheidungen (bitte bei Freigabe bestätigen)
 - Admin ohne Passwort im Setup: Warnung statt Blockade.
 - Entfernen: alle Gruppenmitglieder ausser appstart-user, nicht nur vom Setup eingetragene.
 - Datenordner im Programmordner: Warnung mit Bestätigung statt Verbot.
+- AppStart-Icon: Variante nach Wahl des Maintainers.
 - Kein automatischer Default für den Datenordner (Vorschlag aus dem Lernmodus ist ein späterer Change).
 
 ## Impact

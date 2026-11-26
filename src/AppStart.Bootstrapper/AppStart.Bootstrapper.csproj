@@ -18,6 +18,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyTitle>AppStart Setup</AssemblyTitle>
+    <ApplicationIcon>$(AppStartIcon)</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

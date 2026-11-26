@@ -35,3 +35,14 @@ Der Assistent SHALL jedes Mitglied der Gruppe AppStart Users ausser appstart-use
 #### Scenario: appstart-user bleibt
 - **WHEN** der Techniker die Liste der Bediener bearbeitet
 - **THEN** steht appstart-user nicht in der entfernbaren Liste; es wird nur über die eigene Option gesteuert
+
+### Requirement: Eigenes Icon
+AppStart SHALL ein eigenes Icon haben: als Programm-Icon von AppStart.Setup.exe, AppStart.Service.exe, AppStart.Launcher.exe und AppStart-Setup.exe, als Fenster-Icon von Assistent und Prüfansicht, in den Startmenü-Einträgen «AppStart – Einrichtung» und «AppStart – Einrichtung prüfen» sowie für das MSI in «Apps und Features». Die Verknüpfungen der freigegebenen Applikationen behalten das Icon ihrer EXE.
+
+#### Scenario: Startmenü zeigt das AppStart-Icon
+- **WHEN** der Techniker den Startmenü-Ordner «AppStart» öffnet
+- **THEN** zeigen «AppStart – Einrichtung» und «AppStart – Einrichtung prüfen» das AppStart-Icon
+
+#### Scenario: Applikationen behalten ihr Icon
+- **WHEN** ein Bediener die Verknüpfung einer freigegebenen Applikation sieht
+- **THEN** zeigt sie das Icon der Applikation, nicht das AppStart-Icon

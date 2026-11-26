@@ -1,3 +1,5 @@
+<img src="assets/icon/appstart-256.png" width="96" height="96" alt="AppStart-Icon" align="right">
+
 # AppStart
 
 **Applikationen mit Admin-Rechten starten – ohne dass der Benutzer Admin ist.**
