@@ -51,6 +51,24 @@ internal static class WpfHost
         }
     }
 
+    /// <summary>Yields the dispatcher until <paramref name="condition"/> holds, e.g. after work started with Task.Run.</summary>
+    public static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 5000)
+    {
+        var deadline = Environment.TickCount64 + timeoutMs;
+        while (!condition())
+        {
+            if (Environment.TickCount64 > deadline)
+            {
+                throw new TimeoutException($"Condition not met within {timeoutMs} ms.");
+            }
+
+            await Task.Delay(20);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        }
+
+        await SettleAsync();
+    }
+
     public static string OutputDirectory
     {
         get
