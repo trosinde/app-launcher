@@ -1,5 +1,5 @@
 ## 1. Icon (Bug)
-- [ ] 1.1 Auf der Test-VM: Verknüpfung einer betroffenen App prüfen (IconLocation per Shell auslesen, Icon-Cache, Icon der alten Verknüpfung) und Ursache in diesem Change notieren
+- [ ] 1.1 (Vermutung: Datenordner = Programmordner sperrt den Ordner der EXE für Bediener; Explorer läuft als Bediener, kann das Icon aus der EXE nicht lesen und zeigt das Icon des Launchers bzw. ein Standard-Icon. Seit 6.2 hat der Launcher das AppStart-Icon, damit ist der Fall erkennbar) Auf der Test-VM: Verknüpfung einer betroffenen App prüfen (IconLocation per Shell auslesen, Icon-Cache, Icon der alten Verknüpfung) und Ursache in diesem Change notieren
 - [ ] 1.2 Ursache beheben; Test, der IconLocation der erzeugten Verknüpfung gegen die erwartete Quelle prüft
 
 ## 2. Administratoren mit Passwort
