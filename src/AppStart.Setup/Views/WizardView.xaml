@@ -160,7 +160,8 @@
                 DataContext="{Binding SelectedApp}"
                 Visibility="{Binding Converter={StaticResource NullToVisibility}}">
           <StackPanel>
-            <TextBlock Text="{Binding ProtectionHeading}" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" />
+            <TextBlock Text="{Binding ProtectionHeading}" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBlock Text="{x:Static vm:SetupTexts.ProtectionExplanation}" Style="{StaticResource Hint}" Margin="0,0,0,10" />
             <Grid TextElement.FontSize="13">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150" />
@@ -180,8 +181,20 @@
               <Button Grid.Column="2" Margin="10,0,0,0" Style="{StaticResource SmallButton}" Height="30" Padding="6,0"
                       Content="{x:Static vm:SetupTexts.ButtonBrowse}"
                       Command="{Binding DataContext.BrowseDataDirCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-              <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource ErrorText}" Margin="0,4,0,0"
-                         Text="{Binding DataDirError}" Visibility="{Binding DataDirError, Converter={StaticResource NullToVisibility}}" />
+              <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2">
+                <TextBlock Style="{StaticResource ErrorText}" Margin="0,4,0,0"
+                           Text="{Binding DataDirError}" Visibility="{Binding DataDirError, Converter={StaticResource NullToVisibility}}" />
+                <!-- spec fix-wizard-findings: data folder in the program folder -->
+                <Border Style="{StaticResource WarningBox}" Margin="0,8,0,0"
+                        Visibility="{Binding DataDirInProgramFolder, Converter={StaticResource BoolToVisibility}}">
+                  <StackPanel>
+                    <TextBlock Text="{x:Static vm:SetupTexts.DataDirInProgramFolderWarning}" TextWrapping="Wrap" FontSize="13"
+                               Foreground="{StaticResource WarningForeground}" AutomationProperties.LiveSetting="Assertive" />
+                    <CheckBox Margin="0,8,0,0" FontSize="13" IsChecked="{Binding DataDirRiskAccepted}"
+                              Content="{x:Static vm:SetupTexts.DataDirAcceptRisk}" Foreground="{StaticResource WarningForeground}" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
               <Label Grid.Row="2" Content="{x:Static vm:SetupTexts.RegistryKeyLabel}" Target="{Binding ElementName=RegistryKeyBox}" Padding="0" FontSize="13"
                      VerticalAlignment="Center" Margin="0,8,0,0" />
               <TextBox x:Name="RegistryKeyBox" Grid.Row="2" Grid.Column="1" Height="30" MinHeight="30" FontSize="13" Padding="6,0" VerticalContentAlignment="Center" Margin="0,8,0,0"

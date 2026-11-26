@@ -101,6 +101,19 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Equal([@"LABOR\bediener02"], _state.Current.AddedGroupMembers);
     }
 
+    // spec: fix-wizard-findings/installation «Warnung bei Datenordner im Programmordner» (command line and answer file)
+    [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
+    public void Data_folder_in_program_folder_gives_a_warning_line()
+    {
+        var results = _engine.Apply(Request(App("appa", dataDir: @"C:\Apps\appa\Daten"), App("appb", dataDir: @"C:\ProgramData\appb")));
+
+        var warning = Assert.Single(results, r => r.Text.StartsWith("Warnung: Datenordner", StringComparison.Ordinal));
+        Assert.True(warning.Success);
+        Assert.Equal(
+            @"Warnung: Datenordner C:\Apps\appa\Daten von appa liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. C:\ProgramData\<Hersteller>\<App>",
+            warning.Text);
+    }
+
     // spec: fix-wizard-findings/installation «Früher hinzugefügten Bediener entfernen»
     [Fact]
     public void Members_removed_in_the_wizard_leave_the_group_even_when_added_by_hand()

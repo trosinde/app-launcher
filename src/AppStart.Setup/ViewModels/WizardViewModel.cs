@@ -209,7 +209,11 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
     public bool AppsStepValid => Apps.Any(a => a.IsSelected) && Apps.Where(a => a.IsSelected).All(a => a.IsValid);
 
     /// <summary>Hint below the list (null when nothing to say).</summary>
-    public string? AppsHint => Apps.Count > 0 && !Apps.Any(a => a.IsSelected) ? SetupTexts.NoAppSelected : null;
+    public string? AppsHint =>
+        Apps.Count > 0 && !Apps.Any(a => a.IsSelected) ? SetupTexts.NoAppSelected
+        : Apps.FirstOrDefault(a => a.IsSelected && a.DataDirInProgramFolder && !a.DataDirRiskAccepted) is { } pending
+            ? string.Format(CultureInfo.CurrentCulture, SetupTexts.DataDirConfirmPendingFormat, pending.Name)
+            : null;
 
     private void OnAppsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {

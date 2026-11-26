@@ -289,6 +289,52 @@ public sealed class WizardViewModelTests
         Assert.Equal([@"LABOR\bediener01"], vm.Members.Select(m => m.Account));
     }
 
+    // spec: fix-wizard-findings/installation «Datenordner gleich Programmordner»
+    [Fact]
+    public async Task Data_folder_in_program_folder_needs_confirmation()
+    {
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
+        var vm = await CreateAsync();
+        var app = vm.Apps[0];
+        Assert.True(CanNext(vm));
+
+        app.DataDir = @"C:\Program Files\Hersteller\AppA";
+        Assert.True(app.DataDirInProgramFolder);
+        Assert.False(CanNext(vm));
+        Assert.Equal("Datenordner von Applikation A liegt im Programmordner: ändern oder das Risiko bestätigen.", vm.AppsHint);
+
+        app.DataDirRiskAccepted = true;
+        Assert.True(CanNext(vm));
+        Assert.Null(vm.AppsHint);
+
+        app.DataDir = @"C:\Program Files\Hersteller\AppA\Daten"; // another folder: confirm again
+        Assert.False(app.DataDirRiskAccepted);
+        Assert.False(CanNext(vm));
+    }
+
+    // spec: fix-wizard-findings/installation «Datenordner ausserhalb»
+    [Fact]
+    public async Task Data_folder_outside_shows_no_warning()
+    {
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
+        var vm = await CreateAsync();
+
+        vm.Apps[0].DataDir = @"C:\ProgramData\Hersteller\AppA";
+
+        Assert.False(vm.Apps[0].DataDirInProgramFolder);
+        Assert.True(CanNext(vm));
+    }
+
+    // spec: fix-wizard-findings/installation «Erklärung sichtbar»
+    [Fact]
+    public void Protection_explanation_names_lock_access_and_examples()
+    {
+        Assert.Contains("nur appstart-app, SYSTEM und Administratoren", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains("Leer lassen", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains(@"C:\ProgramData\<Hersteller>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains(@"HKLM\SOFTWARE\<Hersteller>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+    }
+
     // spec: fix-wizard-findings/installation «Warnung im Assistenten»
     [Fact]
     public async Task Admins_without_password_show_a_warning()

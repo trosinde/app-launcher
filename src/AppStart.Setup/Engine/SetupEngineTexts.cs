@@ -19,6 +19,7 @@ public static class SetupEngineTexts
     public const string ConfigUnreadable = "apps.json ist ungültig: {0}";
     public const string UnknownApp = "Applikation «{0}» ist nicht freigegeben";
 
+    public const string DataDirInProgramFolder = "Warnung: Datenordner {1} von {0} liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\\ProgramData, z.B. C:\\ProgramData\\<Hersteller>\\<App>";
     public const string DataProtected = "Datenordner und Registry-Keys gesperrt";
     public const string DataProtectionFailed = "Datenordner oder Registry-Keys konnten nicht gesperrt werden";
 

@@ -199,6 +199,11 @@ public sealed class SetupEngine(
 
         // 3. Data folders and registry keys
         progress?.Report(SetupEngineTexts.ProgressProtection);
+        foreach (var app in entries.Where(a => DataDirPolicy.OverlapsProgramFolder(a.DataDir, a.Exe)))
+        {
+            results.Add(new(string.Format(SetupEngineTexts.DataDirInProgramFolder, app.Id, app.DataDir), true));
+        }
+
         try
         {
             var backups = state.AclBackups.ToList();

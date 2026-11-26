@@ -8,9 +8,9 @@
 - [x] 2.3 (Build grün; Testlauf unter Windows in 5.2) Assistent: Warnung im Schritt «Konten und Gruppe»; apply über das automatische verify; Tests
 
 ## 3. Datenordner und Registry-Key
-- [ ] 3.1 Erklärtexte und Beispiele an beiden Feldern (SetupTexts, WizardView)
-- [ ] 3.2 Prüfung «Datenordner im/über Programmordner» als reine Funktion; Unit-Tests (gleich, darunter, darüber, anderer Ordner, Gross-/Kleinschreibung, abschliessender Backslash)
-- [ ] 3.3 Warnung mit Bestätigung im Assistenten; Warnung in apply und Antwortdatei; Tests
+- [x] 3.1 (Build grün; Testlauf unter Windows in 5.2) Erklärtexte und Beispiele an beiden Feldern (SetupTexts, WizardView)
+- [x] 3.2 (Build grün; Testlauf unter Windows in 5.2) Prüfung «Datenordner im/über Programmordner» als reine Funktion; Unit-Tests (gleich, darunter, darüber, anderer Ordner, Gross-/Kleinschreibung, abschliessender Backslash)
+- [x] 3.3 (Build grün; Testlauf unter Windows in 5.2) Warnung mit Bestätigung im Assistenten; Warnzeile in der Zusammenfassung, bei add, apply und Antwortdatei; Tests
 
 ## 4. Bediener entfernen
 - [x] 4.1 (Build grün; Testlauf unter Windows in 5.2) WizardViewModel: alle Mitglieder ausser appstart-user entfernbar
