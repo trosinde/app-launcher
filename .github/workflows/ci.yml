@@ -67,3 +67,27 @@ jobs:
           name: test-results-${{ runner.os }}
           path: TestResults/
           if-no-files-found: warn
+
+      # The manual must build with every change (HTML only; the PDF needs Edge and is built by the release).
+      - name: Build manual (HTML)
+        shell: pwsh
+        run: ./build/Build-Manual.ps1 -SkipPdf -OutputDir artifacts/manual
+
+      - name: Upload manual
+        uses: actions/upload-artifact@v7
+        with:
+          name: manual-html
+          path: artifacts/manual/
+          if-no-files-found: error
+
+  openspec:
+    name: OpenSpec validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Validate specs
+        run: npx --yes @fission-ai/openspec@1.17.0 validate --all --strict

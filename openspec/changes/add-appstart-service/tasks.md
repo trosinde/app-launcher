@@ -41,6 +41,7 @@
 - [x] 7.4 Velopack-Hooks: Install registriert und startet den Dienst, Uninstall stoppt und löscht ihn, keine Oberfläche, < 30 s
 - [x] 7.5 AppStart.Bootstrapper (Native AOT, requireAdministrator): MSI eingebettet, msiexec still mit Log und Auswertung der Exit-Codes, danach installiertes AppStart.Setup nach Signaturprüfung starten
 - [x] 7.6 Lieferumfang AppStart-Setup.exe (interaktiv) und AppStart.msi (Softwareverteilung), beide signiert
+- [x] 7.7 Pipeline nach der Vorlage «Release, Handbuch und README angleichen» (Teile A und B): CI baut zusätzlich das Handbuch-HTML (Artefakt manual-html), Job «OpenSpec validate»; PR-Template und CONTRIBUTING nennen beide Pflicht-Checks
 
 ## 8. Tests
 - [x] 8.1 Unit-Tests Core
