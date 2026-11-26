@@ -78,7 +78,7 @@ try {
 
     $report = Join-Path $StageDir 'setup-verify.html'
     $r = Invoke-Setup @('verify', '--report', $report)
-    Check 'verify: Exit-Code 0, 9 von 9' ($r.Exit -eq 0 -and $r.Text -like '*9 von 9*') ''
+    Check 'verify: Exit-Code 0, 10 von 10' ($r.Exit -eq 0 -and $r.Text -like '*10 von 10*') ''
     Check 'Prüfbericht abgelegt' ((Test-Path $report) -and @(Get-ChildItem "$env:ProgramData\AppStart\Reports" -Filter 'verify-*.html').Count -ge 1) ''
 
     # Start through the shortcut created by setup

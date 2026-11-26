@@ -45,6 +45,21 @@ jobs:
       - name: Test
         run: dotnet test --solution AppStart.slnx -c Release --no-build --report-xunit-trx --results-directory TestResults
 
+      # Failed tests as annotations: readable on the run page and via the public API, without log access.
+      - name: Annotate failed tests
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-ChildItem TestResults -Filter *.trx -Recurse | ForEach-Object {
+            [xml]$trx = Get-Content $_.FullName -Raw
+            foreach ($r in $trx.TestRun.Results.UnitTestResult | Where-Object outcome -eq 'Failed') {
+              $msg = "$($r.Output.ErrorInfo.Message)" -replace '\r?\n', ' ' -replace '%', '%25'
+              if ($msg.Length -gt 900) { $msg = $msg.Substring(0, 900) + ' ...' }
+              $title = "$($r.testName)" -replace '%', '%25' -replace ',', '%2C' -replace ':', '%3A'
+              Write-Output "::error title=$title::$msg"
+            }
+          }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
