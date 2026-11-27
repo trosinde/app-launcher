@@ -1,16 +1,16 @@
 ## ADDED Requirements
 
-### Requirement: Administratoren mit Passwort
-verify SHALL jedes aktivierte lokale Konto, das direkt oder über eine verschachtelte Gruppe Mitglied der Administratoren ist und kein Passwort hat, als Abweichung melden und im Bericht namentlich nennen.
+### Requirement: Administrators with password
+verify SHALL report every enabled local account that is a member of Administrators, directly or via a nested group, and has no password as a deviation and name it in the report.
 
-#### Scenario: Admin ohne Passwort
-- **WHEN** ein aktiviertes lokales Konto in der Gruppe Administratoren ein leeres Passwort hat
-- **THEN** meldet verify den Prüfpunkt «Administratoren mit Passwort» als nicht erfüllt mit dem Kontonamen und liefert einen Exit-Code ungleich 0
+#### Scenario: Admin without password
+- **WHEN** an enabled local account in the Administrators group has an empty password
+- **THEN** verify reports the check "Administrators with password" as failed with the account name and returns an exit code other than 0
 
-#### Scenario: Alle Admins mit Passwort
-- **WHEN** jedes aktivierte Konto in der Gruppe Administratoren ein Passwort hat
-- **THEN** ist der Prüfpunkt «Administratoren mit Passwort» erfüllt
+#### Scenario: All admins with password
+- **WHEN** every enabled account in the Administrators group has a password
+- **THEN** the check "Administrators with password" is passed
 
-#### Scenario: Deaktiviertes Konto ohne Passwort
-- **WHEN** ein deaktiviertes Konto in der Gruppe Administratoren kein Passwort hat
-- **THEN** zählt es nicht als Abweichung
+#### Scenario: Disabled account without password
+- **WHEN** a disabled account in the Administrators group has no password
+- **THEN** it does not count as a deviation

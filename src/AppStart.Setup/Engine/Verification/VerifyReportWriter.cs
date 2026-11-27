@@ -53,7 +53,7 @@ public static class VerifyReportWriter
         };
 
         var sb = new StringBuilder();
-        sb.Append("<!doctype html>\n<html lang=\"de-CH\">\n<head>\n<meta charset=\"utf-8\">\n");
+        sb.Append("<!doctype html>\n<html lang=\"en-US\">\n<head>\n<meta charset=\"utf-8\">\n");
         sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
         sb.Append("<title>").Append(E(VerificationTexts.ReportTitle)).Append(" – ").Append(E(report.Computer))
           .Append(' ').Append(E(FormatDate(report))).Append("</title>\n");
@@ -95,7 +95,7 @@ public static class VerifyReportWriter
             }
             else if (check.Findings.Count > 0)
             {
-                // Notes of a passed check (add-allowed-child-processes: «Alle weiteren Programme erlaubt»).
+                // Notes of a passed check (add-allowed-child-processes: "All other programs allowed").
                 sb.Append("<td class=\"muted\">").Append(E(check.Expected)).Append("<ul>");
                 foreach (var note in check.Findings)
                 {

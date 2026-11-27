@@ -78,13 +78,13 @@ public sealed class JobMonitor(
         }
         catch (Exception ex)
         {
-            Unchecked(processId, $"Prozess nicht zu öffnen: {ex.Message}");
+            Unchecked(processId, $"Process cannot be opened: {ex.Message}");
             return;
         }
 
         if (process is null)
         {
-            Unchecked(processId, "Prozess nicht zu öffnen (beendet oder kein Zugriff).");
+            Unchecked(processId, "Process cannot be opened (ended or no access).");
             return;
         }
 
@@ -96,7 +96,7 @@ public sealed class JobMonitor(
                 path = process.Path;
                 if (path is null)
                 {
-                    Kill(process, "<unbekannt>", "Pfad des Prozesses nicht lesbar.");
+                    Kill(process, "<unknown>", "Path of the process not readable.");
                     return;
                 }
 
@@ -104,7 +104,7 @@ public sealed class JobMonitor(
             }
             catch (Exception ex)
             {
-                Kill(process, path ?? "<unbekannt>", $"Prüfung fehlgeschlagen: {ex.Message}");
+                Kill(process, path ?? "<unknown>", $"Verification failed: {ex.Message}");
             }
         }
     }
@@ -113,7 +113,7 @@ public sealed class JobMonitor(
     {
         if (inspector.IsSystemConsoleHost(path))
         {
-            Allowed(process, path, "Konsolenfenster von Windows (conhost.exe), immer erlaubt.");
+            Allowed(process, path, "Windows console window (conhost.exe), always allowed.");
             return;
         }
 
@@ -128,13 +128,13 @@ public sealed class JobMonitor(
                     var (thumbprint, sha) = inspector.Fingerprint(path);
                     recorder.Record(app.Id, path, thumbprint, sha, process.ParentPath, now);
                     log.LogInformation(EventIds.ChildRecorded,
-                        "Lernmodus: Programm aufgezeichnet. Benutzer: {User}, AppId: {AppId}, Pfad: {Path}, Prozess: {ProcessId}, Elternprozess: {Parent}, Signatur: {Signature}.",
-                        context.User, app.Id, path, process.Id, process.ParentPath ?? "-", thumbprint ?? "keine gültige");
+                        "Learning mode: program recorded. User: {User}, AppId: {AppId}, Path: {Path}, Process: {ProcessId}, Parent process: {Parent}, Signature: {Signature}.",
+                        context.User, app.Id, path, process.Id, process.ParentPath ?? "-", thumbprint ?? "none valid");
                 }
                 catch (Exception ex)
                 {
                     log.LogError(EventIds.JobMonitorFailed,
-                        "Lernmodus: Programm nicht aufgezeichnet. Benutzer: {User}, AppId: {AppId}, Pfad: {Path}, Prozess: {ProcessId}. {Reason}",
+                        "Learning mode: program not recorded. User: {User}, AppId: {AppId}, Path: {Path}, Process: {ProcessId}. {Reason}",
                         context.User, app.Id, path, process.Id, ex.Message);
                 }
 
@@ -144,7 +144,7 @@ public sealed class JobMonitor(
             if (Interlocked.Exchange(ref _learnEndLogged, 1) == 0)
             {
                 log.LogInformation(EventIds.LearnModeEnded,
-                    "Lernmodus abgelaufen ({Expires:u}), es gilt wieder der eingestellte Modus. AppId: {AppId}, Benutzer: {User}.",
+                    "Learning mode expired ({Expires:u}), the configured mode applies again. AppId: {AppId}, User: {User}.",
                     learn.ExpiresUtc, app.Id, context.User);
             }
         }
@@ -152,24 +152,24 @@ public sealed class JobMonitor(
         switch (app.ChildProcessMode)
         {
             case ChildProcessMode.All:
-                Allowed(process, path, "Modus «all»: alle weiteren Programme erlaubt.");
+                Allowed(process, path, "Mode \"all\": all other programs allowed.");
                 return;
             case ChildProcessMode.Blocked:
-                Kill(process, path, "Modus «blocked»: keine weiteren Programme erlaubt.");
+                Kill(process, path, "Mode \"blocked\": no other programs allowed.");
                 return;
         }
 
         var entry = app.AllowedChildren?.FirstOrDefault(c => SamePath(c.Exe, path));
         if (entry is null)
         {
-            Kill(process, path, "Nicht auf der Liste der erlaubten Hilfsprogramme.");
+            Kill(process, path, "Not on the list of allowed helper programs.");
             return;
         }
 
         var check = inspector.Verify(entry, path);
         if (!check.Success)
         {
-            var reason = entry.Check == IntegrityCheck.Sha256 ? "Prüfsumme stimmt nicht" : "Signatur stimmt nicht";
+            var reason = entry.Check == IntegrityCheck.Sha256 ? "Checksum does not match" : "Signature does not match";
             Kill(process, path, $"{reason}: {check.Detail}");
             return;
         }
@@ -179,7 +179,7 @@ public sealed class JobMonitor(
 
     private void Allowed(IChildProcess process, string path, string detail) =>
         log.LogInformation(EventIds.ChildAllowed,
-            "Hilfsprogramm erlaubt. Benutzer: {User}, Session: {Session}, AppId: {AppId}, Pfad: {Path}, Prozess: {ProcessId}. {Detail}",
+            "Helper program allowed. User: {User}, Session: {Session}, AppId: {AppId}, Path: {Path}, Process: {ProcessId}. {Detail}",
             context.User, context.SessionId, app.Id, path, process.Id, detail);
 
     private void Kill(IChildProcess process, string path, string reason)
@@ -191,18 +191,18 @@ public sealed class JobMonitor(
         }
         catch (Exception ex)
         {
-            reason += $" Beenden fehlgeschlagen: {ex.Message}";
+            reason += $" Ending failed: {ex.Message}";
         }
 
         log.LogWarning(EventIds.ChildTerminated,
-            "Programm beendet. Benutzer: {User}, Session: {Session}, AppId: {AppId}, Pfad: {Path}, Prozess: {ProcessId}, beendet: {Terminated}. Grund: {Reason}",
-            context.User, context.SessionId, app.Id, path, process.Id, done ? "ja" : "NEIN", reason);
+            "Program ended. User: {User}, Session: {Session}, AppId: {AppId}, Path: {Path}, Process: {ProcessId}, Ended: {Terminated}. Reason: {Reason}",
+            context.User, context.SessionId, app.Id, path, process.Id, done ? "yes" : "NO", reason);
     }
 
     // The process could not even be opened: nothing can be terminated, but it must be visible.
     private void Unchecked(int processId, string reason) =>
         log.LogError(EventIds.JobMonitorFailed,
-            "Neuer Prozess im Job nicht prüfbar. Benutzer: {User}, AppId: {AppId}, Prozess: {ProcessId}. {Reason}",
+            "New process in the job cannot be verified. User: {User}, AppId: {AppId}, Process: {ProcessId}. {Reason}",
             context.User, app.Id, processId, reason);
 
     private static bool SamePath(string a, string b) =>

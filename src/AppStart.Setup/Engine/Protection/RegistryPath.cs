@@ -24,22 +24,22 @@ internal static class RegistryPath
             || !(segments[0].Equals("HKLM", StringComparison.OrdinalIgnoreCase)
                  || segments[0].Equals("HKEY_LOCAL_MACHINE", StringComparison.OrdinalIgnoreCase)))
         {
-            throw new ArgumentException($"Registry-Key «{key}» muss mit HKLM\\SOFTWARE\\ beginnen.", nameof(key));
+            throw new ArgumentException($"Registry key \"{key}\" must start with HKLM\\SOFTWARE\\.", nameof(key));
         }
 
         if (segments.Length < 3 || !segments[1].Equals("SOFTWARE", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Registry-Key «{key}» muss unterhalb von HKLM\\SOFTWARE\\ liegen.", nameof(key));
+            throw new ArgumentException($"Registry key \"{key}\" must lie below HKLM\\SOFTWARE\\.", nameof(key));
         }
 
         if (segments.Any(s => s.Trim().Length == 0 || s.Contains('/', StringComparison.Ordinal)))
         {
-            throw new ArgumentException($"Registry-Key «{key}» enthält einen leeren oder ungültigen Teil.", nameof(key));
+            throw new ArgumentException($"Registry key \"{key}\" contains an empty or invalid part.", nameof(key));
         }
 
         if (segments.Length == 3 && ForbiddenBelowSoftware.Contains(segments[2]))
         {
-            throw new ArgumentException($"Registry-Key «{key}» ist ein gemeinsamer Systemschlüssel und darf nicht gesperrt werden.", nameof(key));
+            throw new ArgumentException($"Registry key \"{key}\" is a shared system key and must not be locked.", nameof(key));
         }
 
         var subKey = string.Join('\\', segments.Skip(1));

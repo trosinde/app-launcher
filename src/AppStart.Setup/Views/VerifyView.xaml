@@ -9,7 +9,7 @@
              d:DesignWidth="960" d:DesignHeight="760"
              FontFamily="Segoe UI" FontSize="14"
              Foreground="{StaticResource TextPrimary}" Background="{StaticResource CardBackground}">
-  <!-- UI design docs/ui-designs/Verify.dc.html (Prüfbericht) plus a button bar for print / save as. -->
+  <!-- UI design docs/ui-designs/Verify.dc.html (verification report) plus a button bar for print / save as. -->
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />

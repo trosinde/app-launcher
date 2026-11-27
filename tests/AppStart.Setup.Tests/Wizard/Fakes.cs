@@ -15,11 +15,11 @@ internal sealed class FakeSetupEngine : ISetupEngine
 
     public List<SetupStepResult> ApplyResults { get; } =
     [
-        new("Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt", true),
-        new("2 Applikationen freigegeben, Konfiguration geschützt", true),
-        new("Datenordner und Registry-Keys gesperrt", true),
-        new("Verknüpfungen mit App-Icon angelegt, 2 alte Verknüpfungen gesichert", true),
-        new("Dienst AppStart läuft, Start automatisch", true),
+        new("Accounts appstart-app and appstart-user, group AppStart Users created", true),
+        new("2 applications approved, configuration protected", true),
+        new("Data folders and registry keys locked", true),
+        new("Shortcuts with app icon created, 2 old shortcuts backed up", true),
+        new("Service AppStart is running, starts automatically", true),
     ];
 
     public Exception? ApplyException { get; set; }
@@ -48,7 +48,7 @@ internal sealed class FakeSetupEngine : ISetupEngine
         Inspected.Add(exePath);
         if (exePath.Contains("broken", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Datei nicht lesbar");
+            throw new InvalidOperationException("file not readable");
         }
 
         var name = Path.GetFileNameWithoutExtension(exePath);
@@ -59,7 +59,7 @@ internal sealed class FakeSetupEngine : ISetupEngine
     {
         LastRequest = request;
         LastPassword = request.OperatorPassword is null ? null : Plain(request.OperatorPassword);
-        progress?.Report("Konten werden angelegt…");
+        progress?.Report("Creating accounts…");
         if (ApplyException is not null)
         {
             throw ApplyException;
@@ -114,10 +114,10 @@ internal sealed class FakeSetupEngine : ISetupEngine
             : new AllowedChild { Exe = exePath, Check = IntegrityCheck.Sha256, Sha256 = new string('c', 64), AllowShell = allowShell };
     }
 
-    public IReadOnlyList<string> WriteViolations(string exePath) => Writable.Contains(exePath) ? ["Benutzer hat Schreibrechte."] : [];
+    public IReadOnlyList<string> WriteViolations(string exePath) => Writable.Contains(exePath) ? ["Users has write permissions."] : [];
 
     public Core.Integrity.IntegrityResult VerifyChild(AllowedChild entry) =>
-        Changed.Contains(entry.Exe) ? Core.Integrity.IntegrityResult.Fail("SHA-256 weicht ab.") : Core.Integrity.IntegrityResult.Ok("ok");
+        Changed.Contains(entry.Exe) ? Core.Integrity.IntegrityResult.Fail("SHA-256 differs.") : Core.Integrity.IntegrityResult.Ok("ok");
 
     public AllowedChild RehashChild(AllowedChild entry)
     {
@@ -132,13 +132,13 @@ internal sealed class FakeSetupEngine : ISetupEngine
     public IReadOnlyList<SetupStepResult> StartLearning(string appId, int minutes)
     {
         LearnCalls.Add("start:" + appId);
-        return StartLearningFails ? [new SetupStepResult("Applikation «x» ist nicht freigegeben", false)] : [new SetupStepResult("Lernmodus gestartet", true)];
+        return StartLearningFails ? [new SetupStepResult("Application \"x\" is not approved", false)] : [new SetupStepResult("Learning mode started", true)];
     }
 
     public IReadOnlyList<SetupStepResult> StopLearning(string appId)
     {
         LearnCalls.Add("stop:" + appId);
-        return [new SetupStepResult("Lernmodus beendet", true)];
+        return [new SetupStepResult("Learning mode ended", true)];
     }
 
     public LearnRecording? GetRecording(string appId) => Recording;
@@ -153,14 +153,14 @@ internal sealed class FakeSetupEngine : ISetupEngine
     {
         (string Title, string Expected)[] points =
         [
-            ("Dienst", "läuft, Start automatisch, LocalSystem"),
-            ("Programmordner", "nur SYSTEM und Administratoren schreiben"),
-            ("Konten", "appstart-user ohne Admin-Rechte, appstart-app ohne Anmeldung"),
-            ("Pipe", "Rechte gemäss SDDL, keine Fernzugriffe"),
-            ("apps.json", "geschützt, jede EXE besteht die Prüfung"),
-            ("Datenordner je App", "nur appstart-app, SYSTEM, Administratoren"),
-            ("Registry-Key je App", "für Bediener nicht lesbar"),
-            ("Verknüpfungen", "zeigen auf den Launcher"),
+            ("Service", "running, starts automatically, LocalSystem"),
+            ("Program folder", "only SYSTEM and Administrators can write"),
+            ("Accounts", "appstart-user without admin rights, appstart-app without sign-in"),
+            ("Pipe", "permissions as per SDDL, no remote access"),
+            ("apps.json", "protected, every EXE passes the verification"),
+            ("Data folder per app", "only appstart-app, SYSTEM, Administrators"),
+            ("Registry key per app", "not readable by operators"),
+            ("Shortcuts", "point to the launcher"),
         ];
         var checks = points.Select((p, i) =>
         {
@@ -170,7 +170,7 @@ internal sealed class FakeSetupEngine : ISetupEngine
                 p.Title,
                 p.Expected,
                 deviation ? CheckOutcome.Deviation : CheckOutcome.Passed,
-                deviation ? (i == 2 ? ["appstart-user ist Mitglied der Administratoren"] : ["LABOR\\bediener01 kann den Key lesen"]) : []);
+                deviation ? (i == 2 ? ["appstart-user is a member of Administrators"] : ["LABOR\\bediener01 can read the key"]) : []);
         }).ToList();
         return new VerifyReport(new DateTimeOffset(2026, 11, 15, 10, 42, 0, TimeSpan.Zero), "LAB-PC-014", "LABOR\\service", "0.1.0", checks);
     }
@@ -233,7 +233,7 @@ internal sealed class FakeUi : IUiServices
         return true;
     }
 
-    /// <summary>Answers for Confirm in order; «Nein» when empty.</summary>
+    /// <summary>Answers for Confirm in order; "No" when empty.</summary>
     public Queue<bool> ConfirmAnswers { get; } = new();
 
     public List<string> Confirmations { get; } = [];
@@ -244,7 +244,7 @@ internal sealed class FakeUi : IUiServices
         return ConfirmAnswers.Count > 0 && ConfirmAnswers.Dequeue();
     }
 
-    /// <summary>What the «user» does in the helpers dialog; default: close with «Abbrechen».</summary>
+    /// <summary>What the "user" does in the helpers dialog; default: close with "Cancel".</summary>
     public Func<HelpersViewModel, bool> OnHelpers { get; set; } = _ => false;
 
     public Action<LearnViewModel> OnLearn { get; set; } = vm => vm.CancelCommand.Execute(null);

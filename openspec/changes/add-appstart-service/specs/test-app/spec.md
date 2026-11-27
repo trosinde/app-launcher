@@ -1,20 +1,20 @@
 ## ADDED Requirements
 
-### Requirement: Testapplikation wie ein betroffener Fat Client
-AppStart.TestApp SHALL Admin-Rechte verlangen, Werte inkl. Test-Passwort in HKLM\SOFTWARE\AppStartTest speichern, Dateien in C:\ProgramData\AppStartTest lesen und schreiben und ihren Zustand anzeigen.
+### Requirement: Test application like an affected fat client
+AppStart.TestApp SHALL require admin rights, store values including a test password in HKLM\SOFTWARE\AppStartTest, read and write files in C:\ProgramData\AppStartTest and display its state.
 
-#### Scenario: Start ohne Admin-Rechte
-- **WHEN** ein Standard-User die TestApp-EXE direkt startet
-- **THEN** bricht sie mit einer Meldung ab
+#### Scenario: Start without admin rights
+- **WHEN** a standard user starts the TestApp EXE directly
+- **THEN** it exits with a message
 
-#### Scenario: Start über den Launcher
-- **WHEN** ein Mitglied von AppStart Users die TestApp über ihre Verknüpfung startet
-- **THEN** zeigt sie Konto appstart-app, Admin ja und Zugriff auf Registry und Dateien ok
+#### Scenario: Start via the launcher
+- **WHEN** a member of AppStart Users starts the TestApp via its shortcut
+- **THEN** it shows account appstart-app, admin yes and access to registry and files ok
 
-#### Scenario: Daten für Bediener gesperrt
-- **WHEN** der Bediener Registry-Key oder Datenordner der TestApp selbst öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: Data blocked for operators
+- **WHEN** the operator opens the registry key or data folder of the TestApp directly
+- **THEN** access is denied
 
-#### Scenario: Ausbruchsversuch
-- **WHEN** in der TestApp «Eingabeaufforderung starten» gewählt wird
-- **THEN** scheitert der Start von cmd.exe
+#### Scenario: Escape attempt
+- **WHEN** "Start command prompt" is chosen in the TestApp
+- **THEN** starting cmd.exe fails

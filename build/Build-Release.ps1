@@ -9,9 +9,9 @@
      AppStart.Setup (WPF, not single-file) and AppStart.TestApp (subfolder TestApp)
   3. vpk pack --msi --instLocation PerMachine --packTitle AppStart  ->  C:\Program Files\AppStart
   4. removes Velopack's per-user Setup.exe and Portable.zip: they install into a folder the user can
-     write to (concept: "Nie das per-user-Setup von Velopack verwenden")
+     write to (concept: "Never use the per-user setup of Velopack")
   5. renames the MSI to AppStart-<Version>.msi, builds the bootstrapper AppStart-Setup.exe with the MSI
-     embedded (tasks 7.5/7.6), signs it, copies the manual as AppStart-Handbuch-<Version>.pdf and
+     embedded (tasks 7.5/7.6), signs it, copies the manual as AppStart-Manual-<Version>.pdf and
      writes SHA256SUMS.txt
 
   Signing: with -PfxPath the certificate is imported into CurrentUser\My for the duration of the build
@@ -95,7 +95,7 @@ try {
             -p:PublishTrimmed=true -o (Join-Path $pack 'TestApp')
     }
     Invoke-Step 'Manual (PDF)' { & (Join-Path $PSScriptRoot 'Build-Manual.ps1') -Version $Version -OutputDir (Join-Path $work 'manual') }
-    Copy-Item (Join-Path $work 'manual/AppStart-Handbuch.pdf') (Join-Path $pack 'AppStart-Handbuch.pdf')
+    Copy-Item (Join-Path $work 'manual/AppStart-Manual.pdf') (Join-Path $pack 'AppStart-Manual.pdf')
     Get-ChildItem $pack -Recurse -Filter '*.pdb' | Remove-Item
 
     # --- signing setup (no secret on any command line)
@@ -178,7 +178,7 @@ try {
     }
 
     # The manual also as a release asset, readable without installing AppStart (same file as in the package).
-    Copy-Item (Join-Path $work 'manual/AppStart-Handbuch.pdf') (Join-Path $OutputDir "AppStart-Handbuch-$Version.pdf")
+    Copy-Item (Join-Path $work 'manual/AppStart-Manual.pdf') (Join-Path $OutputDir "AppStart-Manual-$Version.pdf")
 
     $sums = Get-ChildItem $OutputDir -File | Sort-Object Name | ForEach-Object {
         "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name

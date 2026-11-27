@@ -28,7 +28,7 @@ public sealed partial class Manual
     /// <summary>Folder that holds index.md and the chapters.</summary>
     public string Directory { get; }
 
-    /// <summary>File name (e.g. "07-meldungen.md") → Markdown source.</summary>
+    /// <summary>File name (e.g. "07-messages-and-troubleshooting.md") → Markdown source.</summary>
     public IReadOnlyDictionary<string, string> Sources { get; }
 
     /// <summary>File name → rendered, normalised text.</summary>
@@ -43,7 +43,7 @@ public sealed partial class Manual
 
     public string ChapterFile(string prefix) =>
         Sources.Keys.SingleOrDefault(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        ?? throw new InvalidOperationException($"Kapitel «{prefix}*.md» fehlt in {Directory}.");
+        ?? throw new InvalidOperationException($"Chapter \"{prefix}*.md\" is missing in {Directory}.");
 
     /// <summary>Collapses all whitespace (incl. line breaks) to single spaces, so wrapping never matters.</summary>
     public static string Normalize(string text) => Whitespace().Replace(text, " ").Trim();
@@ -130,7 +130,7 @@ public sealed partial class Manual
             }
         }
 
-        throw new DirectoryNotFoundException($"docs/manual/index.md nicht gefunden (gesucht ab {AppContext.BaseDirectory}).");
+        throw new DirectoryNotFoundException($"docs/manual/index.md not found (searched from {AppContext.BaseDirectory}).");
     }
 
     [GeneratedRegex(@"\s+")]

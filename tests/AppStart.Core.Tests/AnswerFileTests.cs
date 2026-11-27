@@ -11,7 +11,7 @@ public class AnswerFileTests
           "version": 1,
           "apps": [{
             "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
-            "id": "appa", "name": "Applikation A",
+            "id": "appa", "name": "Application A",
             "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
             "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA",
             "childProcesses": "allowlist",

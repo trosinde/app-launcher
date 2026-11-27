@@ -13,7 +13,7 @@ public sealed record CheckRow(string Title, string Text, bool IsDeviation)
     public static CheckRow From(CheckResult check)
     {
         var deviation = check.Outcome == CheckOutcome.Deviation;
-        // Passed checks may carry notes (e.g. «Alle weiteren Programme erlaubt»): shown below the expected state.
+        // Passed checks may carry notes (e.g. "All other programs allowed"): shown below the expected state.
         var text = check.Findings.Count == 0 ? check.Expected
             : deviation ? string.Join(Environment.NewLine, check.Findings)
             : check.Expected + Environment.NewLine + string.Join(Environment.NewLine, check.Findings);
@@ -24,7 +24,7 @@ public sealed record CheckRow(string Title, string Text, bool IsDeviation)
 }
 
 /// <summary>
-/// Verify view (task 9.1, Start menu «AppStart – Einrichtung prüfen»): runs verify, shows the result per
+/// Verify view (task 9.1, Start menu "AppStart – Verify setup"): runs verify, shows the result per
 /// check point, saves the report automatically, offers print and "save as".
 /// </summary>
 public sealed partial class VerifyViewModel(ISetupEngine engine, IUiServices ui) : ObservableObject

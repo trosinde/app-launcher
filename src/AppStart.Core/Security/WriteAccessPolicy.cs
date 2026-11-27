@@ -28,12 +28,12 @@ public static class WriteAccessPolicy
 
         if (descriptor.Owner is { } owner && !Trusted.Contains(owner))
         {
-            violations.Add($"Besitzer {Describe(owner)} ist nicht SYSTEM, Administratoren oder TrustedInstaller.");
+            violations.Add($"Owner {Describe(owner)} is not SYSTEM, Administrators or TrustedInstaller.");
         }
 
         if (descriptor.DiscretionaryAcl is null)
         {
-            violations.Add("Keine Zugriffsliste (NULL DACL): jeder hat Vollzugriff.");
+            violations.Add("No access control list (NULL DACL): everyone has full access.");
             return violations;
         }
 
@@ -50,7 +50,7 @@ public static class WriteAccessPolicy
 
             if ((known.AccessMask & mask) != 0)
             {
-                violations.Add($"{Describe(known.SecurityIdentifier)} hat Schreibrechte (Maske 0x{known.AccessMask:X8}).");
+                violations.Add($"{Describe(known.SecurityIdentifier)} has write permissions (mask 0x{known.AccessMask:X8}).");
             }
         }
 

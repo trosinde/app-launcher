@@ -31,7 +31,7 @@
 
     <!-- Status list -->
     <Border Grid.Row="1" Style="{StaticResource Card}">
-      <ItemsControl ItemsSource="{Binding Rows}" AutomationProperties.Name="Zustand">
+      <ItemsControl ItemsSource="{Binding Rows}" AutomationProperties.Name="State">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type vm:StatusRow}">
             <Border x:Name="RowBorder" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Padding="14,10">

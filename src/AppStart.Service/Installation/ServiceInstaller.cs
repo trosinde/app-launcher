@@ -12,7 +12,7 @@ namespace AppStart.Service.Installation;
 internal static class ServiceInstaller
 {
     private const string DisplayName = "AppStart";
-    private const string Description = "Startet freigegebene Applikationen für Bediener mit Admin-Rechten (AppStart).";
+    private const string Description = "Starts approved applications for operators with admin rights (AppStart).";
 
     /// <summary>Install hook (also after an MSI upgrade): create or re-point the service, then start it.</summary>
     public static void InstallAndStart()

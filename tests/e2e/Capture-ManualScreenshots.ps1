@@ -55,7 +55,7 @@ $AllShots = @('startmenue.png', 'bootstrapper.png', 'setup-1.png', 'setup-2.png'
     'testapp.png', 'lernmodus.png', 'lernergebnis.png', 'hilfsprogramme.png', 'setup-weitere-programme.png', 'pruefansicht-ok.png', 'pruefansicht-abweichung.png', 'verify-konsole.png',
     'launcher-nicht-erreichbar.png', 'launcher-verweigert.png', 'ereignisanzeige.png')
 $Shots = [ordered]@{}
-foreach ($s in $AllShots) { $Shots[$s] = 'SKIP  nicht erreicht' }
+foreach ($s in $AllShots) { $Shots[$s] = 'SKIP  not reached' }
 
 # ------------------------------------------------------------------ helpers
 
@@ -98,7 +98,7 @@ function Save-Shot($window, [string] $file, [string] $note = '') {
             $r = $window.Current.BoundingRectangle
             $x = [int]$r.X; $y = [int]$r.Y; $w = [int]$r.Width; $hgt = [int]$r.Height
         }
-        if ($w -le 0 -or $hgt -le 0) { throw 'Fenster hat keine Grösse' }
+        if ($w -le 0 -or $hgt -le 0) { throw 'Window has no size' }
         $bmp = New-Object System.Drawing.Bitmap($w, $hgt)
         $g = [System.Drawing.Graphics]::FromImage($bmp)
         $g.CopyFromScreen($x, $y, 0, 0, $bmp.Size)
@@ -108,7 +108,7 @@ function Save-Shot($window, [string] $file, [string] $note = '') {
         Write-Host "  OK   $file"
         return $true
     } catch {
-        Set-ShotSkip @($file) "Bildschirmfoto nicht möglich: $($_.Exception.Message)"
+        Set-ShotSkip @($file) "Screenshot not possible: $($_.Exception.Message)"
         return $false
     }
 }
@@ -143,7 +143,7 @@ function Invoke-Button($root, [string] $name, [int] $timeoutSec = 20) {
         }
         Start-Sleep -Milliseconds 250
     } while ((Get-Date) -lt $deadline)
-    throw "Knopf «$name» nicht gefunden oder nicht aktiv"
+    throw "Button \"$name\" not found or not enabled"
 }
 
 function Wait-TopWindow([scriptblock] $match, [int] $timeoutSec = 20) {
@@ -197,14 +197,14 @@ function Capture-LauncherDialog([pscredential] $op, [string] $lnk, [string] $fil
     $before = @(Get-Process AppStart.Launcher -ErrorAction SilentlyContinue | ForEach-Object Id)
     Start-ShortcutAs $op $lnk | Out-Null
     $p = Wait-NewProcess 'AppStart.Launcher' $before 20
-    if (-not $p) { Set-ShotSkip @($file) 'Launcher-Prozess nicht gestartet'; return }
+    if (-not $p) { Set-ShotSkip @($file) 'Launcher process not started'; return }
     $w = Wait-ProcessWindow $p.Id 30
-    if (-not $w) { Set-ShotSkip @($file) "keine Meldung des Launchers (exit $(if ($p.HasExited) { $p.ExitCode } else { 'läuft' }))"; Close-Process $p; return }
+    if (-not $w) { Set-ShotSkip @($file) "no message from the launcher (exit $(if ($p.HasExited) { $p.ExitCode } else { 'running' }))"; Close-Process $p; return }
     Start-Sleep -Milliseconds 500
     $texts = (Get-WindowTexts $w) -join ' | '
-    Write-Host "  Launcher-Meldung: '$($w.Current.Name)' $texts"
+    Write-Host "  Launcher message: '$($w.Current.Name)' $texts"
     if ($texts -like "*$expect*") { [void](Save-Shot $w $file) }
-    else { Set-ShotSkip @($file) "Meldung enthält «$expect» nicht: $texts" }
+    else { Set-ShotSkip @($file) "Message does not contain \"$expect\": $texts" }
     Close-Process $p
 }
 
@@ -218,7 +218,7 @@ $serviceStopped = $false
 $adminDeviation = $false
 try {
     Write-Host "== Windows $((Get-CimInstance Win32_OperatingSystem).Version), Bootstrapper $BootstrapperPath, Ausgabe $OutputDir"
-    if (Get-AppStartProduct) { throw 'AppStart ist bereits installiert. Nur auf einer frischen Test-VM (Snapshot) ausführen.' }
+    if (Get-AppStartProduct) { throw 'AppStart is already installed. Run only on a fresh test VM (snapshot).' }
     Remove-Item $ShotWork -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force $ShotWork | Out-Null
     # Own console out of the way: CopyFromScreen photographs whatever is on top.
@@ -235,7 +235,7 @@ try {
     while (-not $wizard -and (Get-Date) -lt $deadline) {
         foreach ($w in @(Get-ProcessWindows $boot.Id)) {
             $texts = (Get-WindowTexts $w) -join ' | '
-            if ($texts -like '*AppStart wird installiert*') {
+            if ($texts -like '*Installing AppStart*') {
                 if (-not $progressSeen) {
                     $progressSeen = $true
                     Start-Sleep -Milliseconds 1200   # marquee bar visibly moving
@@ -243,7 +243,7 @@ try {
                 }
             } elseif ($texts) {
                 # Any other message (3010 restart, already installed, untrusted, failure): log and close.
-                Write-Host "  Bootstrapper-Meldung: $texts"
+                Write-Host "  Bootstrapper message: $texts"
                 Close-UiWindow $w
             }
         }
@@ -252,13 +252,13 @@ try {
         if (-not $wizard -and $boot.HasExited) { break }
         Start-Sleep -Milliseconds 150
     }
-    if (-not $progressSeen) { Set-ShotSkip @('bootstrapper.png') 'Fortschrittsdialog nicht gesehen (Installation zu schnell oder Meldung statt Fortschritt)' }
+    if (-not $progressSeen) { Set-ShotSkip @('bootstrapper.png') 'Progress dialog not seen (installation too fast or message instead of progress)' }
     if ($wizard) {
         # This wizard loaded an empty configuration; it is reopened after the release of the TestApp.
         $null = $wizard.Handle
         for ($i = 0; $i -lt 3 -and -not $wizard.HasExited; $i++) {
             foreach ($w in Get-ProcessWindows $wizard.Id) {
-                $yes = Find-ByName $w 'Ja' ([System.Windows.Automation.ControlType]::Button)
+                $yes = @('Yes', 'Ja') | ForEach-Object { Find-ByName $w $_ ([System.Windows.Automation.ControlType]::Button) } | Where-Object { $_ } | Select-Object -First 1 # MessageBox buttons follow the Windows language
                 if ($yes) { try { $yes.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() } catch { } } else { Close-UiWindow $w }
             }
             $wizard.WaitForExit(5000) | Out-Null
@@ -266,10 +266,10 @@ try {
         if (-not $wizard.HasExited) { $wizard.Kill() }
     }
     if (-not $boot.WaitForExit(30000)) {
-        foreach ($w in @(Get-ProcessWindows $boot.Id)) { Write-Host "  Bootstrapper-Meldung: $((Get-WindowTexts $w) -join ' | ')"; Close-UiWindow $w }
+        foreach ($w in @(Get-ProcessWindows $boot.Id)) { Write-Host "  Bootstrapper message: $((Get-WindowTexts $w) -join ' | ')"; Close-UiWindow $w }
         if (-not $boot.WaitForExit(10000)) { $boot.Kill() }
     }
-    if (-not (Get-AppStartProduct) -or -not (Test-Path $SetupExe)) { throw 'AppStart wurde durch den Bootstrapper nicht installiert.' }
+    if (-not (Get-AppStartProduct) -or -not (Test-Path $SetupExe)) { throw 'AppStart was not installed by the bootstrapper.' }
     Write-Host "  installiert, Bootstrapper exit $($boot.ExitCode)"
 
     # ================================================================ 2. release TestApp copy, wizard
@@ -289,8 +289,8 @@ try {
     try {
         $wiz = Start-Process $SetupExe -WorkingDirectory $CurDir -PassThru
         $win = Wait-ProcessWindow $wiz.Id 60
-        if (-not $win) { throw 'Fenster «AppStart Setup» erscheint nicht' }
-        if (-not (Wait-Element $win "Schutz für $TestAppName" 60)) { throw 'TestApp erscheint nicht in Schritt 1' }
+        if (-not $win) { throw 'Window "AppStart Setup" does not appear' }
+        if (-not (Wait-Element $win "Protection for $TestAppName" 60)) { throw 'TestApp does not appear in step 1' }
         $item = Find-ByName $win $TestAppName ([System.Windows.Automation.ControlType]::ListItem)
         if ($item) { try { $item.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() } catch { } }
         $cb = Find-ByName $win $TestAppName ([System.Windows.Automation.ControlType]::CheckBox)
@@ -299,18 +299,18 @@ try {
             if ($tp.Current.ToggleState -ne 'On') { $tp.Toggle() }
         }
         Start-Sleep -Milliseconds 500
-        [void](Save-Shot $win 'setup-1.png' 'eine Applikation (SHA-256); zweite signierte Applikation nicht automatisiert')
+        [void](Save-Shot $win 'setup-1.png' 'one application (SHA-256); second signed application not automated')
 
         # ---- step 2
-        Invoke-Button $win 'Weiter'
-        $opBox = Wait-Element $win 'Bedienerkonto appstart-user anlegen' 20 ([System.Windows.Automation.ControlType]::CheckBox)
-        if (-not $opBox) { throw 'Schritt 2: Kontrollkästchen «Bedienerkonto appstart-user anlegen» fehlt' }
+        Invoke-Button $win 'Next'
+        $opBox = Wait-Element $win 'Create operator account appstart-user' 20 ([System.Windows.Automation.ControlType]::CheckBox)
+        if (-not $opBox) { throw 'Step 2: check box "Create operator account appstart-user" missing' }
         $tp = $opBox.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
         if ($tp.Current.ToggleState -ne 'On') { $tp.Toggle() }
         Start-Sleep -Milliseconds 500
         $pwCond = New-Object System.Windows.Automation.PropertyCondition($UIA::IsPasswordProperty, $true)
         $pwBoxes = @($win.FindAll('Descendants', $pwCond))
-        if ($pwBoxes.Count -lt 2) { throw "Schritt 2: $($pwBoxes.Count) Passwortfeld(er) statt 2" }
+        if ($pwBoxes.Count -lt 2) { throw "Step 2: $($pwBoxes.Count) password field(s) instead of 2" }
         foreach ($box in $pwBoxes[0..1]) {
             $set = $false
             try { $box.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($password); $set = $true } catch { }
@@ -321,56 +321,56 @@ try {
             }
             Start-Sleep -Milliseconds 200
         }
-        if (Find-ByName $win 'Die Passwörter stimmen nicht überein.') { throw 'Schritt 2: Passwörter wurden nicht übernommen' }
-        # Example member chip for the image only; removed again before «Weiter» (account does not exist).
+        if (Find-ByName $win 'The passwords do not match.') { throw 'Step 2: passwords were not taken over' }
+        # Example member chip for the image only; removed again before "Next" (account does not exist).
         $memberAdded = $false
-        $memberBox = Find-ByName $win 'Benutzer hinzufügen' ([System.Windows.Automation.ControlType]::Edit)
+        $memberBox = Find-ByName $win 'Add user' ([System.Windows.Automation.ControlType]::Edit)
         if ($memberBox) {
             try {
                 $memberBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue('DOMAIN\bediener01')
                 Start-Sleep -Milliseconds 300
-                Invoke-Button $win 'Hinzufügen' 5
+                Invoke-Button $win 'Add' 5
                 $memberAdded = [bool](Wait-Element $win 'DOMAIN\bediener01' 5 ([System.Windows.Automation.ControlType]::Text))
-            } catch { Write-Host "  Mitglied-Beispiel nicht möglich: $($_.Exception.Message)" }
+            } catch { Write-Host "  Member example not possible: $($_.Exception.Message)" }
         }
-        [void](Save-Shot $win 'setup-2.png' $(if ($memberAdded) { 'mit Beispiel DOMAIN\bediener01' } else { 'ohne weiteres Mitglied' }))
+        [void](Save-Shot $win 'setup-2.png' $(if ($memberAdded) { 'with example DOMAIN\bediener01' } else { 'without other member' }))
         if ($memberAdded) {
-            Invoke-Button $win 'Mitglied entfernen' 5
+            Invoke-Button $win 'Remove member' 5
             Start-Sleep -Milliseconds 500
-            if (Find-ByName $win 'DOMAIN\bediener01' ([System.Windows.Automation.ControlType]::Text)) { throw 'Beispiel-Mitglied DOMAIN\bediener01 liess sich nicht entfernen' }
+            if (Find-ByName $win 'DOMAIN\bediener01' ([System.Windows.Automation.ControlType]::Text)) { throw 'Example member DOMAIN\bediener01 could not be removed' }
         } elseif ($memberBox) {
             try { $memberBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue('') } catch { }
         }
 
         # ---- step 3: running, then done
-        Invoke-Button $win 'Weiter'
+        Invoke-Button $win 'Next'
         $runningShot = $false
         $deadline = (Get-Date).AddMinutes(5)
         $fertig = $null
         while ((Get-Date) -lt $deadline) {
-            $fertig = Find-ByName $win 'Fertig' ([System.Windows.Automation.ControlType]::Button)
+            $fertig = Find-ByName $win 'Finish' ([System.Windows.Automation.ControlType]::Button)
             if ($fertig -and $fertig.Current.IsEnabled) { break }
-            # First shot as soon as «Einrichtung läuft» shows a progress line other than the start text.
-            if (-not $runningShot -and (Find-ByName $win 'Einrichtung läuft') -and -not (Find-ByName $win 'Einrichtung wird gestartet…')) {
+            # First shot as soon as "Setup running" shows a progress line other than the start text.
+            if (-not $runningShot -and (Find-ByName $win 'Setup running') -and -not (Find-ByName $win 'Starting setup…')) {
                 $grab = $Shots['setup-3-laeuft.png']
                 $runningShot = Save-Shot $win 'setup-3-laeuft.png'
                 # If it finished meanwhile the image would show the result: discard it.
-                if ($runningShot -and -not (Find-ByName $win 'Einrichtung läuft')) {
+                if ($runningShot -and -not (Find-ByName $win 'Setup running')) {
                     Remove-Item (Join-Path $OutputDir 'setup-3-laeuft.png') -ErrorAction SilentlyContinue
                     $Shots['setup-3-laeuft.png'] = $grab; $runningShot = $true
-                    Set-ShotSkip @('setup-3-laeuft.png') 'Einrichtung während der Aufnahme fertig geworden'
+                    Set-ShotSkip @('setup-3-laeuft.png') 'Setup finished during the capture'
                 }
             }
             Start-Sleep -Milliseconds 100
         }
-        if (-not $runningShot) { Set-ShotSkip @('setup-3-laeuft.png') 'Einrichtung zu schnell, Zwischenzustand nicht erwischt' }
-        if (-not ($fertig -and $fertig.Current.IsEnabled)) { throw 'Schritt 3: Einrichtung nach 5 Minuten nicht abgeschlossen' }
+        if (-not $runningShot) { Set-ShotSkip @('setup-3-laeuft.png') 'Setup too fast, intermediate state not caught' }
+        if (-not ($fertig -and $fertig.Current.IsEnabled)) { throw 'Step 3: setup not finished after 5 minutes' }
         Start-Sleep -Milliseconds 800
         $texts = (Get-WindowTexts $win) -join ' | '
-        $passed = $texts -like '*Prüfung bestanden*'
-        if (-not $passed) { Write-Host "  Achtung, Prüfung nicht bestanden: $texts" }
-        [void](Save-Shot $win 'setup-3.png' $(if ($passed) { '' } else { 'ACHTUNG: Prüfung nicht bestanden, Bild prüfen' }))
-        Invoke-Button $win 'Fertig'
+        $passed = $texts -like '*Verification passed*'
+        if (-not $passed) { Write-Host "  Caution, verification failed: $texts" }
+        [void](Save-Shot $win 'setup-3.png' $(if ($passed) { '' } else { 'CAUTION: verification failed, check the image' }))
+        Invoke-Button $win 'Finish'
         if (-not $wiz.WaitForExit(20000)) { Close-Process $wiz }
     } catch {
         Set-ShotSkip $wizardFiles "Assistent: $($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
@@ -379,13 +379,13 @@ try {
 
     # Later images need the operator; if the wizard did not create it, the CLI does.
     if (-not (Get-LocalUser appstart-user -ErrorAction SilentlyContinue)) {
-        Write-Host '  appstart-user fehlt nach dem Assistenten: add-user über die Kommandozeile'
+        Write-Host '  appstart-user missing after the wizard: add-user via the command line'
         $r = Invoke-Setup @('add-user', '--name', 'appstart-user', '--password-stdin') $password
-        if ($r.Exit -ne 0) { throw 'appstart-user konnte nicht angelegt werden' }
+        if ($r.Exit -ne 0) { throw 'appstart-user could not be created' }
     }
     $op = New-OperatorCredential 'appstart-user' $password
     $lnk = if (Test-Path $PublicLnk) { $PublicLnk } else { (@(Get-LauncherShortcuts) | Where-Object { $_.Arguments -eq "--app $appId" } | Select-Object -First 1).Path }
-    if (-not $lnk) { throw 'Verknüpfung «AppStart TestApp» nicht gefunden' }
+    if (-not $lnk) { throw 'Shortcut "AppStart TestApp" not found' }
     if ((Get-Service AppStart).Status -ne 'Running') { Start-Service AppStart; Start-Sleep -Seconds 2 }
 
     # ================================================================ 3. TestApp
@@ -397,16 +397,16 @@ try {
         $apps = @(Wait-TestApp $t 1 30)
         if (-not $apps) {
             $dialogs = @(Get-Process AppStart.Launcher -ErrorAction SilentlyContinue | ForEach-Object { Get-ProcessWindows $_.Id } | ForEach-Object { (Get-WindowTexts $_) -join ' | ' })
-            throw "TestApp startet nicht als appstart-app. $($dialogs -join ' / ')"
+            throw "TestApp does not start as appstart-app. $($dialogs -join ' / ')"
         }
         $w = Wait-ProcessWindow $apps[0].Id 30
-        if (-not $w) { throw 'kein Fenster «AppStart TestApp»' }
+        if (-not $w) { throw 'no window "AppStart TestApp"' }
         Start-Sleep -Seconds 2   # checks of the TestApp run at start
-        Invoke-Button $w 'Eingabeaufforderung starten'
+        Invoke-Button $w 'Start command prompt'
         $deadline = (Get-Date).AddSeconds(10)
-        while (-not ((Get-WindowTextControls $w) -contains 'Start blockiert durch Job-Objekt') -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 300 }
+        while (-not ((Get-WindowTextControls $w) -contains 'Start blocked by job object') -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 300 }
         $texts = Get-WindowTextControls $w
-        $note = if ($texts -contains 'Start blockiert durch Job-Objekt') { '' } else { 'ACHTUNG: «Start blockiert durch Job-Objekt» nicht gefunden' }
+        $note = if ($texts -contains 'Start blocked by job object') { '' } else { 'CAUTION: "Start blocked by job object" not found' }
         [void](Save-Shot $w 'testapp.png' $note)
         Close-UiWindow $w
     } catch {
@@ -414,51 +414,51 @@ try {
     } finally { Stop-TestApps }
 
     # ================================================================ 3b. helper programs and learn mode (add-allowed-child-processes 8.1)
-    Write-Host "`n-- Weitere Programme, Lernmodus"
+    Write-Host "`n-- Other programs, learning mode"
     $childFiles = @('lernmodus.png', 'lernergebnis.png', 'hilfsprogramme.png', 'setup-weitere-programme.png')
     $wiz = $null
     try {
         $wiz = Start-Process $SetupExe -WorkingDirectory $CurDir -PassThru
         $win = Wait-ProcessWindow $wiz.Id 60
-        if (-not $win) { throw 'Fenster «AppStart Setup» erscheint nicht' }
-        if (-not (Wait-Element $win "Schutz für $TestAppName" 60)) { throw 'TestApp erscheint nicht in Schritt 1' }
+        if (-not $win) { throw 'Window "AppStart Setup" does not appear' }
+        if (-not (Wait-Element $win "Protection for $TestAppName" 60)) { throw 'TestApp does not appear in step 1' }
         $item = Find-ByName $win $TestAppName ([System.Windows.Automation.ControlType]::ListItem)
         if ($item) { try { $item.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() } catch { } }
         Start-Sleep -Milliseconds 500
 
-        # «Weitere Programme»: Nur erlaubte Hilfsprogramme
+        # "Other programs": Allowed helper programs only
         $combo = Find-ById $win 'ChildModeBox'
-        if (-not $combo) { throw 'Auswahl «Weitere Programme» (ChildModeBox) fehlt' }
+        if (-not $combo) { throw 'Selection "Other programs" (ChildModeBox) missing' }
         $combo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand()
         Start-Sleep -Milliseconds 500
-        $opt = Find-ByName $combo 'Nur erlaubte Hilfsprogramme' ([System.Windows.Automation.ControlType]::ListItem)
-        if (-not $opt) { $opt = Find-ByName $UIA::RootElement 'Nur erlaubte Hilfsprogramme' ([System.Windows.Automation.ControlType]::ListItem) }
-        if (-not $opt) { throw 'Eintrag «Nur erlaubte Hilfsprogramme» nicht gefunden' }
+        $opt = Find-ByName $combo 'Allowed helper programs only' ([System.Windows.Automation.ControlType]::ListItem)
+        if (-not $opt) { $opt = Find-ByName $UIA::RootElement 'Allowed helper programs only' ([System.Windows.Automation.ControlType]::ListItem) }
+        if (-not $opt) { throw 'Entry "Allowed helper programs only" not found' }
         $opt.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
         try { $combo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Collapse() } catch { }
         Start-Sleep -Milliseconds 500
 
-        # Dialog «Erlaubte Hilfsprogramme» (still empty) -> Lernmodus starten…
+        # Dialog "Allowed helper programs" (still empty) -> Start learning mode…
         $btn = Find-ById $win 'HelpersButton'
-        if (-not $btn) { throw 'Knopf «Hilfsprogramme…» fehlt' }
+        if (-not $btn) { throw 'Button "Helper programs…" missing' }
         $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-        $helpers = Wait-DialogWith $wiz.Id 'Lernmodus starten…' 20
-        if (-not $helpers) { throw 'Dialog «Erlaubte Hilfsprogramme» erscheint nicht' }
-        Invoke-Button $helpers 'Lernmodus starten…'
-        $learn = Wait-DialogWith $wiz.Id 'Lernmodus beenden' 30
-        if (-not $learn) { throw 'Dialog «Lernmodus» erscheint nicht' }
+        $helpers = Wait-DialogWith $wiz.Id 'Start learning mode…' 20
+        if (-not $helpers) { throw 'Dialog "Allowed helper programs" does not appear' }
+        Invoke-Button $helpers 'Start learning mode…'
+        $learn = Wait-DialogWith $wiz.Id 'End learning mode' 30
+        if (-not $learn) { throw 'Dialog "Learning mode" does not appear' }
 
         # The operator uses the application: allowed helper (its grandchild cmd.exe) and the command prompt.
         Start-Sleep -Seconds 3
         $t = Get-Date
         Start-ShortcutAs $op $lnk | Out-Null
         $apps = @(Wait-TestApp $t 1 30)
-        if (-not $apps) { throw 'TestApp startet im Lernmodus nicht' }
+        if (-not $apps) { throw 'TestApp does not start in learning mode' }
         $tw = Wait-ProcessWindow $apps[0].Id 30
         Start-Sleep -Seconds 2
-        Invoke-Button $tw 'Erlaubtes Hilfsprogramm starten'
+        Invoke-Button $tw 'Start allowed helper program'
         Start-Sleep -Seconds 3
-        Invoke-Button $tw 'Eingabeaufforderung starten'
+        Invoke-Button $tw 'Start command prompt'
         Start-Sleep -Seconds 2
         Close-UiWindow $tw
         Stop-TestApps
@@ -466,21 +466,21 @@ try {
         Start-Sleep -Seconds 4   # the dialog refreshes every 2 s
         [void](Save-Shot $learn 'lernmodus.png')
 
-        Invoke-Button $learn 'Lernmodus beenden'
-        $result = Wait-DialogWith $wiz.Id 'Verwerfen' 30
-        if (-not $result) { throw 'Dialog «Vorschläge übernehmen» erscheint nicht' }
+        Invoke-Button $learn 'End learning mode'
+        $result = Wait-DialogWith $wiz.Id 'Discard' 30
+        if (-not $result) { throw 'Dialog "Apply suggestions" does not appear' }
         [void](Save-Shot $result 'lernergebnis.png')
-        # «1 Programm übernehmen» / «{n} Programme übernehmen»: the number depends on what was recorded.
+        # "Apply 1 program" / "Apply {n} programs": the number depends on what was recorded.
         $take = @($result.FindAll('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Button)))) |
-            Where-Object { $_.Current.Name -like '*Programm* übernehmen' } | Select-Object -First 1
-        if (-not $take -or -not $take.Current.IsEnabled) { throw 'Knopf «… Programme übernehmen» fehlt oder ist gesperrt' }
+            Where-Object { $_.Current.Name -like 'Apply *program*' } | Select-Object -First 1
+        if (-not $take -or -not $take.Current.IsEnabled) { throw 'Button "Apply … programs" missing or disabled' }
         $take.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 
-        # Back in «Erlaubte Hilfsprogramme» with the TestHelper on the list
+        # Back in "Allowed helper programs" with the TestHelper on the list
         $helpers = Wait-DialogWith $wiz.Id 'AppStart.TestHelper.exe' 30
-        if (-not $helpers) { throw 'TestHelper steht nach der Übernahme nicht in der Liste' }
+        if (-not $helpers) { throw 'TestHelper is not in the list after applying' }
         [void](Save-Shot $helpers 'hilfsprogramme.png')
-        Invoke-Button $helpers 'Übernehmen'
+        Invoke-Button $helpers 'Apply'
         Start-Sleep -Seconds 1
         [void](Save-Shot $win 'setup-weitere-programme.png')
     } catch {
@@ -492,7 +492,7 @@ try {
             # Leave the wizard without finishing: the list is only in the wizard, apps.json stays as it was.
             for ($i = 0; $i -lt 3 -and -not $wiz.HasExited; $i++) {
                 foreach ($w in Get-ProcessWindows $wiz.Id) {
-                    $yes = Find-ByName $w 'Ja' ([System.Windows.Automation.ControlType]::Button)
+                    $yes = @('Yes', 'Ja') | ForEach-Object { Find-ByName $w $_ ([System.Windows.Automation.ControlType]::Button) } | Where-Object { $_ } | Select-Object -First 1 # MessageBox buttons follow the Windows language
                     if ($yes) { try { $yes.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() } catch { } } else { Close-UiWindow $w }
                 }
                 $wiz.WaitForExit(5000) | Out-Null
@@ -503,27 +503,27 @@ try {
     }
 
     # ================================================================ 4. verify view, console
-    Write-Host "`n-- Prüfansicht"
+    Write-Host "`n-- Verification view"
     function Capture-VerifyView([string] $file, [string] $expect) {
         $p = Start-Process $SetupExe -ArgumentList 'verify --ui' -WorkingDirectory $CurDir -PassThru
         try {
             $w = Wait-ProcessWindow $p.Id 60
-            if (-not $w) { throw 'Prüfansicht erscheint nicht' }
+            if (-not $w) { throw 'Verification view does not appear' }
             $box = Wait-Element $w $expect 90
-            if (-not $box) { throw "«$expect» erscheint nicht: $((Get-WindowTexts $w) -join ' | ')" }
+            if (-not $box) { throw "\"$expect\" does not appear: $((Get-WindowTexts $w) -join ' | ')" }
             if ($box.Current.IsOffscreen) {
                 try { $w.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).SetWindowVisualState('Maximized'); Start-Sleep -Milliseconds 800 } catch { }
             }
-            [void](Save-Shot $w $file $(if ($box.Current.IsOffscreen) { 'ACHTUNG: Kasten ausserhalb des sichtbaren Bereichs' } else { '' }))
+            [void](Save-Shot $w $file $(if ($box.Current.IsOffscreen) { 'CAUTION: box outside the visible area' } else { '' }))
         } finally { Close-Process $p }
     }
-    try { Capture-VerifyView 'pruefansicht-ok.png' 'Einrichtung entspricht dem Soll' }
+    try { Capture-VerifyView 'pruefansicht-ok.png' 'Setup matches the expected state' }
     catch { Set-ShotSkip @('pruefansicht-ok.png') $_.Exception.Message }
 
     try {
         Add-LocalGroupMember -SID 'S-1-5-32-544' -Member 'appstart-user'
         $adminDeviation = $true
-        try { Capture-VerifyView 'pruefansicht-abweichung.png' 'Einsatz nicht abschliessen' }
+        try { Capture-VerifyView 'pruefansicht-abweichung.png' 'Do not close the service visit' }
         catch { Set-ShotSkip @('pruefansicht-abweichung.png') $_.Exception.Message }
 
         Write-Host "`n-- Konsole"
@@ -534,7 +534,7 @@ try {
                 '@echo off'
                 'chcp 65001 >nul'
                 'mode con: cols=110 lines=36'
-                'title Eingabeaufforderung'
+                'title Command Prompt'
                 "cd /d `"$CurDir`""
                 'echo.'
                 'echo %CD%^>AppStart.Setup.exe verify'
@@ -544,8 +544,8 @@ try {
             $beforeCmd = @(Get-Process cmd, conhost -ErrorAction SilentlyContinue | ForEach-Object Id)
             $tc = Get-Date
             $host1 = Start-Process conhost.exe -ArgumentList "cmd.exe /k `"$bat`"" -PassThru
-            $w = Wait-TopWindow { $_.Current.Name -like '*Eingabeaufforderung*' -and $_.Current.ClassName -eq 'ConsoleWindowClass' } 20
-            if (-not $w) { throw 'Konsolenfenster nicht gefunden' }
+            $w = Wait-TopWindow { $_.Current.Name -like '*Command Prompt*' -and $_.Current.ClassName -eq 'ConsoleWindowClass' } 20
+            if (-not $w) { throw 'Console window not found' }
             # Wait until verify has finished (no AppStart.Setup.exe verify process started after $tc)
             $deadline = (Get-Date).AddSeconds(90)
             do {
@@ -561,7 +561,7 @@ try {
             if ($host1 -and -not $host1.HasExited) { try { $host1.Kill() } catch { } }
         } catch { Set-ShotSkip @('verify-konsole.png') "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)" }
     } catch {
-        Set-ShotSkip @('pruefansicht-abweichung.png', 'verify-konsole.png') "Abweichung nicht herstellbar: $($_.Exception.Message)"
+        Set-ShotSkip @('pruefansicht-abweichung.png', 'verify-konsole.png') "Deviation cannot be produced: $($_.Exception.Message)"
     } finally {
         if ($adminDeviation) { Remove-LocalGroupMember -SID 'S-1-5-32-544' -Member 'appstart-user' -ErrorAction SilentlyContinue; $adminDeviation = $false }
     }
@@ -573,7 +573,7 @@ try {
         $exeBackup = Join-Path $ShotWork 'AppStart.TestApp.exe.orig'
         Copy-Item $CopyExe $exeBackup -Force
         Set-OneByteChanged $CopyExe
-        Capture-LauncherDialog $op $lnk 'launcher-verweigert.png' 'Start verweigert'
+        Capture-LauncherDialog $op $lnk 'launcher-verweigert.png' 'Launch denied'
     } catch {
         Set-ShotSkip @('launcher-verweigert.png') "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
     } finally {
@@ -585,7 +585,7 @@ try {
         $serviceStopped = $true
         (Get-Service AppStart).WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))
         Start-Sleep -Seconds 1
-        Capture-LauncherDialog $op $lnk 'launcher-nicht-erreichbar.png' 'Start-Dienst nicht erreichbar'
+        Capture-LauncherDialog $op $lnk 'launcher-nicht-erreichbar.png' 'Launch service not reachable'
     } catch {
         Set-ShotSkip @('launcher-nicht-erreichbar.png') "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
     } finally {
@@ -597,7 +597,7 @@ try {
     Write-Host "`n-- Ereignisanzeige"
     try {
         if (-not (Get-WinEvent -FilterHashtable @{ LogName = 'Application'; ProviderName = 'AppStart'; Id = 1201 } -MaxEvents 1 -ErrorAction SilentlyContinue)) {
-            Write-Host '  Hinweis: kein Ereignis 1201 vorhanden'
+            Write-Host '  Note: no event 1201 present'
         }
         New-Item -ItemType Directory -Force $ViewDir | Out-Null
         @"
@@ -619,15 +619,15 @@ try {
         $beforeMmc = @(Get-Process mmc -ErrorAction SilentlyContinue | ForEach-Object Id)
         Start-Process eventvwr.exe -ArgumentList "/v:`"$ViewFile`""
         $mmc = Wait-NewProcess 'mmc' $beforeMmc 30
-        if (-not $mmc) { throw 'Ereignisanzeige (mmc.exe) startet nicht' }
-        # mmc first shows «Snap-In hinzufügen»; wait for the main window.
+        if (-not $mmc) { throw 'Event Viewer (mmc.exe) does not start' }
+        # mmc first shows "Add Snap-in"; wait for the main window.
         $w = $null
         $deadline = (Get-Date).AddSeconds(60)
         while (-not $w -and (Get-Date) -lt $deadline) {
             $w = @(Get-ProcessWindows $mmc.Id) | Where-Object { $_.Current.Name -like '*Ereignisanzeige*' -or $_.Current.Name -like '*Event Viewer*' } | Select-Object -First 1
             if (-not $w) { Start-Sleep -Milliseconds 500 }
         }
-        if (-not $w) { throw 'Hauptfenster der Ereignisanzeige nicht gefunden' }
+        if (-not $w) { throw 'Main window of the Event Viewer not found' }
         try { $w.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).SetWindowVisualState('Maximized') } catch { }
         Start-Sleep -Seconds 4   # view loads its events
         # Select the newest 1201 row (best effort: MMC list rows are ListItem/DataItem with the event ID as a cell)
@@ -643,7 +643,7 @@ try {
             }
         }
         Start-Sleep -Seconds 2
-        [void](Save-Shot $w 'ereignisanzeige.png' $(if ($selected) { 'Eintrag 1201 markiert' } else { 'ACHTUNG: Eintrag 1201 nicht automatisch markiert, Bild prüfen' }))
+        [void](Save-Shot $w 'ereignisanzeige.png' $(if ($selected) { 'entry 1201 selected' } else { 'CAUTION: entry 1201 not selected automatically, check the image' }))
         Close-UiWindow $w
         if (-not $mmc.WaitForExit(10000)) { try { $mmc.Kill() } catch { } }
     } catch {
@@ -654,15 +654,15 @@ try {
     }
 
     # ================================================================ 8. Start menu folder
-    Write-Host "`n-- Startmenü"
+    Write-Host "`n-- Start menu"
     try {
-        if (-not (Test-Path $StartMenuDir)) { throw "Startmenü-Ordner $StartMenuDir fehlt" }
-        Write-Host "  Einträge: $((Get-ChildItem $StartMenuDir | ForEach-Object Name) -join ', ')"
+        if (-not (Test-Path $StartMenuDir)) { throw "Start menu folder $StartMenuDir is missing" }
+        Write-Host "  Entries: $((Get-ChildItem $StartMenuDir | ForEach-Object Name) -join ', ')"
         Start-Process explorer.exe -ArgumentList "`"$StartMenuDir`""
         $w = Wait-TopWindow { $_.Current.ClassName -eq 'CabinetWClass' -and $_.Current.Name -like 'AppStart*' } 20
-        if (-not $w) { throw 'Explorer-Fenster «AppStart» nicht gefunden' }
+        if (-not $w) { throw 'Explorer window "AppStart" not found' }
         Start-Sleep -Seconds 1
-        [void](Save-Shot $w 'startmenue.png' 'Explorer-Fenster des Startmenü-Ordners')
+        [void](Save-Shot $w 'startmenue.png' 'Explorer window of the Start menu folder')
         Close-UiWindow $w
     } catch {
         Set-ShotSkip @('startmenue.png') "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"

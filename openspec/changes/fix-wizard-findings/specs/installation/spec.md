@@ -1,48 +1,48 @@
 ## ADDED Requirements
 
-### Requirement: Warnung bei Administratoren ohne Passwort
-Der Assistent SHALL im Schritt «Konten und Gruppe» warnen und die betroffenen Konten nennen, wenn ein aktiviertes Konto in der Gruppe Administratoren kein Passwort hat. Die Einrichtung bleibt möglich.
+### Requirement: Warning about administrators without password
+The wizard SHALL warn in the step "Accounts and group" and name the affected accounts if an enabled account in the Administrators group has no password. Setup remains possible.
 
-#### Scenario: Warnung im Assistenten
-- **WHEN** der Techniker den Schritt «Konten und Gruppe» öffnet und ein aktiviertes Admin-Konto kein Passwort hat
-- **THEN** zeigt der Assistent eine Warnung mit dem Kontonamen und dem Hinweis, ein Passwort zu setzen
+#### Scenario: Warning in the wizard
+- **WHEN** the technician opens the step "Accounts and group" and an enabled admin account has no password
+- **THEN** the wizard shows a warning with the account name and the advice to set a password
 
-### Requirement: Erklärung von Datenordner und Registry-Key
-Der Assistent SHALL im Schritt «Applikation auswählen» an den Feldern Datenordner und Registry-Key erklären, dass das Ziel auf appstart-app, SYSTEM und Administratoren gesperrt wird, Bediener danach keinen Zugriff haben, die ursprünglichen Rechte bei der Deinstallation zurückkommen und ein leeres Feld nichts sperrt.
+### Requirement: Explanation of data folder and registry key
+The wizard SHALL explain in the step "Select application", at the fields data folder and registry key, that the target is locked down to appstart-app, SYSTEM and Administrators, that operators have no access afterwards, that the original permissions are restored on uninstallation and that an empty field locks nothing.
 
-#### Scenario: Erklärung sichtbar
-- **WHEN** der Techniker eine Applikation auswählt
-- **THEN** stehen neben Datenordner und Registry-Key die Erklärung und ein Beispiel (C:\ProgramData\<Hersteller>\<App>, HKLM\SOFTWARE\<Hersteller>\<App>)
+#### Scenario: Explanation visible
+- **WHEN** the technician selects an application
+- **THEN** the explanation and an example (C:\ProgramData\<Vendor>\<App>, HKLM\SOFTWARE\<Vendor>\<App>) are shown next to data folder and registry key
 
-### Requirement: Warnung bei Datenordner im Programmordner
-Der Assistent SHALL warnen, wenn der Datenordner der Ordner der EXE ist, darin liegt oder ihn enthält. Die Warnung SHALL nennen, dass appstart-app dann EXE und DLLs ändern könnte, ausgetauschte DLLs von der Hash- und Signaturprüfung nicht erkannt werden und ein Ordner unter C:\ProgramData empfohlen ist. Weiter geht es erst nach ausdrücklicher Bestätigung. apply und die Antwortdatei geben dieselbe Warnung aus.
+### Requirement: Warning about data folder in the program folder
+The wizard SHALL warn if the data folder is the folder of the EXE, lies inside it or contains it. The warning SHALL state that appstart-app could then modify the EXE and DLLs, that swapped DLLs are not detected by the hash and signature verification and that a folder under C:\ProgramData is recommended. Continuing is possible only after explicit confirmation. apply and the answer file output the same warning.
 
-#### Scenario: Datenordner gleich Programmordner
-- **WHEN** der Techniker als Datenordner den Ordner der gewählten EXE einträgt
-- **THEN** zeigt der Assistent die Warnung und «Weiter» ist erst nach Bestätigung möglich
+#### Scenario: Data folder equals program folder
+- **WHEN** the technician enters the folder of the selected EXE as data folder
+- **THEN** the wizard shows the warning and "Next" is possible only after confirmation
 
-#### Scenario: Datenordner ausserhalb
-- **WHEN** der Datenordner weder den Ordner der EXE enthält noch darin liegt
-- **THEN** erscheint keine Warnung
+#### Scenario: Data folder outside
+- **WHEN** the data folder neither contains the folder of the EXE nor lies inside it
+- **THEN** no warning appears
 
-### Requirement: Bediener entfernen
-Der Assistent SHALL jedes Mitglied der Gruppe AppStart Users ausser appstart-user entfernen können, auch Mitglieder aus früheren Läufen und von Hand eingetragene. Beim Übernehmen SHALL das Setup alle Mitglieder aus der Gruppe nehmen, die nicht mehr in der Liste stehen.
+### Requirement: Removing operators
+The wizard SHALL be able to remove every member of the group AppStart Users except appstart-user, including members from earlier runs and members added by hand. When applying, the setup SHALL remove all members from the group that are no longer in the list.
 
-#### Scenario: Früher hinzugefügten Bediener entfernen
-- **WHEN** der Techniker den Assistenten erneut öffnet, einen bereits eingetragenen Bediener entfernt und übernimmt
-- **THEN** ist das Konto nicht mehr Mitglied von AppStart Users und kann keine Applikation mehr über AppStart starten
+#### Scenario: Remove an operator added earlier
+- **WHEN** the technician opens the wizard again, removes an operator already listed and applies
+- **THEN** the account is no longer a member of AppStart Users and can no longer launch any application via AppStart
 
-#### Scenario: appstart-user bleibt
-- **WHEN** der Techniker die Liste der Bediener bearbeitet
-- **THEN** steht appstart-user nicht in der entfernbaren Liste; es wird nur über die eigene Option gesteuert
+#### Scenario: appstart-user stays
+- **WHEN** the technician edits the list of operators
+- **THEN** appstart-user is not in the removable list; it is controlled only by its own option
 
-### Requirement: Eigenes Icon
-AppStart SHALL ein eigenes Icon haben: als Programm-Icon von AppStart.Setup.exe, AppStart.Service.exe, AppStart.Launcher.exe und AppStart-Setup.exe, als Fenster-Icon von Assistent und Prüfansicht, in den Startmenü-Einträgen «AppStart – Einrichtung» und «AppStart – Einrichtung prüfen» sowie für das MSI in «Apps und Features». Die Verknüpfungen der freigegebenen Applikationen behalten das Icon ihrer EXE.
+### Requirement: Own icon
+AppStart SHALL have its own icon: as program icon of AppStart.Setup.exe, AppStart.Service.exe, AppStart.Launcher.exe and AppStart-Setup.exe, as window icon of the wizard and the verification view, in the Start menu entries "AppStart – Setup" and "AppStart – Verify setup" and for the MSI in "Apps & features". The shortcuts of the approved applications keep the icon of their EXE.
 
-#### Scenario: Startmenü zeigt das AppStart-Icon
-- **WHEN** der Techniker den Startmenü-Ordner «AppStart» öffnet
-- **THEN** zeigen «AppStart – Einrichtung» und «AppStart – Einrichtung prüfen» das AppStart-Icon
+#### Scenario: Start menu shows the AppStart icon
+- **WHEN** the technician opens the Start menu folder "AppStart"
+- **THEN** "AppStart – Setup" and "AppStart – Verify setup" show the AppStart icon
 
-#### Scenario: Applikationen behalten ihr Icon
-- **WHEN** ein Bediener die Verknüpfung einer freigegebenen Applikation sieht
-- **THEN** zeigt sie das Icon der Applikation, nicht das AppStart-Icon
+#### Scenario: Applications keep their icon
+- **WHEN** an operator sees the shortcut of an approved application
+- **THEN** it shows the icon of the application, not the AppStart icon

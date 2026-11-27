@@ -165,10 +165,10 @@ public sealed class TestEnvironment : ITestEnvironment
             // In mode allowlist the service terminates it within milliseconds (Spike 1.1).
             if (process.WaitForExit(1500) && process.ExitCode == TerminatedByAppStart)
             {
-                return (ChildProcessOutcome.TerminatedByService, $"cmd.exe beendet (Exit-Code 0x{process.ExitCode:X})");
+                return (ChildProcessOutcome.TerminatedByService, $"cmd.exe ended (exit code 0x{process.ExitCode:X})");
             }
 
-            return (ChildProcessOutcome.Started, $"cmd.exe gestartet (PID {process.Id})");
+            return (ChildProcessOutcome.Started, $"cmd.exe started (PID {process.Id})");
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorNotEnoughQuota)
         {
@@ -189,7 +189,7 @@ public sealed class TestEnvironment : ITestEnvironment
         var helper = Path.Combine(AppContext.BaseDirectory, HelperFileName);
         if (!File.Exists(helper))
         {
-            return (ChildProcessOutcome.Failed, $"{helper} fehlt");
+            return (ChildProcessOutcome.Failed, $"{helper} is missing");
         }
 
         try
@@ -204,14 +204,14 @@ public sealed class TestEnvironment : ITestEnvironment
             var output = process.StandardOutput.ReadToEnd().Trim();
             if (!process.WaitForExit(10_000))
             {
-                return (ChildProcessOutcome.Failed, "Keine Antwort nach 10 s");
+                return (ChildProcessOutcome.Failed, "No response after 10 s");
             }
 
             return process.ExitCode switch
             {
                 0 => (ChildProcessOutcome.Ran, output),
-                TerminatedByAppStart => (ChildProcessOutcome.TerminatedByService, $"Exit-Code 0x{process.ExitCode:X}"),
-                _ => (ChildProcessOutcome.Failed, $"Exit-Code {process.ExitCode}"),
+                TerminatedByAppStart => (ChildProcessOutcome.TerminatedByService, $"exit code 0x{process.ExitCode:X}"),
+                _ => (ChildProcessOutcome.Failed, $"exit code {process.ExitCode}"),
             };
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorNotEnoughQuota)

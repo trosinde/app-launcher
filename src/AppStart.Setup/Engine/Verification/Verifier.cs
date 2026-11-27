@@ -7,7 +7,7 @@ using AppStart.Core.Configuration;
 namespace AppStart.Setup.Engine.Verification;
 
 /// <summary>
-/// verify (spec verification, concept table "Prüfbefehl"): eight check points, each with concrete German
+/// verify (spec verification, concept table "Verify command"): eight check points, each with concrete readable
 /// findings. All system access goes through <see cref="ISystemProbe"/> and the area services, so every check
 /// runs against fakes in tests. Nothing is changed.
 /// </summary>
@@ -197,7 +197,7 @@ public sealed class Verifier : IVerifier
         return findings;
     }
 
-    // spec fix-wizard-findings, verification: Administratoren mit Passwort
+    // spec fix-wizard-findings, verification: Administrators with password
     private List<string> CheckAdminPasswords() =>
         _accounts.FindAdministratorsWithoutPassword()
             .Select(f => f.Win32Error is { } error
@@ -380,7 +380,7 @@ public sealed class Verifier : IVerifier
 
     // ------------------------------------------------------------------ Helpers
 
-    // add-allowed-child-processes, spec verification «Prüfung der Hilfsprogramme».
+    // add-allowed-child-processes, spec verification "Verification of helper programs".
     private (List<string> Deviations, List<string> Notes) CheckHelpers(IReadOnlyList<AppEntry>? apps)
     {
         if (apps is null)

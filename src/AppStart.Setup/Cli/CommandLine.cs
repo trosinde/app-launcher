@@ -265,7 +265,7 @@ internal static class CommandLine
 
         foreach (var check in report.Checks)
         {
-            Console.WriteLine($"{(check.Outcome == CheckOutcome.Passed ? "OK        " : "ABWEICHUNG")}  {check.Title}");
+            Console.WriteLine($"{(check.Outcome == CheckOutcome.Passed ? "OK        " : "DEVIATION ")}  {check.Title}");
             foreach (var finding in check.Findings)
             {
                 Console.WriteLine($"            {finding}");

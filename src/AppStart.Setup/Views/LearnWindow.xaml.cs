@@ -5,7 +5,7 @@ using AppStart.Setup.ViewModels;
 
 namespace AppStart.Setup.Views;
 
-/// <summary>Dialog «Lernmodus läuft»: refreshes countdown and recording every 2 s; closing counts as «Abbrechen».</summary>
+/// <summary>Dialog "Learning mode running": refreshes countdown and recording every 2 s; closing counts as "Cancel".</summary>
 public partial class LearnWindow : Window
 {
     private readonly LearnViewModel _viewModel;

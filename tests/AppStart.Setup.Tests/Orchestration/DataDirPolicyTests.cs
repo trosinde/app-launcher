@@ -2,7 +2,7 @@ using AppStart.Setup.Engine;
 
 namespace AppStart.Setup.Tests.Orchestration;
 
-// spec: fix-wizard-findings/installation «Datenordner gleich Programmordner», «Datenordner ausserhalb»
+// spec: fix-wizard-findings/installation "Data folder equals program folder", "Data folder outside"
 public class DataDirPolicyTests
 {
     private const string Exe = @"C:\Program Files\Hersteller\AppA\AppA.exe";

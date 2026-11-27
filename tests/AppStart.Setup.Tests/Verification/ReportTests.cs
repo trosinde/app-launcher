@@ -9,7 +9,7 @@ public class ReportTests
     private static VerifyReport Sample(params CheckResult[] checks) =>
         new(new DateTimeOffset(2026, 11, 15, 10, 42, 7, TimeSpan.FromHours(1)), "LAB-PC-014", @"LAB-PC-014\techniker", "1.2.3", checks);
 
-    private static CheckResult Ok(string id, string title) => new(id, title, "Soll " + title, CheckOutcome.Passed, []);
+    private static CheckResult Ok(string id, string title) => new(id, title, "Expected " + title, CheckOutcome.Passed, []);
 
     private static VerifyReport OneDeviation()
     {
@@ -30,7 +30,7 @@ public class ReportTests
         var dir = Path.Combine(Machine.TempDirectory(), "Reports");
         try
         {
-            var html = VerifyReportWriter.Write(Sample(Ok("dienst", "Dienst")), dir);
+            var html = VerifyReportWriter.Write(Sample(Ok("dienst", "Service")), dir);
 
             Assert.Equal(Path.Combine(dir, "verify-2026-11-15-104207.html"), html);
             Assert.True(File.Exists(html));
@@ -62,14 +62,14 @@ public class ReportTests
     [Fact]
     public void Findings_are_html_encoded_and_the_report_has_no_script()
     {
-        var report = Sample(new CheckResult("konten", "Konten", "Bediener <ohne> Admin", CheckOutcome.Deviation,
-            ["<script>alert('x')</script> & \"Bob\" ist Mitglied der Administratoren"]));
+        var report = Sample(new CheckResult("konten", "Accounts", "operators <without> admin", CheckOutcome.Deviation,
+            ["<script>alert('x')</script> & \"Bob\" is a member of Administrators"]));
 
         var html = VerifyReportWriter.RenderHtml(report);
 
         Assert.DoesNotContain("<script", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("<ohne>", html);
-        Assert.Contains("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; &amp; &quot;Bob&quot; ist Mitglied der Administratoren", html);
+        Assert.DoesNotContain("<without>", html);
+        Assert.Contains("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; &amp; &quot;Bob&quot; is a member of Administrators", html);
         Assert.DoesNotContain("http://", html);
         Assert.DoesNotContain("https://", html);
         Assert.DoesNotContain("<link", html);
@@ -89,21 +89,21 @@ public class ReportTests
     {
         var html = VerifyReportWriter.RenderHtml(OneDeviation());
 
-        Assert.Contains("PRÜFBERICHT", html);
-        Assert.Contains("AppStart – Prüfung nach Serviceeinsatz", html);
-        Assert.Contains(">1 Abweichung<", html);
-        Assert.Contains("<dt>Rechner</dt><dd>LAB-PC-014</dd>", html);
-        Assert.Contains("<dt>Datum</dt><dd>15.11.2026 10:42</dd>", html);
+        Assert.Contains("VERIFICATION REPORT", html);
+        Assert.Contains("AppStart – Verification after a service visit", html);
+        Assert.Contains(">1 deviation<", html);
+        Assert.Contains("<dt>Computer</dt><dd>LAB-PC-014</dd>", html);
+        Assert.Contains("<dt>Date</dt><dd>15.11.2026 10:42</dd>", html);
         Assert.Contains(@"<dt>Servicetechniker</dt><dd>LAB-PC-014\techniker</dd>", html);
         Assert.Contains("<dt>Version</dt><dd>AppStart 1.2.3</dd>", html);
-        Assert.Contains("Einsatz nicht abschliessen", html);
-        Assert.Contains(@"Konten: LAB-PC-014\appstart-user ist Mitglied der Administratoren", html);
-        Assert.Contains("Korrigieren und Prüfung wiederholen: <code>AppStart.Setup.exe verify</code>", html);
-        Assert.Equal(9, CountOf(html, ">Erfüllt<"));
-        Assert.Equal(1, CountOf(html, ">Abweichung<"));
-        Assert.DoesNotContain("Prüfung bestanden –", html); // green summary box (the check point «Hilfsprogramme» says «Prüfung bestanden,» in its Soll)
-        Assert.Contains("Unterschrift Servicetechniker", html);
-        Assert.Contains("Unterschrift Kunde", html);
+        Assert.Contains("Do not close the service visit", html);
+        Assert.Contains(@"Accounts: LAB-PC-014\appstart-user is a member of Administrators", html);
+        Assert.Contains("Correct and repeat the verification: <code>AppStart.Setup.exe verify</code>", html);
+        Assert.Equal(9, CountOf(html, ">Passed<"));
+        Assert.Equal(1, CountOf(html, ">Deviation<"));
+        Assert.DoesNotContain("Verification passed –", html); // green summary box (the check "Helper programs" says "verification passed," in its expected state)
+        Assert.Contains("Signature service technician", html);
+        Assert.Contains("Signature customer", html);
         Assert.Contains("@page{size:A4", html);
         Assert.Contains("@media print", html);
     }
@@ -113,25 +113,25 @@ public class ReportTests
     {
         var html = VerifyReportWriter.RenderHtml(new Machine().Run());
 
-        Assert.Contains("Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt", html);
-        Assert.Contains(">Keine Abweichung<", html);
-        Assert.DoesNotContain("Einsatz nicht abschliessen", html);
-        Assert.Equal(10, CountOf(html, ">Erfüllt<"));
+        Assert.Contains("Verification passed – 10 of 10 checks passed", html);
+        Assert.Contains(">No deviation<", html);
+        Assert.DoesNotContain("Do not close the service visit", html);
+        Assert.Equal(10, CountOf(html, ">Passed<"));
     }
 
     [Fact]
     public void Json_roundtrip_keeps_every_value()
     {
         var report = Sample(
-            Ok("dienst", "Dienst"),
-            new CheckResult("konten", "Konten", "Bediener ohne Admin-Rechte", CheckOutcome.Deviation, ["appstart-user ist Mitglied der Administratoren", "<x>"]));
+            Ok("dienst", "Service"),
+            new CheckResult("konten", "Accounts", "operators without admin rights", CheckOutcome.Deviation, ["appstart-user is a member of Administrators", "<x>"]));
 
         var json = VerifyReportWriter.RenderJson(report);
         var back = VerifyReportWriter.ParseJson(json)!;
 
         Assert.Contains("\"outcome\": \"Deviation\"", json);
         Assert.Contains("\"exitCode\": 1", json);
-        Assert.Contains("appstart-user ist Mitglied der Administratoren", json);
+        Assert.Contains("appstart-user is a member of Administrators", json);
         Assert.Equal(report.CreatedAt, back.CreatedAt);
         Assert.Equal(report.CreatedAt.Offset, back.CreatedAt.Offset);
         Assert.Equal(report.Computer, back.Computer);
@@ -150,8 +150,8 @@ public class ReportTests
     [Fact]
     public void Json_keeps_umlauts_readable()
     {
-        var json = VerifyReportWriter.RenderJson(Sample(Ok("verknuepfungen", "Verknüpfungen")));
-        Assert.Contains("Verknüpfungen", json);
+        var json = VerifyReportWriter.RenderJson(Sample(Ok("verknuepfungen", "Shortcuts")));
+        Assert.Contains("Shortcuts", json);
     }
 
     /// <summary>

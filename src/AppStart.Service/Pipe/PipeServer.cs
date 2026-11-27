@@ -8,7 +8,7 @@ namespace AppStart.Service.Pipe;
 
 /// <summary>
 /// Hosts \\.\pipe\AppStart. Creates the first instance with FILE_FLAG_FIRST_PIPE_INSTANCE at start;
-/// if that fails the service stops (spec pipe-security, "Gefälschte Pipe"). Serves up to
+/// if that fails the service stops (spec pipe-security, "Spoofed pipe"). Serves up to
 /// <see cref="PipeFactory.MaxInstances"/> clients in parallel, one message each.
 /// </summary>
 public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer> log, IHostApplicationLifetime lifetime) : BackgroundService
@@ -35,7 +35,7 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
                 if (!waitingLogged)
                 {
                     log.LogWarning(EventIds.PipeSetupFailed,
-                        "Gruppe «{Group}» fehlt: AppStart ist noch nicht eingerichtet. Der Dienst wartet und versucht es alle {Seconds} s erneut.",
+                        "Group \"{Group}\" is missing: AppStart is not set up yet. The service waits and tries again every {Seconds} s.",
                         Core.AppStartConstants.OperatorGroupName, GroupRetry.TotalSeconds);
                     waitingLogged = true;
                 }
@@ -61,20 +61,20 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
         }
         catch (PipeAlreadyExistsException ex)
         {
-            log.LogCritical(EventIds.PipeAlreadyExists, "Dienst startet nicht: {Message}", ex.Message);
+            log.LogCritical(EventIds.PipeAlreadyExists, "Service does not start: {Message}", ex.Message);
             Environment.ExitCode = 2;
             lifetime.StopApplication();
             return;
         }
         catch (Exception ex)
         {
-            log.LogCritical(EventIds.PipeSetupFailed, ex, "Dienst startet nicht: Pipe kann nicht angelegt werden. {Message}", ex.Message);
+            log.LogCritical(EventIds.PipeSetupFailed, ex, "Service does not start: pipe cannot be created. {Message}", ex.Message);
             Environment.ExitCode = 3;
             lifetime.StopApplication();
             return;
         }
 
-        log.LogInformation(EventIds.ServiceStarted, "Dienst AppStart gestartet, Pipe bereit. Rechte: {Sddl}", sddl);
+        log.LogInformation(EventIds.ServiceStarted, "Service AppStart started, pipe ready. Permissions: {Sddl}", sddl);
 
         var workers = new Task[PipeFactory.MaxInstances];
         workers[0] = ServeAsync(first, sddl, stoppingToken);
@@ -84,7 +84,7 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
         }
 
         await Task.WhenAll(workers);
-        log.LogInformation(EventIds.ServiceStopped, "Dienst AppStart beendet.");
+        log.LogInformation(EventIds.ServiceStopped, "Service AppStart stopped.");
     }
 
     // One worker per pipe instance. A fault in one connection is logged and must never stop the service:
@@ -100,7 +100,7 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
             }
             catch (Exception ex)
             {
-                log.LogError(EventIds.PipeError, ex, "Pipe-Instanz kann nicht angelegt werden, neuer Versuch in 5 s: {Message}", ex.Message);
+                log.LogError(EventIds.PipeError, ex, "Pipe instance cannot be created, retrying in 5 s: {Message}", ex.Message);
                 await Task.Delay(TimeSpan.FromSeconds(5), ct).ContinueWith(_ => { }, TaskScheduler.Default);
                 continue;
             }
@@ -119,7 +119,7 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
                 }
                 catch (Exception ex)
                 {
-                    log.LogWarning(EventIds.PipeError, ex, "Pipe-Verbindung abgebrochen: {Message}", ex.Message);
+                    log.LogWarning(EventIds.PipeError, ex, "Pipe connection aborted: {Message}", ex.Message);
                 }
             }
         }
@@ -150,7 +150,7 @@ public sealed class PipeServer(LaunchRequestHandler handler, ILogger<PipeServer>
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                log.LogWarning(EventIds.InvalidRequest, "Keine Anfrage innerhalb von {Timeout} s. Benutzer: {User}, Session: {Session}.",
+                log.LogWarning(EventIds.InvalidRequest, "No request within {Timeout} s. User: {User}, Session: {Session}.",
                     ReadTimeout.TotalSeconds, user, session);
                 return;
             }

@@ -5,7 +5,7 @@ using AppStart.Setup.ViewModels;
 
 namespace AppStart.Setup.Tests.Wizard;
 
-// add-allowed-child-processes, task 4.2: spec installation «Weitere Programme im Assistenten».
+// add-allowed-child-processes, task 4.2: spec installation "Other programs in the wizard".
 public sealed class HelpersViewModelTests
 {
     private const string Export = @"C:\Program Files\Hersteller\AppA\Export.exe";
@@ -17,7 +17,7 @@ public sealed class HelpersViewModelTests
     private readonly FakeUi _ui = new();
 
     private static AppItemViewModel App(bool released = true, ChildProcessMode mode = ChildProcessMode.Blocked, params AllowedChild[] children) => new(
-        new AppCandidate(@"C:\Program Files\Hersteller\AppA\AppA.exe", "Applikation A", "appa", IntegrityCheck.Signature, new string('A', 40), null, null, null,
+        new AppCandidate(@"C:\Program Files\Hersteller\AppA\AppA.exe", "Application A", "appa", IntegrityCheck.Signature, new string('A', 40), null, null, null,
             mode, children),
         isSelected: true,
         isReleased: released);
@@ -30,15 +30,15 @@ public sealed class HelpersViewModelTests
     public void Mode_and_list_go_into_the_candidate()
     {
         var app = App();
-        app.ChildModeIndex = 1; // «Nur erlaubte Hilfsprogramme»
+        app.ChildModeIndex = 1; // "Allowed helper programs only"
         Assert.False(app.IsValid); // allowlist needs entries
         Assert.Equal(SetupTexts.ChildAllowlistEmpty, app.ChildError);
 
         app.AllowedChildren = [Sha(Export)];
 
         Assert.True(app.IsValid);
-        Assert.Equal("1 erlaubt", app.ChildSummary);
-        Assert.Equal("Hilfsprogramme (1)…", app.HelpersButtonText);
+        Assert.Equal("1 allowed", app.ChildSummary);
+        Assert.Equal("Helper programs (1)…", app.HelpersButtonText);
         var candidate = app.ToCandidate();
         Assert.Equal(ChildProcessMode.Allowlist, candidate.ChildProcesses);
         Assert.Equal(Export, Assert.Single(candidate.AllowedChildren!).Exe);
@@ -51,18 +51,18 @@ public sealed class HelpersViewModelTests
         app.ChildMode = ChildProcessMode.Blocked;
 
         Assert.Null(app.ToCandidate().AllowedChildren);
-        Assert.Equal("gesperrt", app.ChildSummary);
+        Assert.Equal("blocked", app.ChildSummary);
         app.ChildMode = ChildProcessMode.Allowlist;
         Assert.Single(app.ToCandidate().AllowedChildren!);
     }
 
-    // Spec scenario «Alle erlaubt»: confirmation first.
+    // Spec scenario "All allowed": confirmation first.
     [Theory]
     [InlineData(false, ChildProcessMode.Blocked)]
     [InlineData(true, ChildProcessMode.All)]
     public async Task All_needs_a_confirmation(bool answer, ChildProcessMode expected)
     {
-        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\A\A.exe", IntegrityCheck.Sha256)] };
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Application A", @"C:\A\A.exe", IntegrityCheck.Sha256)] };
         var wizard = new WizardViewModel(_engine, _ui);
         await wizard.InitializeAsync();
         _ui.ConfirmAnswers.Enqueue(answer);
@@ -73,11 +73,11 @@ public sealed class HelpersViewModelTests
         Assert.Equal(expected, wizard.SelectedApp.ChildMode);
     }
 
-    // Spec scenario «Hilfsprogramm per Dialog erlauben»: allowlist + Export.exe reach the engine.
+    // Spec scenario "Allow helper program via dialog": allowlist + Export.exe reach the engine.
     [Fact]
     public async Task Helper_added_in_the_dialog_reaches_apply()
     {
-        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\A\A.exe", IntegrityCheck.Sha256)] };
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Application A", @"C:\A\A.exe", IntegrityCheck.Sha256)] };
         var wizard = new WizardViewModel(_engine, _ui);
         await wizard.InitializeAsync();
         wizard.SelectedApp!.ChildModeIndex = 1;
@@ -111,7 +111,7 @@ public sealed class HelpersViewModelTests
         Assert.Single(app.AllowedChildren);
     }
 
-    // ------------------------------------------------ dialog «Erlaubte Hilfsprogramme»
+    // ------------------------------------------------ dialog "Allowed helper programs"
 
     [Fact]
     public void States_and_unsigned_warning_follow_the_design()
@@ -122,7 +122,7 @@ public sealed class HelpersViewModelTests
 
         Assert.Equal(SetupTexts.HelperStateOk, vm.Items[0].State);
         Assert.Equal(SetupTexts.HelperStateRenew, vm.Items[1].State);
-        Assert.Equal("Updater.exe ist nicht signiert", vm.UnsignedWarning);
+        Assert.Equal("Updater.exe is not signed", vm.UnsignedWarning);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class HelpersViewModelTests
         vm.AddExeCommand.Execute(null);
 
         Assert.Empty(vm.Items);
-        Assert.Contains("beschreibbar", vm.ErrorMessage, StringComparison.Ordinal);
+        Assert.Contains("can write", vm.ErrorMessage, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -173,7 +173,7 @@ public sealed class HelpersViewModelTests
 
         vm.AddExeCommand.Execute(null);
 
-        Assert.Equal("cmd.exe erlauben?", Assert.Single(_ui.Confirmations));
+        Assert.Equal("Allow cmd.exe?", Assert.Single(_ui.Confirmations));
         Assert.Equal(expected, vm.Items.Count);
         if (expected == 1)
         {
@@ -203,7 +203,7 @@ public sealed class HelpersViewModelTests
         Assert.Empty(vm.Items);
     }
 
-    // Spec scenario «Shell im Lernergebnis»: marked and not selectable; the rest is taken.
+    // Spec scenario "Shell in the learning result": marked and not selectable; the rest is taken.
     [Fact]
     public void Learn_result_proposals_are_taken_except_shells_and_viewers()
     {
@@ -230,7 +230,7 @@ public sealed class HelpersViewModelTests
         Assert.False(cmd.IsSelectable);
         Assert.False(cmd.IsChecked);
         Assert.Equal(SetupTexts.LearnHintCmd, cmd.Hint);
-        Assert.False(seen.Proposals.Single(p => p.FileName == "AcroRd32.exe").IsChecked); // «abwägen»
+        Assert.False(seen.Proposals.Single(p => p.FileName == "AcroRd32.exe").IsChecked); // "consider carefully"
         Assert.Equal(SetupTexts.LearnHintUnsigned, seen.Proposals.Single(p => p.FileName == "Updater.exe").Hint);
         Assert.Equal([Export, Updater], vm.Items.Select(i => i.Exe));
         Assert.Equal(IntegrityCheck.Signature, vm.Items[0].Entry.Check);
@@ -242,18 +242,18 @@ public sealed class HelpersViewModelTests
     public void Take_over_button_counts_the_checked_proposals()
     {
         var rec = new LearnRecording { AppId = "appa" }.Record(Export, new string('B', 40), new string('1', 64), null, DateTimeOffset.UtcNow);
-        var vm = new LearnResultViewModel(_engine, "appa", "Applikation A", rec);
+        var vm = new LearnResultViewModel(_engine, "appa", "Application A", rec);
 
-        Assert.Equal("1 Programm übernehmen", vm.TakeOverText);
+        Assert.Equal("Apply 1 program", vm.TakeOverText);
         vm.Proposals[0].IsChecked = false;
-        Assert.Equal("0 Programme übernehmen", vm.TakeOverText);
+        Assert.Equal("Apply 0 programs", vm.TakeOverText);
     }
 
     [Fact]
     public void Learn_countdown_ends_by_itself()
     {
         var time = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(DateTimeOffset.UtcNow);
-        var vm = new LearnViewModel(_engine, "appa", "Applikation A", time);
+        var vm = new LearnViewModel(_engine, "appa", "Application A", time);
         Assert.True(vm.Start(5));
         Assert.Equal(LearnOutcome.Running, vm.Outcome);
 
@@ -268,9 +268,9 @@ public sealed class HelpersViewModelTests
     public void Failed_start_shows_the_reason()
     {
         _engine.StartLearningFails = true;
-        var vm = new LearnViewModel(_engine, "appa", "Applikation A", TimeProvider.System);
+        var vm = new LearnViewModel(_engine, "appa", "Application A", TimeProvider.System);
 
         Assert.False(vm.Start());
-        Assert.Contains("nicht freigegeben", vm.ErrorMessage, StringComparison.Ordinal);
+        Assert.Contains("not approved", vm.ErrorMessage, StringComparison.Ordinal);
     }
 }

@@ -7,7 +7,7 @@ namespace AppStart.Setup.Engine.Shortcuts;
 
 /// <summary>
 /// Launcher shortcuts per app (public Start menu and public desktop) and the handling of existing shortcuts
-/// that point directly to an app EXE (concept "Installation und Auswahl der Applikationen", task 6.4).
+/// that point directly to an app EXE (concept "Installation and selection of the applications", task 6.4).
 /// All roots are injectable so tests never touch the real Start menu or desktop.
 /// </summary>
 public sealed class ShortcutService : IShortcutService
@@ -61,8 +61,8 @@ public sealed class ShortcutService : IShortcutService
     public IReadOnlyList<string> CreateAppShortcuts(AppEntry app, string launcherPath)
     {
         ArgumentNullException.ThrowIfNull(app);
-        RequireFullPath(launcherPath, "Der Pfad zum Launcher");
-        RequireFullPath(app.Exe, $"Der Pfad zur EXE von «{app.Name}»");
+        RequireFullPath(launcherPath, "The path to the launcher");
+        RequireFullPath(app.Exe, $"The path to the EXE of \"{app.Name}\"");
 
         var fileName = ShortcutNames.ToFileName(app.Name);
         var arguments = $"--app {app.Id}";
@@ -77,8 +77,8 @@ public sealed class ShortcutService : IShortcutService
             if (File.Exists(path) && !IsOwnShortcut(path, launcherPath, arguments))
             {
                 throw new InvalidOperationException(
-                    $"Die Verknüpfung «{path}» existiert bereits und gehört nicht zu dieser Applikation. " +
-                    "Sie wird nicht überschrieben. Bitte die Datei prüfen und von Hand sichern oder entfernen.");
+                    $"The shortcut \"{path}\" already exists and does not belong to this application. " +
+                    "It is not overwritten. Please check the file and back it up or remove it by hand.");
             }
         }
 
@@ -97,11 +97,11 @@ public sealed class ShortcutService : IShortcutService
     /// </summary>
     public void CreateShortcut(string lnkPath, string targetPath, string arguments, string iconLocation, string workingDirectory, string? description = null)
     {
-        RequireFullPath(lnkPath, "Der Pfad zur Verknüpfung");
-        RequireFullPath(targetPath, "Das Ziel der Verknüpfung");
+        RequireFullPath(lnkPath, "The path to the shortcut");
+        RequireFullPath(targetPath, "The target of the shortcut");
         if (!string.Equals(Path.GetExtension(lnkPath), ShortcutNames.Extension, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Der Pfad zur Verknüpfung muss auf .lnk enden: «{lnkPath}».", nameof(lnkPath));
+            throw new ArgumentException($"The path to the shortcut must end in .lnk: \"{lnkPath}\".", nameof(lnkPath));
         }
 
         var (iconPath, iconIndex) = ParseIconLocation(iconLocation);
@@ -138,7 +138,7 @@ public sealed class ShortcutService : IShortcutService
         }
         catch (COMException ex)
         {
-            throw new IOException($"Die Verknüpfung «{path}» konnte nicht geschrieben werden: {ex.Message}", ex);
+            throw new IOException($"The shortcut \"{path}\" could not be written: {ex.Message}", ex);
         }
         finally
         {
@@ -148,7 +148,7 @@ public sealed class ShortcutService : IShortcutService
 
     public IReadOnlyList<string> FindDirectShortcuts(string exePath)
     {
-        RequireFullPath(exePath, "Der Pfad zur EXE");
+        RequireFullPath(exePath, "The path to the EXE");
         var exe = Normalize(exePath);
         var found = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -172,11 +172,11 @@ public sealed class ShortcutService : IShortcutService
 
     public ShortcutBackup BackupAndRemove(string shortcutPath, string appId)
     {
-        RequireFullPath(shortcutPath, "Der Pfad zur Verknüpfung");
+        RequireFullPath(shortcutPath, "The path to the shortcut");
         var original = Path.GetFullPath(shortcutPath);
         if (!File.Exists(original))
         {
-            throw new FileNotFoundException($"Die Verknüpfung «{original}» existiert nicht und kann nicht gesichert werden.", original);
+            throw new FileNotFoundException($"The shortcut \"{original}\" does not exist and cannot be backed up.", original);
         }
 
         Directory.CreateDirectory(_backupDirectory);
@@ -194,7 +194,7 @@ public sealed class ShortcutService : IShortcutService
         if (!File.Exists(backup.BackupPath))
         {
             throw new FileNotFoundException(
-                $"Die Sicherung «{backup.BackupPath}» der Verknüpfung «{backup.OriginalPath}» fehlt. Sie kann nicht zurückgestellt werden.",
+                $"The backup \"{backup.BackupPath}\" of the shortcut \"{backup.OriginalPath}\" is missing. It cannot be restored.",
                 backup.BackupPath);
         }
 
@@ -222,7 +222,7 @@ public sealed class ShortcutService : IShortcutService
         {
             if (!string.Equals(Path.GetExtension(path), ShortcutNames.Extension, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException($"«{path}» ist keine Verknüpfung (.lnk) und wird nicht gelöscht.", nameof(paths));
+                throw new ArgumentException($"\"{path}\" is not a shortcut (.lnk) and is not deleted.", nameof(paths));
             }
 
             try
@@ -331,13 +331,13 @@ public sealed class ShortcutService : IShortcutService
     {
         if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path))
         {
-            throw new ArgumentException($"{what} muss ein vollständiger Pfad sein: «{path}».");
+            throw new ArgumentException($"{what} must be a full path: \"{path}\".");
         }
     }
 
     private static string ExistsMessage(ShortcutBackup backup) =>
-        $"Am ursprünglichen Ort «{backup.OriginalPath}» liegt bereits eine Datei. Die gesicherte Verknüpfung " +
-        $"wird nicht darüber geschrieben und bleibt in «{backup.BackupPath}». Bitte von Hand prüfen.";
+        $"A file already exists at the original location \"{backup.OriginalPath}\". The backed-up shortcut " +
+        $"is not written over it and stays in \"{backup.BackupPath}\". Please check by hand.";
 
     private static string DefaultProfilesRoot()
     {

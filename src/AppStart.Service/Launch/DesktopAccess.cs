@@ -59,7 +59,7 @@ internal static unsafe class DesktopAccess
             var exitCode = ProcessStarter.RunAndWait(copy, Environment.ProcessPath!, HelperArgument, TimeSpan.FromSeconds(10));
             if (exitCode != 0)
             {
-                throw new InvalidOperationException($"Desktop-Freigabe in Session {sessionId} fehlgeschlagen (Exit-Code {exitCode}).");
+                throw new InvalidOperationException($"Desktop access in session {sessionId} failed (exit code {exitCode}).");
             }
         }
         finally

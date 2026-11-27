@@ -53,10 +53,10 @@ public sealed partial class AppItemViewModel : ObservableObject
     // A new folder needs a new confirmation.
     partial void OnDataDirChanged(string value) => DataDirRiskAccepted = false;
 
-    /// <summary>spec fix-wizard-findings «Warnung bei Datenordner im Programmordner».</summary>
+    /// <summary>spec fix-wizard-findings "Warning about data folder in the program folder".</summary>
     public bool DataDirInProgramFolder => IsValidDataDir(DataDir) && DataDirPolicy.OverlapsProgramFolder(DataDir, ExePath);
 
-    /// <summary>Checkbox «Risiko verstanden …»; «Weiter» stays disabled while the warning is open.</summary>
+    /// <summary>Checkbox "I understand the risk …"; "Next" stays disabled while the warning is open.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsValid))]
     private bool _dataDirRiskAccepted;
@@ -67,7 +67,7 @@ public sealed partial class AppItemViewModel : ObservableObject
 
     // ------------------------------------------------------------------ further programs (add-allowed-child-processes)
 
-    /// <summary>Asked before «Alle erlaubt (unsicher)» is taken (wizard sets it; false keeps the old mode).</summary>
+    /// <summary>Asked before "All allowed (unsafe)" is taken (wizard sets it; false keeps the old mode).</summary>
     public Func<AppItemViewModel, bool>? ConfirmAllowAll { get; set; }
 
     public IReadOnlyList<string> ChildModeOptions { get; } = [SetupTexts.ChildModeBlocked, SetupTexts.ChildModeAllowlist, SetupTexts.ChildModeAll];
@@ -112,7 +112,7 @@ public sealed partial class AppItemViewModel : ObservableObject
 
     public bool IsAllowlist => ChildMode == ChildProcessMode.Allowlist;
 
-    /// <summary>Column «Weitere Programme» of the list.</summary>
+    /// <summary>Column "Other programs" of the list.</summary>
     public string ChildSummary => ChildMode switch
     {
         ChildProcessMode.Allowlist => SetupTexts.Format(SetupTexts.ChildSummaryAllowlistFormat, AllowedChildren.Count),

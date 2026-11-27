@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace AppStart.Service.Tests;
 
-// add-allowed-child-processes, tasks 3.2-3.4: spec app-launch «Positivliste für Kindprozesse» and «Lernmodus».
+// add-allowed-child-processes, tasks 3.2-3.4: spec app-launch "Allowlist for child processes" and "Learning mode".
 public class JobMonitorTests
 {
     private const string Dir = @"C:\Program Files\Hersteller\AppA";
@@ -64,7 +64,7 @@ public class JobMonitorTests
         var e = Assert.Single(_log.Entries);
         Assert.Equal(EventIds.ChildTerminated, e.Id);
         Assert.Contains(Cmd, e.Message, StringComparison.Ordinal);
-        Assert.Contains("Nicht auf der Liste", e.Message, StringComparison.Ordinal);
+        Assert.Contains("Not on the list", e.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class JobMonitorTests
         Monitor().OnNewProcess(9);
 
         Assert.True(_inspector.Processes[9].Terminated);
-        Assert.Contains("Prüfsumme stimmt nicht", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
+        Assert.Contains("Checksum does not match", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class JobMonitorTests
         Monitor().OnNewProcess(15);
 
         Assert.True(_inspector.Processes[15].Terminated);
-        Assert.Contains("Prüfung fehlgeschlagen", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
+        Assert.Contains("Verification failed", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class JobMonitorTests
         _inspector.Add(16, Cmd);
         _inspector.Processes[16].CanTerminate = false;
         Monitor().OnNewProcess(16);
-        Assert.Contains("beendet: NEIN", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
+        Assert.Contains("Ended: NO", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
     }
 
     // ------------------------------------------------ learn mode
@@ -178,7 +178,7 @@ public class JobMonitorTests
         Assert.All(_log.Entries, e => Assert.Equal(EventIds.ChildRecorded, e.Id));
     }
 
-    // Spec scenario «Zeitablauf»: also in an instance that is still running.
+    // Spec scenario "Expiry": also in an instance that is still running.
     [Fact]
     public void After_expiry_the_allowlist_applies_again_in_the_running_instance()
     {
@@ -266,8 +266,8 @@ public class JobMonitorTests
         public IChildProcess? Open(int processId) => Processes.GetValueOrDefault(processId);
 
         public IntegrityResult Verify(AllowedChild entry, string path) =>
-            ThrowOnVerify ? throw new IOException("gesperrt")
-            : FailVerify.Contains(path) ? IntegrityResult.Fail("SHA-256 weicht ab.") : IntegrityResult.Ok("ok");
+            ThrowOnVerify ? throw new IOException("locked")
+            : FailVerify.Contains(path) ? IntegrityResult.Fail("SHA-256 differs.") : IntegrityResult.Ok("ok");
 
         public (string? Thumbprint, string Sha256) Fingerprint(string path) => (null, new string('D', 64));
 
@@ -284,7 +284,7 @@ public class JobMonitorTests
         {
             if (Throw)
             {
-                throw new InvalidOperationException("nicht geschützt");
+                throw new InvalidOperationException("not protected");
             }
 
             Recorded.Add((exe, parentExe));

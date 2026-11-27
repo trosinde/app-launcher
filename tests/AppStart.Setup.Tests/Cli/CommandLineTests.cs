@@ -25,8 +25,8 @@ public sealed class CommandLineTests : IDisposable
         Directory.CreateDirectory(_dir);
         _engine = new SetupEngine(new FakeAccounts(), new FakeProtection(), new FakeShortcuts(), new FakeVerifier(), new FakeState(),
             new SetupPaths(@"C:\Program Files\AppStart\current", Path.Combine(_dir, "apps.json"), Path.Combine(_dir, "Reports")),
-            exe => _writable.Contains(exe, StringComparer.OrdinalIgnoreCase) ? ["Benutzer hat Schreibrechte."] : [],
-            null, (_, _) => { }, () => new SetupStepResult("Dienst AppStart läuft, Start automatisch", true));
+            exe => _writable.Contains(exe, StringComparer.OrdinalIgnoreCase) ? ["Users has write permissions."] : [],
+            null, (_, _) => { }, () => new SetupStepResult("Service AppStart is running, starts automatically", true));
     }
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
@@ -76,7 +76,7 @@ public sealed class CommandLineTests : IDisposable
 
         Assert.Equal(0, r.Code);
         Assert.Equal(ChildProcessMode.All, Saved("my-app").ChildProcesses);
-        Assert.Contains("Automatische Prüfung", r.Out, StringComparison.Ordinal);
+        Assert.Contains("Automatic verification", r.Out, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -124,7 +124,7 @@ public sealed class CommandLineTests : IDisposable
 
     // ------------------------------------------------ allow-child / deny-child / rehash --child
 
-    // Spec scenario «Hilfsprogramm per Kommandozeile erlauben».
+    // Spec scenario "Allow helper program via command line".
     [Fact]
     public void Allow_child_is_exit_0_with_automatic_check()
     {
@@ -135,10 +135,10 @@ public sealed class CommandLineTests : IDisposable
 
         Assert.Equal(0, r.Code);
         Assert.Equal(Path.GetFullPath(export), Assert.Single(Saved("appa").AllowedChildren!).Exe);
-        Assert.Contains("Automatische Prüfung", r.Out, StringComparison.Ordinal);
+        Assert.Contains("Automatic verification", r.Out, StringComparison.Ordinal);
     }
 
-    // Spec scenario «Shell ohne Bestätigung»: exit 2, apps.json unchanged.
+    // Spec scenario "Shell without confirmation": exit 2, apps.json unchanged.
     [Fact]
     public void Shell_without_allow_shell_is_exit_2()
     {
@@ -160,7 +160,7 @@ public sealed class CommandLineTests : IDisposable
         Assert.True(Saved("appa").AllowedChildren![0].AllowShell);
     }
 
-    // Spec scenario «Beschreibbarer Ordner»: exit 1, apps.json unchanged.
+    // Spec scenario "Writable folder": exit 1, apps.json unchanged.
     // Found in the UAT on the test VM: allow-child cmd.exe --allow-shell, then deny-child cmd.exe.
     [Fact]
     public void Shell_allowed_and_denied_again_with_the_real_cmd()
@@ -202,7 +202,7 @@ public sealed class CommandLineTests : IDisposable
 
         var r = Run("deny-child", "--app", "appa", "--exe", export);
         Assert.Equal(0, r.Code);
-        Assert.Contains("wieder gesperrt", r.Out, StringComparison.Ordinal);
+        Assert.Contains("blocked again", r.Out, StringComparison.Ordinal);
         Assert.Equal(2, Run("deny-child", "--app", "appa", "--exe", export).Code);
     }
 
@@ -240,16 +240,16 @@ public sealed class CommandLineTests : IDisposable
 
         var start = Run("learn", "start", "--app", "appa", "--minutes", "10");
         Assert.Equal(0, start.Code);
-        Assert.DoesNotContain("Automatische Prüfung", start.Out, StringComparison.Ordinal); // design D4
+        Assert.DoesNotContain("Automatic verification", start.Out, StringComparison.Ordinal); // design D4
 
         Recording((@"C:\Program Files\H\Export.exe", new string('B', 40)), (@"C:\Windows\System32\cmd.exe", new string('C', 40)));
         var show = Run("learn", "show", "--app", "appa");
         Assert.Equal(0, show.Code);
-        Assert.Contains("aktiv bis", show.Out, StringComparison.Ordinal);
+        Assert.Contains("active until", show.Out, StringComparison.Ordinal);
         Assert.Contains(@"cmd.exe – Shell oder Skript-Host", show.Out, StringComparison.Ordinal);
 
         Assert.Equal(0, Run("learn", "stop", "--app", "appa").Code);
-        Assert.Contains("nicht aktiv", Run("learn", "show", "--app", "appa").Out, StringComparison.Ordinal);
+        Assert.Contains("not active", Run("learn", "show", "--app", "appa").Out, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -277,7 +277,7 @@ public sealed class CommandLineTests : IDisposable
         var app = Saved("appa");
         Assert.Equal(ChildProcessMode.Allowlist, app.ChildProcesses);
         Assert.Equal(@"C:\Program Files\H\Export.exe", Assert.Single(app.AllowedChildren!).Exe);
-        Assert.Contains("Automatische Prüfung", r.Out, StringComparison.Ordinal);
+        Assert.Contains("Automatic verification", r.Out, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -335,7 +335,7 @@ public sealed class CommandLineTests : IDisposable
             {
               "version": 1,
               "apps": [
-                { "exe": "{{Json(a)}}", "id": "appa", "name": "Applikation A", "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
+                { "exe": "{{Json(a)}}", "id": "appa", "name": "Application A", "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
                   "childProcesses": "allowlist", "allowedChildren": [ { "exe": "{{Json(export)}}" } ] },
                 { "exe": "{{Json(b)}}", "id": "appb" }
               ],
@@ -344,23 +344,23 @@ public sealed class CommandLineTests : IDisposable
             """);
     }
 
-    // Spec scenario «Erste Einrichtung».
+    // Spec scenario "First setup".
     [Fact]
     public void Apply_sets_up_two_apps_and_checks()
     {
         var r = Run("apply", "--config", TwoApps());
 
         Assert.Equal(0, r.Code);
-        Assert.Contains("Automatische Prüfung", r.Out, StringComparison.Ordinal);
+        Assert.Contains("Automatic verification", r.Out, StringComparison.Ordinal);
         var a = Saved("appa");
-        Assert.Equal("Applikation A", a.Name);
+        Assert.Equal("Application A", a.Name);
         Assert.Equal(@"C:\ProgramData\Hersteller\AppA", a.DataDir);
         Assert.Equal(ChildProcessMode.Allowlist, a.ChildProcesses);
         Assert.Equal(IntegrityCheck.Sha256, Assert.Single(a.AllowedChildren!).Check); // value read from the file on this machine
         Assert.Equal(ChildProcessMode.Blocked, Saved("appb").ChildProcesses);
     }
 
-    // Spec scenario «Zweite Anwendung»: nothing changes.
+    // Spec scenario "Second run": nothing changes.
     [Fact]
     public void Apply_twice_changes_nothing()
     {
@@ -374,7 +374,7 @@ public sealed class CommandLineTests : IDisposable
         Assert.Equal(first, System.IO.File.ReadAllText(Path.Combine(_dir, "apps.json")));
     }
 
-    // Spec scenario «Ungültige Datei»: nothing changes, output names field or path, exit 2.
+    // Spec scenario "Invalid file": nothing changes, output names field or path, exit 2.
     [Theory]
     [InlineData("""{ "version": 1, "apps": [], "password": "geheim" }""", "password")]
     [InlineData("""{ "version": 1, "apps": [ { "exe": "C:\\nicht\\da\\App.exe" } ] }""", "apps[0].exe")]
@@ -449,7 +449,7 @@ public sealed class CommandLineTests : IDisposable
         var r = Run("list");
 
         Assert.Equal(0, r.Code);
-        Assert.Contains("Weitere Programme: nur erlaubte Hilfsprogramme", r.Out, StringComparison.Ordinal);
+        Assert.Contains("Other programs: allowed helper programs only", r.Out, StringComparison.Ordinal);
         Assert.Contains(Path.GetFullPath(export) + " (SHA-256)", r.Out, StringComparison.Ordinal);
     }
 }

@@ -12,7 +12,7 @@ public enum MessageIcon
 /// <summary>What a dialog shows: heading, cause, measure and optionally the log path (footer).</summary>
 public sealed record BootstrapperMessage(MessageIcon Icon, string Heading, string Text, string? Measure = null, string? LogPath = null)
 {
-    /// <summary>Content of the dialog: cause, blank line, «Massnahme: …».</summary>
+    /// <summary>Content of the dialog: cause, blank line, "Action: …".</summary>
     public string Content => Measure is null ? Text : $"{Text}\n\n{BootstrapperTexts.MeasureLabel}{Measure}";
 
     public string? Footer => LogPath is null ? null : string.Format(CultureInfo.InvariantCulture, BootstrapperTexts.LogFooter, LogPath);

@@ -1,6 +1,6 @@
 namespace AppStart.Bootstrapper.Tests;
 
-// add-allowed-child-processes, task 5.1 (design D6, spec installation «Bootstrapper mit Antwortdatei»).
+// add-allowed-child-processes, task 5.1 (design D6, spec installation "Bootstrapper with answer file").
 public class ConfigArgumentTests
 {
     private const string Config = @"C:\Deploy\appstart.json";
@@ -12,7 +12,7 @@ public class ConfigArgumentTests
     public void Quiet_with_config_installs_and_applies(params string[] args) =>
         Assert.Equal(new ParsedArguments(RunMode.Quiet, false, null, Config), BootstrapperLogic.ParseArguments(args));
 
-    // «/config ohne /quiet SHALL ungültig sein (Exit-Code 87)».
+    // "/config without /quiet SHALL be invalid (exit code 87)".
     [Fact]
     public void Config_without_quiet_is_invalid_with_ui()
     {
@@ -53,7 +53,7 @@ public class ConfigArgumentTests
     public void Apply_log_is_named_with_the_time() =>
         Assert.Equal("apply-20261115-104200.log", BootstrapperLogic.ApplyLogFileName(new DateTime(2026, 11, 15, 10, 42, 0)));
 
-    // Exit codes of design D6 and the spec scenarios «Softwareverteilung in einem Schritt» / «Einrichtung scheitert».
+    // Exit codes of design D6 and the spec scenarios "Software distribution in one step" / "Setup fails".
     [Theory]
     [InlineData(0, 0, 0)]
     [InlineData(0, 3010, 3010)]

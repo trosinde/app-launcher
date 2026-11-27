@@ -1,7 +1,7 @@
 ﻿#Requires -RunAsAdministrator
 <#
   Operations tests (task 8.4, automatable part). Only on the TEST VM.
-    1. Second operator appstart-op2 outside «AppStart Users» -> «Keine Berechtigung», then added with
+    1. Second operator appstart-op2 outside "AppStart Users" -> "No permission", then added with
        add-user --member
     2. Two operators start the TestApp: one after the other (both run) and at the same moment
     3. Service process killed -> SCM restarts it (recovery actions) -> start works again
@@ -24,17 +24,17 @@ $op2Name = 'appstart-op2'
 
 function Get-OriginalState {
     $s = [ordered]@{}
-    $s['Lokale Konten'] = (@(Get-LocalUser | Where-Object { $_.Name -ne $op2Name } | ForEach-Object Name) | Sort-Object) -join ','
-    $s['Lokale Gruppen'] = (@(Get-LocalGroup | ForEach-Object Name) | Sort-Object) -join ','
-    $s['Dienst AppStart'] = [string][bool](Get-Service AppStart -ErrorAction SilentlyContinue)
-    $s['Programmordner'] = [string](Test-Path $ProgDir)
+    $s['Local accounts'] = (@(Get-LocalUser | Where-Object { $_.Name -ne $op2Name } | ForEach-Object Name) | Sort-Object) -join ','
+    $s['Local groups'] = (@(Get-LocalGroup | ForEach-Object Name) | Sort-Object) -join ','
+    $s['Service AppStart'] = [string][bool](Get-Service AppStart -ErrorAction SilentlyContinue)
+    $s['Program folder'] = [string](Test-Path $ProgDir)
     $s['apps.json'] = [string](Test-Path $ConfigPath)
-    $s['Startmenü AppStart'] = [string](Test-Path $StartMenuDir)
-    $s['Launcher-Verknüpfungen'] = (@(Get-LauncherShortcuts | ForEach-Object Path) | Sort-Object) -join ','
-    $s['Datenordner SDDL'] = (Get-Sddl $TestDataDir) -replace 'AI', ''
-    $s['Registry-Key SDDL'] = (Get-Sddl $TestRegKey) -replace 'AI', ''
-    $s['Registry-Wert'] = (Get-ItemProperty $TestRegKey).Password
-    $s['Produkt'] = [string][bool](Get-AppStartProduct)
+    $s['Start menu AppStart'] = [string](Test-Path $StartMenuDir)
+    $s['Launcher shortcuts'] = (@(Get-LauncherShortcuts | ForEach-Object Path) | Sort-Object) -join ','
+    $s['Data folder SDDL'] = (Get-Sddl $TestDataDir) -replace 'AI', ''
+    $s['Registry key SDDL'] = (Get-Sddl $TestRegKey) -replace 'AI', ''
+    $s['Registry value'] = (Get-ItemProperty $TestRegKey).Password
+    $s['Product'] = [string][bool](Get-AppStartProduct)
     return $s
 }
 
@@ -53,18 +53,18 @@ function Start-Pair([pscredential] $a, [pscredential] $b, [string] $appId, [int]
 
 try {
     Write-Host "== Windows $((Get-CimInstance Win32_OperatingSystem).Version), Session $((Get-Process -Id $PID).SessionId), MSI $MsiPath"
-    if (Get-AppStartProduct) { throw 'AppStart ist bereits installiert. Test nur auf einer frischen Test-VM (Snapshot) ausführen.' }
+    if (Get-AppStartProduct) { throw 'AppStart is already installed. Run the test only on a fresh test VM (snapshot).' }
     Initialize-WorkDir
     New-TestAppPrerequisites
     $original = Get-OriginalState
 
     $code = Install-AppStartMsi $MsiPath (Join-Path $StageDir 'operations-msi.log')
-    Check 'Vorbereitung: MSI installiert' ($code -eq 0) "exit $code"
+    Check 'Preparation: MSI installed' ($code -eq 0) "exit $code"
     $r = Invoke-Setup @('add', '--exe', $PackagedTestApp, '--data-dir', $TestDataDir, '--reg-key', $TestRegKeyCli, '--name', $TestAppName)
-    Check 'Vorbereitung: TestApp freigegeben' ($r.Exit -eq 0) ''
+    Check 'Preparation: TestApp approved' ($r.Exit -eq 0) ''
     $pw1 = New-RandomPassword
     $r = Invoke-Setup @('add-user', '--name', 'appstart-user', '--password-stdin') $pw1
-    Check 'Vorbereitung: appstart-user angelegt' ($r.Exit -eq 0) ''
+    Check 'Preparation: appstart-user created' ($r.Exit -eq 0) ''
     $op1 = New-OperatorCredential 'appstart-user' $pw1
     $pw2 = New-RandomPassword
     New-LocalTestUser $op2Name $pw2
@@ -74,12 +74,12 @@ try {
 
     # ------------------------------------------------------------ 1. user outside the group, then added
     $l = Start-LauncherAs $op2 "--app $appId" 'operations-nopermission.png'
-    Check 'Benutzer ausserhalb von AppStart Users: «Keine Berechtigung», Exit-Code 4, kein Start' ($l.Exit -eq 4 -and $l.Texts -like '*Keine Berechtigung*' -and @(Get-TestAppProcesses).Count -eq 0) "exit=$($l.Exit)"
+    Check 'User outside AppStart Users: "No permission", exit code 4, no start' ($l.Exit -eq 4 -and $l.Texts -like '*No permission*' -and @(Get-TestAppProcesses).Count -eq 0) "exit=$($l.Exit)"
     $r = Invoke-Setup @('add-user', '--member', "$env:COMPUTERNAME\$op2Name")
     $isMember = [bool](Get-LocalGroupMember -Group 'AppStart Users' -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*\$op2Name" })
-    Check 'add-user --member: zweiter Bediener in AppStart Users' ($r.Exit -eq 0 -and $isMember) ''
+    Check 'add-user --member: second operator in AppStart Users' ($r.Exit -eq 0 -and $isMember) ''
     $r = Invoke-Setup @('verify') -Quiet
-    Check 'verify mit zwei Bedienern: Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Check 'verify with two operators: exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
 
     # ------------------------------------------------------------ 2. two operators
     Start-Sleep -Seconds 3
@@ -87,8 +87,8 @@ try {
     $res = Start-Pair $op1 $op2 $appId 6000   # first start (S4U, profile) takes ~1 s, then 2 s cooldown per session
     $apps = @(Wait-TestApp $t 2)
     # Exit codes of processes started via -Credential are not always readable (-1/empty): the TestApps count.
-    Check 'Zwei Bediener nacheinander (6 s Abstand): beide Starts OK, zwei TestApps als appstart-app' ($res[0].Exit -in 0, -1, $null, '' -and $res[1].Exit -in 0, -1, $null, '' -and $apps.Count -eq 2) "exit=$($res[0].Exit)/$($res[1].Exit) apps=$($apps.Count)"
-    Check 'Zwei Bediener: beide TestApps in der Session der Anfragenden' (@($apps | Where-Object { $_.Session -ne $mySession }).Count -eq 0 -and $apps.Count -eq 2) (($apps | ForEach-Object { "pid $($_.Id) session $($_.Session)" }) -join ', ')
+    Check 'Two operators one after the other (6 s apart): both starts OK, two TestApps as appstart-app' ($res[0].Exit -in 0, -1, $null, '' -and $res[1].Exit -in 0, -1, $null, '' -and $apps.Count -eq 2) "exit=$($res[0].Exit)/$($res[1].Exit) apps=$($apps.Count)"
+    Check 'Two operators: both TestApps in the session of the requester' (@($apps | Where-Object { $_.Session -ne $mySession }).Count -eq 0 -and $apps.Count -eq 2) (($apps | ForEach-Object { "pid $($_.Id) session $($_.Session)" }) -join ', ')
     Stop-TestApps
 
     Start-Sleep -Seconds 3
@@ -96,14 +96,14 @@ try {
     $res = Start-Pair $op1 $op2 $appId 0
     $apps = @(Wait-TestApp $t 1)
     Start-Sleep -Seconds 2; $apps = @(Get-TestAppProcesses $t | Where-Object { $_.Owner -eq 'appstart-app' })
-    # Judged by what each launcher showed: success = no dialog, busy = «Start läuft bereits» (exit codes of
+    # Judged by what each launcher showed: success = no dialog, busy = "Start already in progress" (exit codes of
     # -Credential processes are not always readable).
     $okCount = @($res | Where-Object { -not $_.Texts -and -not $_.TimedOut }).Count
-    $busy = @($res | Where-Object { $_.Texts -like '*Start läuft bereits*' }).Count
-    # Same session (Start-Process -Credential): the per-session gate lets one through and answers «busy» to the other.
+    $busy = @($res | Where-Object { $_.Texts -like '*Start already in progress*' }).Count
+    # Same session (Start-Process -Credential): the per-session gate lets one through and answers "busy" to the other.
     # With two real sessions both would start: manual test M3.
-    Check 'Zwei Bediener gleichzeitig in derselben Session: einer startet, der andere erhält «Start läuft bereits»' ($okCount -eq 1 -and $busy -eq 1 -and $apps.Count -eq 1) "ok=$okCount busy=$busy apps=$($apps.Count)"
-    Check 'Ereignis 1203 (DeniedBusy) protokolliert' ((Get-AppStartEvents 1203 $t).Count -ge 1) ''
+    Check 'Two operators at the same time in the same session: one starts, the other gets "Start already in progress"' ($okCount -eq 1 -and $busy -eq 1 -and $apps.Count -eq 1) "ok=$okCount busy=$busy apps=$($apps.Count)"
+    Check 'Event 1203 (DeniedBusy) logged' ((Get-AppStartEvents 1203 $t).Count -ge 1) ''
     Stop-TestApps
 
     # ------------------------------------------------------------ 3. service restart by the SCM
@@ -118,14 +118,14 @@ try {
         if ($svc.State -eq 'Running' -and $svc.ProcessId -and [int]$svc.ProcessId -ne $oldPid) { $newPid = [int]$svc.ProcessId; break }
     }
     $restartSec = [int]((Get-Date) - $t).TotalSeconds
-    Check 'Dienstprozess beendet -> SCM startet den Dienst neu (Wiederherstellung)' ($newPid -ne 0) "alt $oldPid, neu $newPid nach ~$restartSec s"
+    Check 'Service process ended -> SCM restarts the service (recovery)' ($newPid -ne 0) "old $oldPid, new $newPid after ~$restartSec s"
     $scmEvent = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Service Control Manager'; Id = 7031; StartTime = $t } -ErrorAction SilentlyContinue)
-    Check 'System-Ereignis 7031 (Dienst unerwartet beendet, Neustart) vorhanden' ($scmEvent.Count -ge 1) ''
+    Check 'System event 7031 (service ended unexpectedly, restart) present' ($scmEvent.Count -ge 1) ''
     Start-Sleep -Seconds 3
     $t = Get-Date
     $l = Start-LauncherAs $op1 "--app $appId" ''
     $apps = @(Wait-TestApp $t)
-    Check 'Nach Neustart des Dienstes: Start als appstart-user funktioniert' ($l.Exit -eq 0 -and $apps.Count -ge 1) "exit=$($l.Exit)"
+    Check 'After restart of the service: start as appstart-user works' ($l.Exit -eq 0 -and $apps.Count -ge 1) "exit=$($l.Exit)"
     Stop-TestApps
 
     # ------------------------------------------------------------ 4. application update + rehash
@@ -133,40 +133,40 @@ try {
     Copy-Item $PackagedTestApp $changed -Force
     Set-OneByteChanged $changed
     Copy-Item $changed $PackagedTestApp -Force   # the "update": EXE replaced by a different build
-    Check 'Update der Applikation: EXE durch veränderte Kopie ersetzt' ((Get-FileHash $PackagedTestApp).Hash -eq (Get-FileHash $changed).Hash) ''
+    Check 'Update of the application: EXE replaced by a modified copy' ((Get-FileHash $PackagedTestApp).Hash -eq (Get-FileHash $changed).Hash) ''
     Start-Sleep -Seconds 3
     $t = Get-Date
     $l = Start-LauncherAs $op1 "--app $appId" 'operations-update-denied.png'
-    Check 'Update ohne rehash: Start verweigert (Exit-Code 3), Ereignis 1201' ($l.Exit -in 3, -1 -and $l.Texts -like '*Start verweigert*' -and (Get-AppStartEvents 1201 $t).Count -ge 1 -and @(Get-TestAppProcesses $t).Count -eq 0) "exit=$($l.Exit)"
+    Check 'Update without rehash: launch denied (exit code 3), event 1201' ($l.Exit -in 3, -1 -and $l.Texts -like '*Launch denied*' -and (Get-AppStartEvents 1201 $t).Count -ge 1 -and @(Get-TestAppProcesses $t).Count -eq 0) "exit=$($l.Exit)"
     $r = Invoke-Setup @('rehash', '--app', $appId)
-    Check 'rehash --app: Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Check 'rehash --app: exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
     Start-Sleep -Seconds 3
     $t = Get-Date
     $l = Start-LauncherAs $op1 "--app $appId" ''
     $apps = @(Wait-TestApp $t)
-    Check 'Nach rehash: Start der aktualisierten Applikation funktioniert' ($l.Exit -eq 0 -and $apps.Count -ge 1) "exit=$($l.Exit)"
+    Check 'After rehash: start of the updated application works' ($l.Exit -eq 0 -and $apps.Count -ge 1) "exit=$($l.Exit)"
     Stop-TestApps
     $r = Invoke-Setup @('verify') -Quiet
-    Check 'Nach rehash: verify Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Check 'After rehash: verify exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
 
     # ------------------------------------------------------------ 5. uninstall
     $r = Invoke-Setup @('uninstall')
-    Check 'uninstall (CLI): Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Check 'uninstall (CLI): exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
     Remove-LocalUser $op2Name   # test user, not created by AppStart (excluded from the comparison)
     $codes = @(Uninstall-AppStartMsi)
-    Check 'MSI-Deinstallation: Exit-Code 0' ($codes.Count -ge 1 -and @($codes | Where-Object { $_ -ne 0 }).Count -eq 0) ($codes -join ',')
+    Check 'MSI uninstallation: exit code 0' ($codes.Count -ge 1 -and @($codes | Where-Object { $_ -ne 0 }).Count -eq 0) ($codes -join ',')
     $now = Get-OriginalState
     $diff = @(foreach ($k in $original.Keys) { if ($original[$k] -ne $now[$k]) { "$k : '$($original[$k])' -> '$($now[$k])'" } })
-    $diff | ForEach-Object { Write-Host "  ABWEICHUNG $_" }
-    Check 'Deinstallation: ursprünglicher Zustand (Konten, Gruppe, Dienst, Programmordner, Verknüpfungen, Rechte)' ($diff.Count -eq 0) "$($diff.Count) Abweichung(en)"
+    $diff | ForEach-Object { Write-Host "  DEVIATION $_" }
+    Check 'Uninstallation: original state (accounts, group, service, program folder, shortcuts, permissions)' ($diff.Count -eq 0) "$($diff.Count) deviation(s)"
     # Information only, not part of the spec scenario
     $profiles = @(Get-CimInstance Win32_UserProfile | Where-Object { (Split-Path $_.LocalPath -Leaf) -like 'appstart-*' } | ForEach-Object LocalPath)
-    Write-Host "  INFO verbleibende Profile: $(if ($profiles) { $profiles -join ', ' } else { 'keine' })"
-    Write-Host "  INFO Ereignisquelle AppStart nach Deinstallation: $([System.Diagnostics.EventLog]::SourceExists('AppStart'))"
-    Write-Host "  INFO C:\ProgramData\AppStart nach Deinstallation: $(if (Test-Path $AppStartData) { (Get-ChildItem $AppStartData -Recurse | ForEach-Object { $_.FullName.Substring($AppStartData.Length) }) -join ', ' } else { 'entfernt' })"
+    Write-Host "  INFO remaining profiles: $(if ($profiles) { $profiles -join ', ' } else { 'none' })"
+    Write-Host "  INFO event source AppStart after uninstallation: $([System.Diagnostics.EventLog]::SourceExists('AppStart'))"
+    Write-Host "  INFO C:\ProgramData\AppStart after uninstallation: $(if (Test-Path $AppStartData) { (Get-ChildItem $AppStartData -Recurse | ForEach-Object { $_.FullName.Substring($AppStartData.Length) }) -join ', ' } else { 'removed' })"
 }
 catch {
-    Check 'Testlauf ohne Ausnahme' $false "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
+    Check 'Test run without exception' $false "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
 }
 finally {
     Invoke-E2ECleanup -extraUsers @($op2Name)

@@ -1,27 +1,27 @@
-# Beitragen
+# Contributing
 
-Danke für dein Interesse! Dieses Projekt hat einen einzigen Maintainer (@trosinde).
-Beiträge sind per Pull Request willkommen. Pushen auf `main` und Mergen kann nur der Maintainer.
+Thanks for your interest! This project has a single maintainer (@trosinde).
+Contributions are welcome as pull requests. Only the maintainer can push to `main` and merge.
 
-## So geht's
+## How to
 
-1. Repository forken und einen Branch von `main` anlegen.
-2. Änderung umsetzen, Tests dafür ergänzen oder anpassen.
-3. Tests lokal ausführen (Windows, .NET SDK laut `global.json`):
+1. Fork the repository and create a branch from `main`.
+2. Make your change and add or update tests for it.
+3. Run the tests locally (Windows, .NET SDK as in `global.json`):
    `dotnet test --solution AppStart.slnx -c Release`
-4. Pull Request gegen `main` öffnen.
+4. Open a pull request against `main`.
 
-## Wie es weitergeht
+## What happens next
 
-- Die CI läuft automatisch für deinen Pull Request. Bei ganz neuen GitHub-Konten muss der
-  Maintainer den ersten Lauf freigeben.
-- Der Pull Request wird **erst geprüft, wenn alle Pflicht-Checks grün sind**: «Build and test»
-  (Windows: Build, Tests, Handbuch) und «OpenSpec validate». Schlägt ein Check
-  fehl, behebe ihn mit einem weiteren Push auf denselben Branch.
-- Ist `main` weitergelaufen, muss dein Branch vor dem Merge aktualisiert werden („Update branch“
-  oder Rebase). Lass „Allow edits by maintainers“ aktiviert, dann kann der Maintainer das übernehmen.
-- Ob und wann gemergt wird, entscheidet der Maintainer. Pull Requests werden per Squash gemergt.
+- CI runs automatically for your pull request. For brand-new GitHub accounts the
+  maintainer has to approve the first run.
+- The pull request is **reviewed only once all required checks are green**: "Build and test"
+  (Windows: build, tests, manual) and "OpenSpec validate". If a check
+  fails, fix it with another push to the same branch.
+- If `main` has moved on, your branch has to be updated before the merge ("Update branch"
+  or rebase). Keep "Allow edits by maintainers" enabled so the maintainer can do this.
+- The maintainer decides whether and when to merge. Pull requests are squash-merged.
 
-## Sicherheitslücken melden
+## Reporting security vulnerabilities
 
-Bitte keine öffentlichen Issues für Schwachstellen. Siehe [SECURITY.md](SECURITY.md).
+Please do not open public issues for vulnerabilities. See [SECURITY.md](SECURITY.md).

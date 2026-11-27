@@ -25,7 +25,7 @@ public static class WizardLauncher
         });
     }
 
-    /// <summary>Verify view (Start menu «AppStart – Einrichtung prüfen»): 0 = all checks passed, otherwise 1.</summary>
+    /// <summary>Verify view (Start menu "AppStart – Verify setup"): 0 = all checks passed, otherwise 1.</summary>
     public static int ShowVerify(ISetupEngine engine)
     {
         ArgumentNullException.ThrowIfNull(engine);

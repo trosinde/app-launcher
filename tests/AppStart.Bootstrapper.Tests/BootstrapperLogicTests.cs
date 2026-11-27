@@ -81,7 +81,7 @@ public class BootstrapperLogicTests
     {
         var outcome = BootstrapperLogic.EvaluateMsiexec(1618, Log);
         Assert.False(outcome.Success);
-        Assert.Contains("Eine andere Installation läuft gerade. Bitte warten und erneut versuchen.", outcome.Message!.Text, StringComparison.Ordinal);
+        Assert.Contains("Another installation is in progress. Please wait and try again.", outcome.Message!.Text, StringComparison.Ordinal);
         Assert.Equal(BootstrapperTexts.BusyMeasure, outcome.Message.Measure);
         Assert.Equal(Log, outcome.Message.LogPath);
         Assert.Equal(1618, outcome.ExitCode);
@@ -179,11 +179,11 @@ public class BootstrapperLogicTests
 
     [Fact]
     public void Progress_heading_matches_design() =>
-        Assert.Equal("AppStart wird installiert …", BootstrapperTexts.ProgressHeading);
+        Assert.Equal("Installing AppStart …", BootstrapperTexts.ProgressHeading);
 
     [Fact]
     public void No_package_message_is_clear() =>
-        Assert.Equal("Kein Installationspaket enthalten", BootstrapperLogic.NoPackage.Heading);
+        Assert.Equal("No installation package included", BootstrapperLogic.NoPackage.Heading);
 
     [Fact]
     public void Message_without_measure_or_log_has_plain_content()

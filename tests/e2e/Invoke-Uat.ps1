@@ -32,9 +32,9 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
         elseif ($p.Value -is [array]) { $relaunch += "-$($p.Key)"; $relaunch += ($p.Value -join ',') }
         else { $relaunch += "-$($p.Key)"; $relaunch += "`"$($p.Value)`"" }
     }
-    Write-Host 'Nicht als Administrator gestartet: starte erhöht neu (UAC-Abfrage mit «Ja» bestätigen) ...'
+    Write-Host 'Not started as administrator: restarting elevated (confirm the UAC prompt with "Yes") ...'
     $child = Start-Process (Get-Process -Id $PID).Path -Verb RunAs -Wait -PassThru -ArgumentList $relaunch
-    Write-Host "Fertig (Exit-Code $($child.ExitCode))."
+    Write-Host "Done (exit code $($child.ExitCode))."
     exit $child.ExitCode
 }
 
@@ -61,14 +61,14 @@ if ($FromRequest) {
     $Suites = @($request.suites)
     $ResultDir = $request.resultDir
     $PreviousMsiPath = $request.previousMsiPath
-    if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir muss unter $uatHome liegen." }
+    if (-not $ResultDir.StartsWith($uatHome + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "resultDir must lie under $uatHome." }
 }
 $Suites = @($Suites | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses', 'Install', 'Manual') { throw "Unbekannte Suite $s" } }
-if ($Suites -contains 'Manual' -and -not (Test-Path (Join-Path (Split-Path $MsiPath) 'AppStart-Setup.exe'))) { throw 'Suite Manual braucht AppStart-Setup.exe neben dem MSI.' }
-if ($Suites -contains 'Install' -and -not $PreviousMsiPath) { throw 'Suite Install braucht PreviousMsiPath (älteres MSI).' }
-if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath und ResultDir sind nötig (oder -FromRequest).' }
-if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath muss auf ein MSI zeigen.' }
+foreach ($s in $Suites) { if ($s -notin 'Acceptance', 'Setup', 'Service', 'Operations', 'ChildProcesses', 'Install', 'Manual') { throw "Unknown suite $s" } }
+if ($Suites -contains 'Manual' -and -not (Test-Path (Join-Path (Split-Path $MsiPath) 'AppStart-Setup.exe'))) { throw 'Suite Manual needs AppStart-Setup.exe next to the MSI.' }
+if ($Suites -contains 'Install' -and -not $PreviousMsiPath) { throw 'Suite Install needs PreviousMsiPath (older MSI).' }
+if (-not $MsiPath -or -not $ResultDir) { throw 'MsiPath and ResultDir are required (or -FromRequest).' }
+if (-not $MsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'MsiPath must point to an MSI.' }
 $MsiPath = (Resolve-Path $MsiPath).Path
 New-Item -ItemType Directory -Force $ResultDir | Out-Null
 Remove-Item (Join-Path $ResultDir 'uat-summary.txt') -ErrorAction SilentlyContinue # written last = run finished
@@ -100,7 +100,7 @@ if (Test-Path $bootSource) {
 }
 $previousMsi = $null
 if ($PreviousMsiPath) {
-    if (-not $PreviousMsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'PreviousMsiPath muss auf ein MSI zeigen.' }
+    if (-not $PreviousMsiPath.EndsWith('.msi', [StringComparison]::OrdinalIgnoreCase)) { throw 'PreviousMsiPath must point to an MSI.' }
     New-Item -ItemType Directory -Force (Join-Path $stage 'previous') | Out-Null
     Copy-Item (Resolve-Path $PreviousMsiPath).Path (Join-Path $stage 'previous')
     $previousMsi = Join-Path $stage "previous\$(Split-Path $PreviousMsiPath -Leaf)"

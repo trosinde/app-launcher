@@ -6,7 +6,7 @@ using AppStart.Setup.Engine.Verification;
 
 namespace AppStart.Setup.Tests.Verification;
 
-// add-allowed-child-processes, task 4.5: spec verification «Prüfung der Hilfsprogramme».
+// add-allowed-child-processes, task 4.5: spec verification "Verification of helper programs".
 public sealed class HelpersCheckTests
 {
     private const string Export = @"C:\Program Files\Hersteller\AppA\Export.exe";
@@ -40,15 +40,15 @@ public sealed class HelpersCheckTests
         var check = Run(WithHelpers());
         Assert.Equal(CheckOutcome.Passed, check.Outcome);
         Assert.Empty(check.Findings);
-        Assert.Equal("Hilfsprogramme je App", check.Title);
+        Assert.Equal("Helper programs per app", check.Title);
     }
 
-    // Spec scenario «Hilfsprogramm verändert»: deviation with path and the rehash hint.
+    // Spec scenario "Helper program modified": deviation with path and the rehash hint.
     [Fact]
     public void Changed_helper_is_a_deviation_with_rehash_hint()
     {
         var machine = WithHelpers();
-        machine.Probe.Integrity[Updater] = IntegrityResult.Fail("SHA-256 weicht ab.");
+        machine.Probe.Integrity[Updater] = IntegrityResult.Fail("SHA-256 differs.");
 
         var check = Run(machine);
 
@@ -64,29 +64,29 @@ public sealed class HelpersCheckTests
         var machine = WithHelpers();
         machine.Probe.Files.Remove(Export);
 
-        Assert.Contains("app-a: Hilfsprogramm " + Export + " fehlt", Run(machine).Findings);
+        Assert.Contains("app-a: helper program " + Export + " is missing", Run(machine).Findings);
     }
 
     [Fact]
     public void Writable_helper_folder_is_a_deviation()
     {
         var machine = WithHelpers();
-        machine.Probe.WriteViolations[@"C:\Program Files\Hersteller\AppA"] = ["Benutzer hat Schreibrechte."];
+        machine.Probe.WriteViolations[@"C:\Program Files\Hersteller\AppA"] = ["Users has write permissions."];
 
         var check = Run(machine);
 
         Assert.Equal(CheckOutcome.Deviation, check.Outcome);
-        Assert.Equal(2, check.Findings.Count(f => f.Contains("beschreibbar", StringComparison.Ordinal)));
+        Assert.Equal(2, check.Findings.Count(f => f.Contains("writable", StringComparison.Ordinal)));
     }
 
-    // Spec scenario «Alle weiteren Programme erlaubt»: passed, with the hint and the AppId.
+    // Spec scenario "All other programs allowed": passed, with the hint and the AppId.
     [Fact]
     public void Mode_all_passes_with_a_note()
     {
         var check = Run(WithHelpers(ChildProcessMode.All));
 
         Assert.Equal(CheckOutcome.Passed, check.Outcome);
-        Assert.Equal("Hinweis: Alle weiteren Programme erlaubt (app-a)", Assert.Single(check.Findings));
+        Assert.Equal("Note: All other programs allowed (app-a)", Assert.Single(check.Findings));
     }
 
     [Fact]
@@ -94,13 +94,13 @@ public sealed class HelpersCheckTests
     {
         var report = WithHelpers(ChildProcessMode.All).Run();
 
-        Assert.Contains("Alle weiteren Programme erlaubt (app-a)", VerifyReportWriter.RenderHtml(report), StringComparison.Ordinal);
+        Assert.Contains("All other programs allowed (app-a)", VerifyReportWriter.RenderHtml(report), StringComparison.Ordinal);
         var row = ViewModels.CheckRow.From(report.Checks.Single(c => c.Id == Verifier.HelpersCheckId));
         Assert.False(row.IsDeviation);
-        Assert.Contains("Alle weiteren Programme erlaubt", row.Text, StringComparison.Ordinal);
+        Assert.Contains("All other programs allowed", row.Text, StringComparison.Ordinal);
     }
 
-    // Spec scenario «Lernmodus vergessen»: deviation with expiry and the learn stop hint.
+    // Spec scenario "Learning mode forgotten": deviation with expiry and the learn stop hint.
     [Fact]
     public void Active_learn_mode_is_a_deviation()
     {
@@ -130,9 +130,9 @@ public sealed class HelpersCheckTests
     public void Unprotected_learn_file_is_a_deviation()
     {
         var machine = WithHelpers();
-        machine.Probe.LearnState = new LearnStateLoadResult(LearnStateSerializer.Empty, "learn.json ist nicht geschützt", true);
+        machine.Probe.LearnState = new LearnStateLoadResult(LearnStateSerializer.Empty, "learn.json is not protected", true);
 
-        Assert.Contains(Run(machine).Findings, f => f.Contains("ignoriert", StringComparison.Ordinal));
+        Assert.Contains(Run(machine).Findings, f => f.Contains("ignores", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -32,7 +32,7 @@ public sealed record LearnState
     {
         if (minutes is < MinMinutes or > MaxMinutes)
         {
-            throw new ArgumentOutOfRangeException(nameof(minutes), minutes, $"Erlaubt sind {MinMinutes} bis {MaxMinutes} Minuten.");
+            throw new ArgumentOutOfRangeException(nameof(minutes), minutes, $"Allowed are {MinMinutes} to {MaxMinutes} minutes.");
         }
 
         var session = new LearnSession { AppId = appId, StartedUtc = nowUtc, ExpiresUtc = nowUtc.AddMinutes(minutes) };
@@ -81,12 +81,12 @@ public static class LearnStateSerializer
         }
         catch (JsonException ex)
         {
-            return (null, $"learn.json ist kein gültiges JSON ({ex.Path}): {ex.Message}");
+            return (null, $"learn.json is not valid JSON ({ex.Path}): {ex.Message}");
         }
 
         if (state is null)
         {
-            return (null, "learn.json ist leer.");
+            return (null, "learn.json is empty.");
         }
 
         var error = Validate(state);
@@ -108,7 +108,7 @@ public static class LearnStateSerializer
     {
         if (state.Version != LearnState.CurrentVersion)
         {
-            return $"version: {state.Version} wird nicht unterstützt, erwartet {LearnState.CurrentVersion}.";
+            return $"version: {state.Version} is not supported, expected {LearnState.CurrentVersion}.";
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -118,18 +118,18 @@ public static class LearnStateSerializer
             var at = $"apps[{i}]";
             if (!AppId.IsValid(s.AppId))
             {
-                return $"{at}.appId: «{s.AppId}» ist ungültig.";
+                return $"{at}.appId: \"{s.AppId}\" is invalid.";
             }
 
             if (!seen.Add(s.AppId))
             {
-                return $"{at}.appId: «{s.AppId}» kommt mehrfach vor.";
+                return $"{at}.appId: \"{s.AppId}\" occurs more than once.";
             }
 
             var minutes = (s.ExpiresUtc - s.StartedUtc).TotalMinutes;
             if (minutes is < LearnState.MinMinutes or > LearnState.MaxMinutes)
             {
-                return $"{at}.expiresUtc: Dauer {minutes:F0} Minuten, erlaubt sind {LearnState.MinMinutes} bis {LearnState.MaxMinutes}.";
+                return $"{at}.expiresUtc: duration {minutes:F0} minutes, allowed are {LearnState.MinMinutes} to {LearnState.MaxMinutes}.";
             }
         }
 
@@ -137,7 +137,7 @@ public static class LearnStateSerializer
     }
 }
 
-/// <summary>Reads learn.json for the service (spec app-launch, requirement «Lernmodus»).</summary>
+/// <summary>Reads learn.json for the service (spec app-launch, requirement "Learning mode").</summary>
 public static class LearnStateStore
 {
     /// <summary>
@@ -158,7 +158,7 @@ public static class LearnStateStore
             var violations = WriteAccessPolicy.FindViolations(target);
             if (violations.Count > 0)
             {
-                return new(LearnStateSerializer.Empty, $"{target} ist nicht geschützt: {string.Join(" ", violations)}", true);
+                return new(LearnStateSerializer.Empty, $"{target} is not protected: {string.Join(" ", violations)}", true);
             }
         }
 
@@ -169,7 +169,7 @@ public static class LearnStateStore
         }
         catch (IOException ex)
         {
-            return new(LearnStateSerializer.Empty, $"{path} kann nicht gelesen werden: {ex.Message}", false);
+            return new(LearnStateSerializer.Empty, $"{path} cannot be read: {ex.Message}", false);
         }
 
         var (state, error) = LearnStateSerializer.Parse(json);

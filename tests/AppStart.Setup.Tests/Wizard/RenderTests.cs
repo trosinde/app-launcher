@@ -35,9 +35,9 @@ public sealed class RenderTests
         {
             Snapshot = new SetupSnapshot(
                 [
-                    FakeSetupEngine.Entry("Applikation A", Path.Combine(system, "notepad.exe"), IntegrityCheck.Signature,
+                    FakeSetupEngine.Entry("Application A", Path.Combine(system, "notepad.exe"), IntegrityCheck.Signature,
                         @"C:\ProgramData\Hersteller\AppA", @"HKLM\SOFTWARE\Hersteller\AppA"),
-                    FakeSetupEngine.Entry("Applikation B", Path.Combine(system, "calc.exe"), IntegrityCheck.Sha256),
+                    FakeSetupEngine.Entry("Application B", Path.Combine(system, "calc.exe"), IntegrityCheck.Sha256),
                 ],
                 [@"LABOR\bediener01", @"LABOR\bediener02"],
                 AppAccountExists: false,
@@ -83,7 +83,7 @@ public sealed class RenderTests
             Assert.True(next.IsEnabled);
             WpfHost.SavePng(view, "wizard-1-apps.png");
 
-            // Invalid registry key disables «Weiter» in the real view as well.
+            // Invalid registry key disables "Next" in the real view as well.
             vm.SelectedApp!.RegistryKey = @"HKCU\Software";
             await WpfHost.SettleAsync();
             Assert.False(next.IsEnabled);
@@ -118,7 +118,7 @@ public sealed class RenderTests
         var engine = DesignEngine();
         engine.Snapshot = engine.Snapshot with { OperatorAccountExists = true, AppAccountExists = true };
         engine.Report = FakeSetupEngine.CreateReport(deviations: 1);
-        engine.ApplyResults[3] = new SetupStepResult("Verknüpfungen anlegen", false, "Zugriff auf C:\\Users\\Public\\Desktop verweigert");
+        engine.ApplyResults[3] = new SetupStepResult("Create shortcuts", false, "Access to C:\\Users\\Public\\Desktop denied");
         var (window, view, vm) = await OpenWizardAsync(engine);
         try
         {
@@ -186,10 +186,10 @@ public sealed class RenderTests
         var (window, view, vm) = await OpenWizardAsync(engine);
         try
         {
-            Assert.Equal("2 erlaubt", vm.Apps[0].ChildSummary);
-            Assert.Equal("gesperrt", vm.Apps[1].ChildSummary);
+            Assert.Equal("2 allowed", vm.Apps[0].ChildSummary);
+            Assert.Equal("blocked", vm.Apps[1].ChildSummary);
             Assert.True(((Button)view.FindName("HelpersButton")).IsVisible);
-            Assert.Equal("Hilfsprogramme (2)…", ((Button)view.FindName("HelpersButton")).Content);
+            Assert.Equal("Helper programs (2)…", ((Button)view.FindName("HelpersButton")).Content);
             WpfHost.SavePng(view, "wizard-1-apps-children.png");
 
             vm.SelectedApp = vm.Apps[1];
@@ -207,7 +207,7 @@ public sealed class RenderTests
     {
         var engine = new FakeSetupEngine();
         engine.Changed.Add(Updater);
-        var app = new AppItemViewModel(new AppCandidate(@"C:\A\AppA.exe", "Applikation A", "appa", IntegrityCheck.Signature, new string('A', 40), null, null, null,
+        var app = new AppItemViewModel(new AppCandidate(@"C:\A\AppA.exe", "Application A", "appa", IntegrityCheck.Signature, new string('A', 40), null, null, null,
             ChildProcessMode.Allowlist, DesignHelpers()), true, true);
         var vm = new HelpersViewModel(engine, new FakeUi(), app);
         vm.Items[0].IsChecked = true;
@@ -239,7 +239,7 @@ public sealed class RenderTests
                 .Record(@"C:\Program Files\Adobe\Reader\AcroRd32.exe", new string('E', 40), new string('3', 64), null, t.AddSeconds(12))
                 .Record(@"C:\Windows\System32\cmd.exe", new string('F', 40), new string('4', 64), null, t.AddSeconds(15)),
         };
-        var learn = new LearnViewModel(engine, "appa", "Applikation A", TimeProvider.System);
+        var learn = new LearnViewModel(engine, "appa", "Application A", TimeProvider.System);
         Assert.True(learn.Start(25));
         var window = new LearnWindow(learn);
         Offscreen(window, (FrameworkElement)window.Content, 960, 640);
@@ -248,14 +248,14 @@ public sealed class RenderTests
         WpfHost.SavePng((FrameworkElement)window.Content, "wizard-learn.png");
         learn.FinishCommand.Execute(null);
 
-        var result = new LearnResultViewModel(engine, "appa", "Applikation A", engine.Recording);
+        var result = new LearnResultViewModel(engine, "appa", "Application A", engine.Recording);
         var resultWindow = new LearnResultWindow(result);
         Offscreen(resultWindow, (FrameworkElement)resultWindow.Content, 960, 640);
         resultWindow.Show();
         try
         {
             await WpfHost.SettleAsync();
-            Assert.Equal("2 Programme übernehmen", result.TakeOverText);
+            Assert.Equal("Apply 2 programs", result.TakeOverText);
             WpfHost.SavePng((FrameworkElement)resultWindow.Content, "wizard-learn-result.png");
         }
         finally
@@ -282,7 +282,7 @@ public sealed class RenderTests
     });
 
     private static Button FindButton(DependencyObject root, string content) =>
-        TryFind(root, content) ?? throw new InvalidOperationException($"Button «{content}» not found");
+        TryFind(root, content) ?? throw new InvalidOperationException($"Button \"{content}\" not found");
 
     private static Button? TryFind(DependencyObject root, string content)
     {

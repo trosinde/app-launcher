@@ -23,18 +23,18 @@ public interface IUiServices
     /// <summary>Shows the print dialog and prints the report. False when the user cancelled.</summary>
     bool PrintReport(VerifyReport report);
 
-    /// <summary>Opens the verify view as a dialog (button «Einrichtung prüfen» in the wizard, task 9.2).</summary>
+    /// <summary>Opens the verify view as a dialog (button "Verify setup" in the wizard, task 9.2).</summary>
     void ShowVerifyView(ISetupEngine engine);
 
-    /// <summary>Warning with «Ja»/«Nein»; true only for «Ja» (add-allowed-child-processes: «Alle erlaubt», shells).</summary>
+    /// <summary>Warning with "Yes"/"No"; true only for "Yes" (add-allowed-child-processes: "All allowed", shells).</summary>
     bool Confirm(string heading, string text);
 
-    /// <summary>Dialog «Erlaubte Hilfsprogramme»; true after «Übernehmen».</summary>
+    /// <summary>Dialog "Allowed helper programs"; true after "Apply".</summary>
     bool ShowHelpers(HelpersViewModel viewModel);
 
-    /// <summary>Dialog «Lernmodus läuft» (modal until finished or cancelled).</summary>
+    /// <summary>Dialog "Learning mode running" (modal until finished or cancelled).</summary>
     void ShowLearn(LearnViewModel viewModel);
 
-    /// <summary>Dialog «Vorschläge übernehmen»; true after «… Programme übernehmen».</summary>
+    /// <summary>Dialog "Apply suggestions"; true after "Apply … programs".</summary>
     bool ShowLearnResult(LearnResultViewModel viewModel);
 }

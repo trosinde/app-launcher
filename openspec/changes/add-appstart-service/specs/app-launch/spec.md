@@ -1,64 +1,64 @@
 ## ADDED Requirements
 
-### Requirement: Start freigegebener Applikationen
-Der Dienst SHALL nur Applikationen aus apps.json starten, nach erfolgreicher Prüfung von Signatur oder SHA-256, als Konto appstart-app in der Session des anfragenden Users.
+### Requirement: Launch of approved applications
+The service SHALL launch only applications from apps.json, after successful verification of signature or SHA-256, as account appstart-app in the session of the requesting user.
 
-#### Scenario: Start durch Bediener
-- **WHEN** ein Mitglied von AppStart Users die Verknüpfung einer freigegebenen Applikation startet
-- **THEN** läuft die Applikation als appstart-app auf seinem Bildschirm, ohne Passwort- oder UAC-Abfrage
+#### Scenario: Launch by operator
+- **WHEN** a member of AppStart Users opens the shortcut of an approved application
+- **THEN** the application runs as appstart-app on their screen, without a password or UAC prompt
 
-#### Scenario: Veränderte EXE
-- **WHEN** Signatur oder Prüfsumme der EXE nicht stimmt
-- **THEN** wird der Start verweigert und im Ereignisprotokoll gemeldet
+#### Scenario: Modified EXE
+- **WHEN** the signature or checksum of the EXE does not match
+- **THEN** the launch is denied and reported in the Event Log
 
-#### Scenario: Unbekannte AppId
-- **WHEN** eine AppId angefragt wird, die nicht in apps.json steht
-- **THEN** wird der Start verweigert und protokolliert
+#### Scenario: Unknown AppId
+- **WHEN** an AppId is requested that is not in apps.json
+- **THEN** the launch is denied and logged
 
-### Requirement: Keine Kindprozesse
-Der Dienst SHALL Applikationen mit allowChildProcesses false in einem Job-Objekt starten, das weitere Prozesse verhindert.
+### Requirement: No child processes
+The service SHALL launch applications with allowChildProcesses false in a job object that prevents further processes.
 
-#### Scenario: Ausbruch über Dateidialog
-- **WHEN** die Applikation versucht, cmd.exe zu starten
-- **THEN** schlägt der Start des Kindprozesses fehl
+#### Scenario: Escape via file dialog
+- **WHEN** the application tries to start cmd.exe
+- **THEN** starting the child process fails
 
-### Requirement: Geschützte und gültige Konfiguration
-Der Dienst SHALL apps.json bei jeder Anfrage neu lesen und jeden Start verweigern, wenn die Datei oder ihr Ordner für andere Konten als SYSTEM, Administratoren und TrustedInstaller beschreibbar ist oder die Datei ungültig ist. Gültig heisst: Version 1, jede AppId besteht nur aus Kleinbuchstaben, Ziffern und Bindestrich mit 1 bis 32 Zeichen und kommt nur einmal vor, jeder Pfad ist absolut, check ist signature mit Thumbprint (40 Hex-Zeichen) oder sha256 mit Prüfsumme (64 Hex-Zeichen).
+### Requirement: Protected and valid configuration
+The service SHALL reread apps.json on every request and deny every launch if the file or its folder is writable by accounts other than SYSTEM, Administrators and TrustedInstaller, or if the file is invalid. Valid means: version 1, every AppId consists only of lowercase letters, digits and hyphens with 1 to 32 characters and occurs only once, every path is absolute, check is signature with a thumbprint (40 hex characters) or sha256 with a checksum (64 hex characters).
 
-#### Scenario: Konfiguration für Bediener beschreibbar
-- **WHEN** apps.json oder C:\ProgramData\AppStart Schreibrechte für Benutzer oder einen Bediener enthält
-- **THEN** verweigert der Dienst jeden Start und protokolliert die Ursache
+#### Scenario: Configuration writable by operators
+- **WHEN** apps.json or C:\ProgramData\AppStart grants write access to Users or to an operator
+- **THEN** the service denies every launch and logs the cause
 
-#### Scenario: Ungültige Konfiguration
-- **WHEN** apps.json nicht dem Format entspricht, etwa wegen einer AppId mit Grossbuchstaben oder einer doppelten AppId
-- **THEN** verweigert der Dienst jeden Start und protokolliert den ersten Fehler mit Zeile oder Feld
+#### Scenario: Invalid configuration
+- **WHEN** apps.json does not match the format, for example because of an AppId with uppercase letters or a duplicate AppId
+- **THEN** the service denies every launch and logs the first error with line or field
 
-### Requirement: Prüfung und Start derselben Datei
-Der Dienst SHALL die EXE vor der Prüfung so öffnen, dass sie bis zum Start des Prozesses weder geändert, ersetzt noch gelöscht werden kann, und Signatur oder Prüfsumme an genau diesem geöffneten Inhalt prüfen. Die Signaturprüfung verlangt eine gültige Authenticode-Kette und den Thumbprint aus apps.json; eine Online-Sperrprüfung erfolgt nicht, da Laborrechner oft offline sind.
+### Requirement: Verification and launch of the same file
+The service SHALL open the EXE before verification so that it can be neither modified, replaced nor deleted until the process is started, and SHALL verify signature or checksum against exactly this opened content. Signature verification requires a valid Authenticode chain and the thumbprint from apps.json; no online revocation check is performed, because lab computers are often offline.
 
-#### Scenario: Austausch zwischen Prüfung und Start
-- **WHEN** während der Prüfung versucht wird, die EXE zu überschreiben oder umzubenennen
-- **THEN** schlägt dieser Versuch fehl und gestartet wird nur der geprüfte Inhalt
+#### Scenario: Swap between verification and launch
+- **WHEN** an attempt is made during verification to overwrite or rename the EXE
+- **THEN** this attempt fails and only the verified content is launched
 
-#### Scenario: Fremde Signatur
-- **WHEN** die EXE gültig signiert ist, aber von einem anderen Zertifikat als dem in apps.json hinterlegten
-- **THEN** wird der Start verweigert und protokolliert
+#### Scenario: Foreign signature
+- **WHEN** the EXE is validly signed, but by a certificate other than the one stored in apps.json
+- **THEN** the launch is denied and logged
 
-### Requirement: Launcher ohne Rechte und mit verständlichen Meldungen
-Der Launcher SHALL nur das Argument --app <AppId> annehmen, das Format der AppId vor dem Senden prüfen, START <AppId> über die Pipe senden und bei Erfolg ohne Fenster enden. Bei jedem Fehler zeigt er eine Meldung nach UI-Entwurf mit dem Namen der Verknüpfung als Titel, einer Überschrift, einem Text mit Massnahme und, falls vorhanden, der Ereignis-ID mit Datum und Uhrzeit.
+### Requirement: Launcher without privileges and with clear messages
+The launcher SHALL accept only the argument --app <AppId>, check the format of the AppId before sending, send START <AppId> over the pipe and exit without a window on success. On every error it shows a message according to the UI design with the name of the shortcut as title, a heading, a text with the action to take and, if available, the event ID with date and time.
 
-#### Scenario: Dienst nicht erreichbar
-- **WHEN** der Dienst AppStart nicht läuft
-- **THEN** zeigt der Launcher «Start-Dienst nicht erreichbar» mit dem Hinweis, sich an Administrator oder Service zu wenden
+#### Scenario: Service not reachable
+- **WHEN** the AppStart service is not running
+- **THEN** the launcher shows "Launch service not reachable" with the advice to contact the administrator or service
 
-#### Scenario: Start verweigert
-- **WHEN** der Dienst mit DENIED integrity antwortet
-- **THEN** zeigt der Launcher «Start verweigert», den Text zur veränderten Applikation und die Ereignis-ID
+#### Scenario: Launch denied
+- **WHEN** the service replies with DENIED integrity
+- **THEN** the launcher shows "Launch denied", the text about the modified application and the event ID
 
-#### Scenario: Keine Berechtigung
-- **WHEN** der Benutzer nicht Mitglied von AppStart Users ist
-- **THEN** zeigt der Launcher «Keine Berechtigung» und sendet nichts
+#### Scenario: No permission
+- **WHEN** the user is not a member of AppStart Users
+- **THEN** the launcher shows "No permission" and sends nothing
 
-#### Scenario: Ungültige Verknüpfung
-- **WHEN** der Launcher ohne --app, mit weiteren Argumenten oder mit einer ungültigen AppId gestartet wird
-- **THEN** zeigt er «Ungültige Verknüpfung» und verbindet sich nicht mit dem Dienst
+#### Scenario: Invalid shortcut
+- **WHEN** the launcher is started without --app, with additional arguments or with an invalid AppId
+- **THEN** it shows "Invalid shortcut" and does not connect to the service

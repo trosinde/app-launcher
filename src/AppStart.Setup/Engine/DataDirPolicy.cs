@@ -1,7 +1,7 @@
 namespace AppStart.Setup.Engine;
 
 /// <summary>
-/// spec fix-wizard-findings «Warnung bei Datenordner im Programmordner»: appstart-app gets full control of its
+/// spec fix-wizard-findings "Warning about data folder in the program folder": appstart-app gets full control of its
 /// data folder. When that folder is the program folder of the application, lies in it or contains it, the
 /// application could replace its own EXE and DLLs; replaced DLLs are not caught by the hash or signature check.
 /// </summary>

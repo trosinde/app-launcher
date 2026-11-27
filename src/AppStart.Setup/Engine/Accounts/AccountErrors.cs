@@ -4,7 +4,7 @@ using Windows.Win32.Foundation;
 
 namespace AppStart.Setup.Engine.Accounts;
 
-/// <summary>German exceptions for Win32, NetApi and NTSTATUS errors. Access denied becomes <see cref="UnauthorizedAccessException"/>.</summary>
+/// <summary>Readable exceptions for Win32, NetApi and NTSTATUS errors. Access denied becomes <see cref="UnauthorizedAccessException"/>.</summary>
 internal static class AccountErrors
 {
     public static Exception FromWin32(uint code, string what)
@@ -12,19 +12,19 @@ internal static class AccountErrors
         var inner = new Win32Exception((int)code);
         if (code == (uint)WIN32_ERROR.ERROR_ACCESS_DENIED)
         {
-            return new UnauthorizedAccessException($"{what}: Zugriff verweigert. Dafür sind Administratorrechte nötig.", inner);
+            return new UnauthorizedAccessException($"{what}: access denied. This requires administrator rights.", inner);
         }
 
         var text = code switch
         {
-            PInvoke.NERR_UserExists => "Das Konto existiert bereits.",
-            PInvoke.NERR_GroupNotFound => "Die Gruppe existiert nicht.",
-            PInvoke.NERR_PasswordTooShort => "Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).",
-            (uint)WIN32_ERROR.ERROR_NO_SUCH_MEMBER => "Das Konto existiert nicht.",
-            (uint)WIN32_ERROR.ERROR_NONE_MAPPED => "Das Konto wurde nicht gefunden.",
+            PInvoke.NERR_UserExists => "The account already exists.",
+            PInvoke.NERR_GroupNotFound => "The group does not exist.",
+            PInvoke.NERR_PasswordTooShort => "The password does not meet the password policy of this computer (length, complexity or history).",
+            (uint)WIN32_ERROR.ERROR_NO_SUCH_MEMBER => "The account does not exist.",
+            (uint)WIN32_ERROR.ERROR_NONE_MAPPED => "The account was not found.",
             _ => inner.Message,
         };
-        return new Win32Exception((int)code, $"{what} fehlgeschlagen (Fehler {code}): {text}");
+        return new Win32Exception((int)code, $"{what} failed (error {code}): {text}");
     }
 
     public static Exception FromNtStatus(NTSTATUS status, string what) =>

@@ -79,18 +79,18 @@ public sealed class WizardViewModelTests
     [Fact]
     public async Task Navigation_NextBackAndStepMarks()
     {
-        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\A\A.exe", IntegrityCheck.Signature)] };
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Application A", @"C:\A\A.exe", IntegrityCheck.Signature)] };
         _engine.Snapshot = _engine.Snapshot with { OperatorAccountExists = true, AppAccountExists = true };
         var vm = await CreateAsync();
         Assert.True(vm.Steps[0].IsActive);
-        Assert.Equal("1  Applikationen", vm.Steps[0].DisplayText);
+        Assert.Equal("1  Applications", vm.Steps[0].DisplayText);
         Assert.False(vm.BackCommand.CanExecute(null));
         Assert.True(vm.CancelCommand.CanExecute(null));
 
         await vm.NextCommand.ExecuteAsync(null);
         Assert.True(vm.IsAccountsStep);
         Assert.True(vm.Steps[1].IsActive);
-        Assert.Equal("1  Applikationen ✓", vm.Steps[0].DisplayText);
+        Assert.Equal("1  Applications ✓", vm.Steps[0].DisplayText);
         Assert.True(vm.BackCommand.CanExecute(null));
 
         vm.BackCommand.Execute(null);
@@ -109,9 +109,9 @@ public sealed class WizardViewModelTests
     {
         _engine.Snapshot = new(
             [
-                FakeSetupEngine.Entry("Applikation A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature,
+                FakeSetupEngine.Entry("Application A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature,
                     @"C:\ProgramData\Hersteller\AppA", @"HKLM\SOFTWARE\Hersteller\AppA"),
-                FakeSetupEngine.Entry("Applikation B", @"C:\Program Files\Hersteller\AppB\AppB.exe", IntegrityCheck.Sha256),
+                FakeSetupEngine.Entry("Application B", @"C:\Program Files\Hersteller\AppB\AppB.exe", IntegrityCheck.Sha256),
             ],
             [@"LABOR\bediener01", @"LAB-PC-014\appstart-user", @"LABOR\bediener02"],
             AppAccountExists: true,
@@ -122,12 +122,12 @@ public sealed class WizardViewModelTests
 
         Assert.Equal(2, vm.Apps.Count);
         Assert.All(vm.Apps, a => Assert.True(a.IsSelected && a.IsReleased));
-        Assert.Equal("Signatur", vm.Apps[0].CheckText);
+        Assert.Equal("Signature", vm.Apps[0].CheckText);
         Assert.Equal("SHA-256", vm.Apps[1].CheckText);
         Assert.Equal(@"C:\ProgramData\Hersteller\AppA", vm.Apps[0].DataDir);
         Assert.Equal(@"HKLM\SOFTWARE\Hersteller\AppA", vm.Apps[0].RegistryKey);
         Assert.Same(vm.Apps[0], vm.SelectedApp);
-        Assert.Equal("Schutz für Applikation A", vm.SelectedApp!.ProtectionHeading);
+        Assert.Equal("Protection for Application A", vm.SelectedApp!.ProtectionHeading);
         Assert.Equal([@"LABOR\bediener01", @"LABOR\bediener02"], vm.Members.Select(m => m.Account));
         Assert.All(vm.Members, m => Assert.False(m.IsNew));
         Assert.Equal(SetupTexts.AppAccountExisting, vm.AppAccountText);
@@ -141,7 +141,7 @@ public sealed class WizardViewModelTests
         var engine = new ThrowingLoadEngine();
         var vm = new WizardViewModel(engine, _ui);
         await vm.InitializeAsync();
-        Assert.Contains("Zugriff verweigert", vm.ErrorMessage, StringComparison.Ordinal);
+        Assert.Contains("access denied", vm.ErrorMessage, StringComparison.Ordinal);
         Assert.False(vm.IsBusy);
     }
 
@@ -152,7 +152,7 @@ public sealed class WizardViewModelTests
         _ui.ExeAnswers.Enqueue([@"C:\A\A.exe", @"C:\X\broken.exe"]);
         await vm.AddExeCommand.ExecuteAsync(null);
         Assert.Single(vm.Apps);
-        Assert.Contains("broken.exe kann nicht hinzugefügt werden", vm.ErrorMessage, StringComparison.Ordinal);
+        Assert.Contains("broken.exe cannot be added", vm.ErrorMessage, StringComparison.Ordinal);
 
         vm.Apps[0].IsSelected = false;
         _ui.ExeAnswers.Enqueue([@"c:\a\a.exe"]);
@@ -259,7 +259,7 @@ public sealed class WizardViewModelTests
         Assert.Empty(vm.BuildRequest().RemovedOperatorsOrEmpty);
     }
 
-    // spec: fix-wizard-findings/installation «Früher hinzugefügten Bediener entfernen»
+    // spec: fix-wizard-findings/installation "Remove an operator added earlier"
     [Fact]
     public async Task Members_from_earlier_runs_can_be_removed()
     {
@@ -279,7 +279,7 @@ public sealed class WizardViewModelTests
         Assert.Empty(vm.BuildRequest().RemovedOperatorsOrEmpty);
     }
 
-    // spec: fix-wizard-findings/installation «appstart-user bleibt»
+    // spec: fix-wizard-findings/installation "appstart-user stays"
     [Fact]
     public async Task Operator_account_is_not_in_the_removable_list()
     {
@@ -289,11 +289,11 @@ public sealed class WizardViewModelTests
         Assert.Equal([@"LABOR\bediener01"], vm.Members.Select(m => m.Account));
     }
 
-    // spec: fix-wizard-findings/installation «Datenordner gleich Programmordner»
+    // spec: fix-wizard-findings/installation "Data folder equals program folder"
     [Fact]
     public async Task Data_folder_in_program_folder_needs_confirmation()
     {
-        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Application A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
         var vm = await CreateAsync();
         var app = vm.Apps[0];
         Assert.True(CanNext(vm));
@@ -301,7 +301,7 @@ public sealed class WizardViewModelTests
         app.DataDir = @"C:\Program Files\Hersteller\AppA";
         Assert.True(app.DataDirInProgramFolder);
         Assert.False(CanNext(vm));
-        Assert.Equal("Datenordner von Applikation A liegt im Programmordner: ändern oder das Risiko bestätigen.", vm.AppsHint);
+        Assert.Equal("The data folder of Application A lies in the program folder: change it or confirm the risk.", vm.AppsHint);
 
         app.DataDirRiskAccepted = true;
         Assert.True(CanNext(vm));
@@ -312,11 +312,11 @@ public sealed class WizardViewModelTests
         Assert.False(CanNext(vm));
     }
 
-    // spec: fix-wizard-findings/installation «Datenordner ausserhalb»
+    // spec: fix-wizard-findings/installation "Data folder outside"
     [Fact]
     public async Task Data_folder_outside_shows_no_warning()
     {
-        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Applikation A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
+        _engine.Snapshot = _engine.Snapshot with { Apps = [FakeSetupEngine.Entry("Application A", @"C:\Program Files\Hersteller\AppA\AppA.exe", IntegrityCheck.Signature)] };
         var vm = await CreateAsync();
 
         vm.Apps[0].DataDir = @"C:\ProgramData\Hersteller\AppA";
@@ -325,17 +325,17 @@ public sealed class WizardViewModelTests
         Assert.True(CanNext(vm));
     }
 
-    // spec: fix-wizard-findings/installation «Erklärung sichtbar»
+    // spec: fix-wizard-findings/installation "Explanation visible"
     [Fact]
     public void Protection_explanation_names_lock_access_and_examples()
     {
-        Assert.Contains("nur appstart-app, SYSTEM und Administratoren", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
-        Assert.Contains("Leer lassen", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
-        Assert.Contains(@"C:\ProgramData\<Hersteller>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
-        Assert.Contains(@"HKLM\SOFTWARE\<Hersteller>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains("only appstart-app, SYSTEM and Administrators", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains("Leave empty", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains(@"C:\ProgramData\<Vendor>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
+        Assert.Contains(@"HKLM\SOFTWARE\<Vendor>\<App>", SetupTexts.ProtectionExplanation, StringComparison.Ordinal);
     }
 
-    // spec: fix-wizard-findings/installation «Warnung im Assistenten»
+    // spec: fix-wizard-findings/installation "Warning in the wizard"
     [Fact]
     public async Task Admins_without_password_show_a_warning()
     {
@@ -347,7 +347,7 @@ public sealed class WizardViewModelTests
         var vm = await CreateAsync();
 
         Assert.Equal(
-            @"Administratoren ohne Passwort: LAB-PC-014\service, LAB-PC-014\admin2. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.",
+            @"Administrators without a password: LAB-PC-014\service, LAB-PC-014\admin2. Anyone can then sign in to this PC as an administrator and remove the protection. Set a password or disable the account; otherwise the verification reports it as a deviation.",
             vm.AdminPasswordWarning);
         Assert.True(CanNext(vm)); // a warning, not a block
     }
@@ -397,15 +397,15 @@ public sealed class WizardViewModelTests
 
         Assert.Equal(5, vm.Results.Count);
         Assert.All(vm.Results, r => Assert.True(r.Success));
-        Assert.Equal("Dienst AppStart läuft, Start automatisch", vm.Results[4].Text);
+        Assert.Equal("Service AppStart is running, starts automatically", vm.Results[4].Text);
         Assert.Equal(1, _engine.VerifyCalls);
         Assert.Equal(1, _engine.WriteReportCalls);
 
-        Assert.Equal("Prüfung bestanden – 8 von 8 Prüfpunkten erfüllt", vm.VerifyText);
+        Assert.Equal("Verification passed – 8 of 8 checks passed", vm.VerifyText);
         Assert.True(vm.VerifyPassed);
         Assert.Equal(SetupTexts.SummaryDoneHeading, vm.SummaryHeading);
         Assert.Equal(SetupTexts.SummaryDonePassedIntro, vm.SummaryIntro);
-        Assert.Equal(@"Bericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104200.html", vm.ReportText);
+        Assert.Equal(@"Report: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104200.html", vm.ReportText);
         Assert.False(vm.NextCommand.CanExecute(null));
         Assert.False(vm.BackCommand.CanExecute(null));
         Assert.False(vm.CancelCommand.CanExecute(null));
@@ -424,25 +424,25 @@ public sealed class WizardViewModelTests
     {
         _engine.Report = FakeSetupEngine.CreateReport(deviations: 1);
         var vm = await RunToSummaryAsync();
-        Assert.Equal("Prüfung nicht bestanden – 1 Abweichung, 7 von 8 Prüfpunkten erfüllt", vm.VerifyText);
+        Assert.Equal("Verification failed – 1 deviation, 7 of 8 checks passed", vm.VerifyText);
         Assert.False(vm.VerifyPassed);
         Assert.Equal(SetupTexts.SummaryDoneDeviationIntro, vm.SummaryIntro);
         Assert.Equal(WizardViewModel.ExitFailed, vm.ExitCode);
 
-        Assert.Equal("Prüfung nicht bestanden – 2 Abweichungen, 6 von 8 Prüfpunkten erfüllt", SetupTexts.VerifySummary(6, 8));
+        Assert.Equal("Verification failed – 2 deviations, 6 of 8 checks passed", SetupTexts.VerifySummary(6, 8));
     }
 
     [Fact]
     public async Task ApplyFlow_FailedStepsAndExceptionsAreShown()
     {
-        _engine.ApplyException = new InvalidOperationException("Dienst lässt sich nicht starten");
-        _engine.VerifyException = new UnauthorizedAccessException("kein Admin");
+        _engine.ApplyException = new InvalidOperationException("service cannot be started");
+        _engine.VerifyException = new UnauthorizedAccessException("not an admin");
         var vm = await RunToSummaryAsync();
 
         var line = Assert.Single(vm.Results);
         Assert.False(line.Success);
-        Assert.Equal("Einrichtung abgebrochen: Dienst lässt sich nicht starten", line.Text);
-        Assert.Equal("Prüfung konnte nicht ausgeführt werden: kein Admin", vm.VerifyText);
+        Assert.Equal("Setup aborted: service cannot be started", line.Text);
+        Assert.Equal("Verification could not be run: not an admin", vm.VerifyText);
         Assert.False(vm.HasReportPath);
         Assert.Equal(SetupTexts.SummaryFailedHeading, vm.SummaryHeading);
         Assert.Equal(WizardViewModel.ExitFailed, vm.ExitCode);
@@ -451,7 +451,7 @@ public sealed class WizardViewModelTests
 
     private sealed class ThrowingLoadEngine : Engine.ISetupEngine
     {
-        public Engine.SetupSnapshot LoadCurrent() => throw new UnauthorizedAccessException("Zugriff verweigert");
+        public Engine.SetupSnapshot LoadCurrent() => throw new UnauthorizedAccessException("access denied");
 
         public Engine.AppCandidate Inspect(string exePath) => throw new NotSupportedException();
 

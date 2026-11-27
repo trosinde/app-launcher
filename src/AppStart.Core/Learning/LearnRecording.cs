@@ -8,7 +8,7 @@ namespace AppStart.Core.Learning;
 /// <summary>
 /// Content of C:\ProgramData\AppStart\Learn\&lt;AppId&gt;.json: the programs an application started
 /// during learn mode (add-allowed-child-processes, design D3). Written by the service, read by the
-/// setup for «learn show» and «learn apply».
+/// setup for "learn show" and "learn apply".
 /// </summary>
 public sealed record LearnRecording
 {
@@ -118,12 +118,12 @@ public static class LearnRecordingSerializer
         }
         catch (JsonException ex)
         {
-            return (null, $"Aufzeichnung ist kein gültiges JSON ({ex.Path}): {ex.Message}");
+            return (null, $"Recording is not valid JSON ({ex.Path}): {ex.Message}");
         }
 
         if (recording is null)
         {
-            return (null, "Aufzeichnung ist leer.");
+            return (null, "Recording is empty.");
         }
 
         var error = Validate(recording);
@@ -145,12 +145,12 @@ public static class LearnRecordingSerializer
     {
         if (recording.Version != LearnRecording.CurrentVersion)
         {
-            return $"version: {recording.Version} wird nicht unterstützt, erwartet {LearnRecording.CurrentVersion}.";
+            return $"version: {recording.Version} is not supported, expected {LearnRecording.CurrentVersion}.";
         }
 
         if (!AppId.IsValid(recording.AppId))
         {
-            return $"appId: «{recording.AppId}» ist ungültig.";
+            return $"appId: \"{recording.AppId}\" is invalid.";
         }
 
         for (var i = 0; i < recording.Programs.Count; i++)
@@ -159,22 +159,22 @@ public static class LearnRecordingSerializer
             var at = $"programs[{i}]";
             if (!AppsConfigSerializer.IsAbsoluteWindowsPath(p.Exe))
             {
-                return $"{at}.exe: «{p.Exe}» ist kein absoluter Pfad.";
+                return $"{at}.exe: \"{p.Exe}\" is not an absolute path.";
             }
 
             if (!AppsConfigSerializer.IsHex(p.Sha256, 64))
             {
-                return $"{at}.sha256: 64 Hex-Zeichen nötig.";
+                return $"{at}.sha256: 64 hex characters needed.";
             }
 
             if (p.SignatureValid != AppsConfigSerializer.IsHex(p.SignerThumbprint, 40))
             {
-                return $"{at}.signerThumbprint: bei signatureValid true genau 40 Hex-Zeichen, sonst keiner.";
+                return $"{at}.signerThumbprint: exactly 40 hex characters if signatureValid is true, otherwise none.";
             }
 
             if (p.Starts < 1 || p.LastStartUtc < p.FirstStartUtc)
             {
-                return $"{at}: Anzahl oder Zeitpunkte ungültig.";
+                return $"{at}: count or timestamps invalid.";
             }
         }
 
@@ -190,7 +190,7 @@ public static class LearnRecordingStore
 
     /// <summary>
     /// Null recording and no error when nothing was recorded. A recording operators could have changed
-    /// is refused: «learn apply» turns it into allowlist entries.
+    /// is refused: "learn apply" turns it into allowlist entries.
     /// </summary>
     /// <param name="writeViolations">Violations of the file and its folder (default: <see cref="WriteAccessPolicy"/>); injectable for tests.</param>
     public static (LearnRecording? Recording, string? Error) Load(string appId, string? directory = null,
@@ -206,13 +206,13 @@ public static class LearnRecordingStore
                     ?? [.. WriteAccessPolicy.FindViolations(Path.GetDirectoryName(path)!), .. WriteAccessPolicy.FindViolations(path)];
         if (found.Count > 0)
         {
-            return (null, $"{path} ist nicht geschützt: {string.Join(" ", found)}");
+            return (null, $"{path} is not protected: {string.Join(" ", found)}");
         }
 
         var (recording, error) = LearnRecordingSerializer.Parse(File.ReadAllText(path));
         if (recording is not null && recording.AppId != appId)
         {
-            return (null, $"{path} gehört zu «{recording.AppId}», erwartet «{appId}».");
+            return (null, $"{path} belongs to \"{recording.AppId}\", expected \"{appId}\".");
         }
 
         return (recording, error);

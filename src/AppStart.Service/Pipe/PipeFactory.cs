@@ -78,10 +78,10 @@ internal static unsafe class PipeFactory
                 if (firstInstance && PipeExists())
                 {
                     throw new PipeAlreadyExistsException(
-                        $"\\\\.\\pipe\\{AppStartConstants.PipeName} existiert bereits (Windows-Fehler {error}). Möglicherweise eine gefälschte Pipe.");
+                        $"\\\\.\\pipe\\{AppStartConstants.PipeName} already exists (Windows error {error}). Possibly a spoofed pipe.");
                 }
 
-                throw new Win32Exception(error, $"CreateNamedPipe: Windows-Fehler {error} ({new Win32Exception(error).Message})");
+                throw new Win32Exception(error, $"CreateNamedPipe: Windows error {error} ({new Win32Exception(error).Message})");
             }
 
             var safe = new SafePipeHandle((IntPtr)handle.Value, ownsHandle: true);

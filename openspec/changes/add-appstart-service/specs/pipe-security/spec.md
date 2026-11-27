@@ -1,39 +1,39 @@
 ## ADDED Requirements
 
-### Requirement: Geschützte Named Pipe
-Die Pipe SHALL nur für AppStart Users erreichbar sein, keine Fernzugriffe annehmen, beim Dienststart als erste Instanz angelegt werden und nur Anfragen im Format START <AppId> mit maximal 64 Byte annehmen.
+### Requirement: Protected named pipe
+The pipe SHALL be reachable only for AppStart Users, accept no remote access, be created as the first instance at service start and accept only requests in the format START <AppId> with at most 64 bytes.
 
-#### Scenario: Zugriff über das Netzwerk
-- **WHEN** ein anderer Rechner die Pipe öffnet
-- **THEN** wird die Verbindung abgewiesen
+#### Scenario: Access over the network
+- **WHEN** another computer opens the pipe
+- **THEN** the connection is rejected
 
-#### Scenario: User ausserhalb der Gruppe
-- **WHEN** ein User ohne Mitgliedschaft in AppStart Users die Pipe öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: User outside the group
+- **WHEN** a user without membership in AppStart Users opens the pipe
+- **THEN** access is denied
 
-#### Scenario: Gefälschte Pipe
-- **WHEN** beim Dienststart bereits eine Pipe mit dem Namen existiert
-- **THEN** startet der Dienst nicht und meldet einen Fehler
+#### Scenario: Spoofed pipe
+- **WHEN** a pipe with the name already exists at service start
+- **THEN** the service does not start and reports an error
 
-#### Scenario: Ungültige Anfrage
-- **WHEN** eine Anfrage ein anderes Format hat oder länger als 64 Byte ist
-- **THEN** wird sie verworfen und protokolliert
+#### Scenario: Invalid request
+- **WHEN** a request has a different format or is longer than 64 bytes
+- **THEN** it is discarded and logged
 
-#### Scenario: Bediener legt eigene Pipe-Instanz an
-- **WHEN** ein Mitglied von AppStart Users versucht, eine weitere Server-Instanz von \\.\pipe\AppStart anzulegen
-- **THEN** wird dies verweigert, da die Gruppe kein Recht FILE_CREATE_PIPE_INSTANCE hat
+#### Scenario: Operator creates own pipe instance
+- **WHEN** a member of AppStart Users tries to create another server instance of \\.\pipe\AppStart
+- **THEN** this is denied, because the group does not have the FILE_CREATE_PIPE_INSTANCE right
 
-#### Scenario: Fremde Session
-- **WHEN** eine Anfrage eingeht
-- **THEN** startet die Applikation nur in der Session des Anfragenden
+#### Scenario: Foreign session
+- **WHEN** a request arrives
+- **THEN** the application starts only in the session of the requester
 
-### Requirement: Antwort an den Launcher
-Der Dienst SHALL jede gültige Anfrage mit genau einer Zeile beantworten: OK, oder DENIED <Grund> <Ereignis-ID> mit Grund aus unknown-app, integrity, config, busy, error. Die Antwort enthält keine Pfade, Prüfsummen oder anderen internen Details.
+### Requirement: Reply to the launcher
+The service SHALL answer every valid request with exactly one line: OK, or DENIED <reason> <event ID> with reason from unknown-app, integrity, config, busy, error. The reply contains no paths, checksums or other internal details.
 
-#### Scenario: Start verweigert
-- **WHEN** der Dienst einen Start verweigert
-- **THEN** erhält der Launcher DENIED mit Grund und Ereignis-ID und zeigt die Meldung «Start verweigert» mit dieser Ereignis-ID
+#### Scenario: Launch denied
+- **WHEN** the service denies a launch
+- **THEN** the launcher receives DENIED with reason and event ID and shows the message "Launch denied" with this event ID
 
-#### Scenario: Keine internen Details
-- **WHEN** ein Start wegen einer veränderten EXE verweigert wird
-- **THEN** enthält die Antwort weder den Pfad noch die erwartete oder gefundene Prüfsumme
+#### Scenario: No internal details
+- **WHEN** a launch is denied because of a modified EXE
+- **THEN** the reply contains neither the path nor the expected or found checksum

@@ -144,7 +144,7 @@ public sealed class SetupEngine(
             }
 
             // Members setup added that are no longer requested, plus members the wizard removed explicitly
-            // (spec fix-wizard-findings «Bediener entfernen»: also from earlier runs or added by hand).
+            // (spec fix-wizard-findings "Removing operators": also from earlier runs or added by hand).
             // appstart-user is controlled by its own option only and never removed here.
             var removals = state.AddedGroupMembers
                 .Where(m => !request.AdditionalOperators.Contains(m, StringComparer.OrdinalIgnoreCase))
@@ -408,7 +408,7 @@ public sealed class SetupEngine(
         return ChangeApp(appId, app =>
         {
             var children = (app.AllowedChildren ?? []).Where(c => !ChildPrograms.SamePath(c.Exe, entry.Exe)).Append(entry).ToList();
-            var checkText = entry.Check == IntegrityCheck.Signature ? "Signatur" : "SHA-256";
+            var checkText = entry.Check == IntegrityCheck.Signature ? "Signature" : "SHA-256";
             return (app with { ChildProcesses = ChildProcessMode.Allowlist, AllowedChildren = children },
             [
                 new(string.Format(SetupEngineTexts.ChildAllowed, entry.Exe, appId, checkText), true),

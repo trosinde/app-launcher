@@ -23,7 +23,7 @@ public sealed class SetupEngineTests : IDisposable
         Directory.CreateDirectory(_dir);
         _engine = new SetupEngine(_accounts, _protection, _shortcuts, new FakeVerifier(), _state,
             new SetupPaths(@"C:\Program Files\AppStart\current", Path.Combine(_dir, "apps.json"), Path.Combine(_dir, "Reports")),
-            exe => _writable.Contains(exe, StringComparer.OrdinalIgnoreCase) ? ["Benutzer hat Schreibrechte."] : []);
+            exe => _writable.Contains(exe, StringComparer.OrdinalIgnoreCase) ? ["Users has write permissions."] : []);
     }
 
     private string ConfigPath => Path.Combine(_dir, "apps.json");
@@ -61,7 +61,7 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Single(_state.Current.ShortcutBackups);
         Assert.Contains(@"C:\Program Files\AppStart\current\AppStart.Launcher.exe", _shortcuts.LauncherTargets);
         Assert.All(results.Take(4), r => Assert.True(r.Success, r.Text + r.Detail));
-        Assert.Equal("1 Applikation freigegeben, Konfiguration geschützt", results[1].Text);
+        Assert.Equal("1 application approved, configuration protected", results[1].Text);
     }
 
     [Fact]
@@ -101,20 +101,20 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Equal([@"LABOR\bediener02"], _state.Current.AddedGroupMembers);
     }
 
-    // spec: fix-wizard-findings/installation «Warnung bei Datenordner im Programmordner» (command line and answer file)
+    // spec: fix-wizard-findings/installation "Warning about data folder in the program folder" (command line and answer file)
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Data_folder_in_program_folder_gives_a_warning_line()
     {
         var results = _engine.Apply(Request(App("appa", dataDir: @"C:\Apps\appa\Daten"), App("appb", dataDir: @"C:\ProgramData\appb")));
 
-        var warning = Assert.Single(results, r => r.Text.StartsWith("Warnung: Datenordner", StringComparison.Ordinal));
+        var warning = Assert.Single(results, r => r.Text.StartsWith("Warning: Data folder", StringComparison.Ordinal));
         Assert.True(warning.Success);
         Assert.Equal(
-            @"Warnung: Datenordner C:\Apps\appa\Daten von appa liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. C:\ProgramData\<Hersteller>\<App>",
+            @"Warning: Data folder C:\Apps\appa\Daten of appa lies in the program folder of the application or contains it. appstart-app can then change the EXE and DLLs; the hash and signature check does not detect replaced DLLs. Recommended: a folder under C:\ProgramData, e.g. C:\ProgramData\<Vendor>\<App>",
             warning.Text);
     }
 
-    // spec: fix-wizard-findings/installation «Früher hinzugefügten Bediener entfernen»
+    // spec: fix-wizard-findings/installation "Remove an operator added earlier"
     [Fact]
     public void Members_removed_in_the_wizard_leave_the_group_even_when_added_by_hand()
     {
@@ -125,7 +125,7 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Equal([@"LABOR\vonhand"], _accounts.Removed);
     }
 
-    // spec: fix-wizard-findings/installation «appstart-user bleibt»
+    // spec: fix-wizard-findings/installation "appstart-user stays"
     [Fact]
     public void Operator_account_is_never_removed_through_the_member_list()
     {
@@ -195,7 +195,7 @@ public sealed class SetupEngineTests : IDisposable
 
     // ------------------------------------------------------------------ add-allowed-child-processes (task 4.1)
 
-    // Spec installation, «Migration der Konfiguration»: version 1 becomes version 2 with the same protection.
+    // Spec installation, "Migration of the configuration": version 1 becomes version 2 with the same protection.
     [Theory]
     [InlineData(false, ChildProcessMode.Blocked)]
     [InlineData(true, ChildProcessMode.All)]
@@ -218,7 +218,7 @@ public sealed class SetupEngineTests : IDisposable
     private static AppCandidate _engineCandidate(AppEntry a) =>
         new(a.Exe, a.Name, a.Id, a.Check, a.SignerThumbprint, a.Sha256, a.DataDir, a.RegistryKey, a.ChildProcessMode, a.AllowedChildren);
 
-    // Spec installation, «Hilfsprogramm per Kommandozeile erlauben» (engine part).
+    // Spec installation, "Allow helper program via command line" (engine part).
     [Fact]
     public void Allow_child_adds_entry_with_sha256_and_sets_allowlist()
     {
@@ -248,7 +248,7 @@ public sealed class SetupEngineTests : IDisposable
         Assert.Single(Saved("appa").AllowedChildren!);
     }
 
-    // Spec scenario «Shell ohne Bestätigung»: apps.json unchanged, invalid input.
+    // Spec scenario "Shell without confirmation": apps.json unchanged, invalid input.
     [Fact]
     public void Shell_without_confirmation_is_invalid_input_and_changes_nothing()
     {
@@ -270,7 +270,7 @@ public sealed class SetupEngineTests : IDisposable
         Assert.True(Assert.Single(Saved("appa").AllowedChildren!).AllowShell);
     }
 
-    // Spec scenario «Beschreibbarer Ordner»: refused (exit code 1), apps.json unchanged.
+    // Spec scenario "Writable folder": refused (exit code 1), apps.json unchanged.
     [Fact]
     public void Helper_in_operator_writable_folder_is_refused()
     {
@@ -335,7 +335,7 @@ public sealed class SetupEngineTests : IDisposable
 
         var results = _engine.DenyChild("appa", updater);
         Assert.Equal(ChildProcessMode.Blocked, Saved("appa").ChildProcesses);
-        Assert.Contains(results, r => r.Text.Contains("wieder gesperrt", StringComparison.Ordinal));
+        Assert.Contains(results, r => r.Text.Contains("blocked again", StringComparison.Ordinal));
         Assert.Throws<SetupInputException>(() => _engine.DenyChild("appa", updater));
     }
 
