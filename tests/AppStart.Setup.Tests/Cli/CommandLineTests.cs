@@ -246,7 +246,7 @@ public sealed class CommandLineTests : IDisposable
         var show = Run("learn", "show", "--app", "appa");
         Assert.Equal(0, show.Code);
         Assert.Contains("active until", show.Out, StringComparison.Ordinal);
-        Assert.Contains(@"cmd.exe – Shell oder Skript-Host", show.Out, StringComparison.Ordinal);
+        Assert.Contains(@"cmd.exe – shell or script host", show.Out, StringComparison.Ordinal);
 
         Assert.Equal(0, Run("learn", "stop", "--app", "appa").Code);
         Assert.Contains("not active", Run("learn", "show", "--app", "appa").Out, StringComparison.Ordinal);

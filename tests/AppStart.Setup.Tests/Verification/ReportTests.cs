@@ -94,7 +94,7 @@ public class ReportTests
         Assert.Contains(">1 deviation<", html);
         Assert.Contains("<dt>Computer</dt><dd>LAB-PC-014</dd>", html);
         Assert.Contains("<dt>Date</dt><dd>15.11.2026 10:42</dd>", html);
-        Assert.Contains(@"<dt>Servicetechniker</dt><dd>LAB-PC-014\techniker</dd>", html);
+        Assert.Contains(@"<dt>Service technician</dt><dd>LAB-PC-014\techniker</dd>", html);
         Assert.Contains("<dt>Version</dt><dd>AppStart 1.2.3</dd>", html);
         Assert.Contains("Do not close the service visit", html);
         Assert.Contains(@"Accounts: LAB-PC-014\appstart-user is a member of Administrators", html);

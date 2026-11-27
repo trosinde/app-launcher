@@ -62,7 +62,7 @@ public class AppsConfigSerializerTests
     [InlineData("\"version\": 1", "\"version\": 0", "version")]
     [InlineData("\"version\": 1", "\"version\": 2", "apps[0].allowChildProcesses")]
     [InlineData("\"allowChildProcesses\": false", "\"childProcesses\": \"blocked\"", "apps[0].childProcesses")]
-    [InlineData("\"name\": \"Applikation A\"", "\"name\": \" \"", "apps[0].name")]
+    [InlineData("\"name\": \"Application A\"", "\"name\": \" \"", "apps[0].name")]
     public void Invalid_field_is_reported(string from, string to, string expectedField)
     {
         var json = ConceptExample.Replace(from, to, StringComparison.Ordinal);
