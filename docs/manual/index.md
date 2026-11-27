@@ -1,23 +1,23 @@
-# AppStart – Benutzerhandbuch
+# AppStart – User manual
 
-**Freigegebene Applikationen mit Admin-Rechten starten, ohne dass Bediener Admin-Rechte haben**
+**Start approved applications with admin rights without giving operators admin rights**
 
-Handbuch für Installateure und Servicetechniker. Es beschreibt Installation, Einrichtung, Prüfung nach dem Serviceeinsatz, alle Meldungen und die Kommandozeile von AppStart. Es ist zugleich die Grundlage für das Service and Security Manual.
+Manual for installers and service technicians. It describes the installation, setup, verification after a service visit, all messages and the command line of AppStart. It is also the basis for the Service and Security Manual.
 
-<!-- Titelseite: Alles oberhalb von «## Inhalt» übernimmt build/ManualBuilder als Titelseite des PDF. Version und Stand ergänzt das Build-Skript. -->
+<!-- Title page: build/ManualBuilder uses everything above "## Contents" as the title page of the PDF. The build script adds version and date. -->
 
-## Inhalt
+## Contents
 
-1. [Überblick](01-overview.md) – Zweck, Funktionsweise, Begriffe
-2. [Voraussetzungen](02-requirements.md) – Windows, Rechte, Angaben je Applikation
-3. [Installation](03-installation.md) – mit `AppStart-Setup.exe`, Einrichtung in drei Schritten, stille Installation
-4. [Applikationen verwalten](04-managing-applications.md) – hinzufügen, entfernen, nach Update neu erfassen
-5. [Konten und Gruppe](05-accounts-and-group.md) – App-Konto, Bedienerkonto, Gruppe `AppStart Users`
-6. [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) – Prüfbericht, jede Abweichung mit Ursache und Behebung
-7. [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md) – Launcher, Installationsprogramm, Setup, Ereignisprotokoll
-8. [Update und Deinstallation](08-update-and-uninstall.md) – AppStart und Applikationen aktualisieren, alles zurückstellen
-9. [Referenz](09-reference.md) – Kommandozeile, Soll-Konfiguration, Pfade, Konten, Pipe
+1. [Overview](01-overview.md) – purpose, how it works, terms
+2. [Requirements](02-requirements.md) – Windows, rights, information per application
+3. [Installation](03-installation.md) – with `AppStart-Setup.exe`, setup in three steps, silent installation
+4. [Managing applications](04-managing-applications.md) – add, remove, record again after an update
+5. [Accounts and group](05-accounts-and-group.md) – app account, operator account, group `AppStart Users`
+6. [Verification after a service visit](06-verification-after-a-service-visit.md) – verification report, every deviation with cause and fix
+7. [Messages and troubleshooting](07-messages-and-troubleshooting.md) – launcher, installer, setup, Event Log
+8. [Update and uninstall](08-update-and-uninstall.md) – update AppStart and applications, restore everything
+9. [Reference](09-reference.md) – command line, expected configuration, paths, accounts, pipe
 
-Bildschirmfotos: Die Bilder stammen aus der fertigen Software auf der Test-VM. Wo noch ein Platzhalter steht, listet [images/README.md](images/README.md) das fehlende Bild.
+Screenshots: The images come from the finished software on the test VM. Where a placeholder is still shown, [images/README.md](images/README.md) lists the missing image.
 
-Schreibweise: Texte, die die Software anzeigt, stehen in «Guillemets» oder als `Code`. Werte in spitzen Klammern wie `<AppId>` sind zu ersetzen.
+Conventions: Texts that the software shows are in "double quotes" or in `code`. Replace values in angle brackets such as `<AppId>`.

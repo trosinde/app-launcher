@@ -1,265 +1,266 @@
-# Prüfung nach Serviceeinsatz
+# Verification after a service visit
 
-`verify` prüft die gesamte Einrichtung gegen das Soll und legt einen Prüfbericht ab. Es ändert nichts am System.
+`verify` checks the entire setup against the expected state and saves a verification report. It changes nothing on the system.
 
-Das Service and Security Manual verlangt die Prüfung **nach der Installation und am Ende jedes Serviceeinsatzes**, etwa wenn ein Techniker vorübergehend Rechte geändert, Benutzer in die Administratoren aufgenommen oder eine Applikation aktualisiert hat. Der Bericht wird dem Einsatz beigelegt. Ein Einsatz ist erst abgeschlossen, wenn der Bericht «Keine Abweichung» zeigt.
+The Service and Security Manual requires the verification **after the installation and at the end of every service visit**, for example when a technician temporarily changed permissions, added users to the Administrators group or updated an application. The report is attached to the service visit. A service visit is complete only when the report shows "No deviation".
 
-## Prüfung starten
+## Starting the verification
 
-| Weg | Ablauf |
+| Way | Procedure |
 |---|---|
-| **Startmenü** (Standardweg) | «AppStart» → «AppStart – Einrichtung prüfen». UAC-Abfrage mit Admin-Zugangsdaten bestätigen. Die Prüfansicht öffnet sich und prüft sofort. |
-| **Assistent** | «AppStart – Einrichtung», in Schritt 1 unten links «Einrichtung prüfen». Gleiche Prüfansicht. |
-| **Automatisch** | Am Ende der Einrichtung im Assistenten, nach jedem ändernden Befehl der Kommandozeile und nach jeder Installation und jedem Update des MSI. Der Bericht wird jeweils abgelegt. |
-| **Kommandozeile** | `AppStart.Setup.exe verify [--report "<Pfad>"]` in einer Eingabeaufforderung «Als Administrator ausführen». Exit-Code 0 nur ohne Abweichung, sonst 1. |
+| **Start menu** (standard way) | "AppStart" → "AppStart – Verify setup". Confirm the UAC prompt with admin credentials. The verification view opens and verifies immediately. |
+| **Wizard** | "AppStart – Setup", in step 1 at the bottom left "Verify setup". Same verification view. |
+| **Automatic** | At the end of the setup in the wizard, after every changing command of the command line and after every installation and update of the MSI. The report is saved each time. |
+| **Command line** | `AppStart.Setup.exe verify [--report "<path>"]` in a command prompt opened with "Run as administrator". Exit code 0 only without deviation, otherwise 1. |
 
-Bediener können die Prüfung nicht starten, da sie Admin-Rechte verlangt.
+Operators cannot start the verification because it requires admin rights.
 
-## Prüfansicht
+## Verification view
 
-![Prüfansicht ohne Abweichung](images/pruefansicht-ok.png)
+![Verification view without deviation](images/pruefansicht-ok.png)
 
-Fenster «AppStart – Einrichtung prüfen». Während der Prüfung steht «Prüfung läuft…». Danach:
+Window "AppStart – Verify setup". While the verification runs, it shows "Verification running…". Afterwards:
 
-- Kopf: «PRÜFBERICHT», Überschrift «AppStart – Prüfung nach Serviceeinsatz», rechts das Ergebnis: «Keine Abweichung», «1 Abweichung» oder z.B. «3 Abweichungen».
-- Angaben: «Rechner» (Computername), «Datum» (z.B. 15.11.2026 10:42), «Servicetechniker» (angemeldetes Konto), «Version» (z.B. «AppStart 0.2.0»).
-- Tabelle mit den Spalten «Prüfpunkt», «Soll» und «Ergebnis» («Erfüllt» oder «Abweichung»). Bei einer Abweichung steht statt des Solls die gefundene Abweichung, darunter das Soll.
-- Bei Abweichungen ein roter Kasten «Einsatz nicht abschliessen» mit «Abweichungen korrigieren und Prüfung wiederholen:» und dem Befehl `AppStart.Setup.exe verify`.
-- Ohne Abweichung ein grüner Kasten «Einrichtung entspricht dem Soll» mit «Alle 10 Prüfpunkte erfüllt. Der Einsatz kann abgeschlossen werden.»
-- Unten die Felder «Unterschrift Servicetechniker» und «Unterschrift Kunde» für den ausgedruckten Bericht.
+- Header: "VERIFICATION REPORT", heading "AppStart – Verification after a service visit", on the right the result: "No deviation", "1 deviation" or e.g. "3 deviations".
+- Details: "Computer" (computer name), "Date" (e.g. 15.11.2026 10:42), "Service technician" (signed-in account), "Version" (e.g. "AppStart 0.2.0").
+- Table with the columns "Check", "Expected" and "Result" ("Passed" or "Deviation"). For a deviation, the deviation found is shown instead of the expected state, with the expected state below it.
+- With deviations, a red box "Do not close the service visit" with "Correct the deviations and repeat the verification:" and the command `AppStart.Setup.exe verify`.
+- Without deviation, a green box "Setup matches the expected state" with "All 10 checks passed. The service visit can be closed."
+- At the bottom, the fields "Signature service technician" and "Signature customer" for the printed report.
 
-![Prüfansicht mit einer Abweichung](images/pruefansicht-abweichung.png)
+![Verification view with one deviation](images/pruefansicht-abweichung.png)
 
-Knöpfe:
+Buttons:
 
-| Knopf | Wirkung |
+| Button | Effect |
 |---|---|
-| «Bericht drucken» | Druckt den Bericht (Druckauftrag «AppStart Prüfbericht») |
-| «Bericht speichern unter» | Kopiert den abgelegten HTML-Bericht an einen frei wählbaren Ort, z.B. auf einen USB-Stick. Dialog «Bericht speichern unter». |
-| «Prüfung wiederholen» | Prüft erneut und legt einen neuen Bericht ab |
-| «Schliessen» | Schliesst die Ansicht. Exit-Code 0 ohne Abweichung, sonst 1. |
+| "Print report" | Prints the report (print job "AppStart verification report") |
+| "Save report as" | Copies the saved HTML report to any location, e.g. a USB stick. Dialog "Save report as". |
+| "Repeat verification" | Verifies again and saves a new report |
+| "Close" | Closes the view. Exit code 0 without deviation, otherwise 1. |
 
-Im Dialog «Bericht speichern unter» ist der Dateityp `Prüfbericht (*.html)|*.html` vorgewählt.
+In the dialog "Save report as", the file type `Verification report (*.html)|*.html` is preselected.
 
-Meldungen der Prüfansicht:
+Messages of the verification view:
 
-| Meldung | Bedeutung und Massnahme |
+| Message | Meaning and action |
 |---|---|
-| «Bericht gespeichert: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Bericht automatisch abgelegt |
-| «Bericht kopiert nach E:\Einsatz\verify-2026-11-15-104212.html» | «Bericht speichern unter» war erfolgreich |
-| «Bericht konnte nicht gespeichert werden: …» | `C:\ProgramData\AppStart\Reports` nicht beschreibbar oder Laufwerk voll. Platz schaffen, Prüfung wiederholen. |
-| «Der Bericht konnte nicht kopiert werden: …» | Ziel nicht beschreibbar (schreibgeschützter Stick, fehlende Rechte). Anderes Ziel wählen. |
-| «Der Bericht konnte nicht gedruckt werden: …» | Kein Drucker oder Druckerfehler. Bericht speichern und später drucken. |
-| «Prüfung konnte nicht ausgeführt werden: …» | Unerwarteter Fehler. Grund lesen, Prüfung über die Kommandozeile wiederholen, sonst Service. |
+| "Report saved: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html" | Report saved automatically |
+| "Report copied to E:\ServiceVisit\verify-2026-11-15-104212.html" | "Save report as" succeeded |
+| "Report could not be saved: …" | `C:\ProgramData\AppStart\Reports` is not writable or the drive is full. Free up space, repeat the verification. |
+| "The report could not be copied: …" | Target not writable (write-protected stick, missing permissions). Choose another target. |
+| "The report could not be printed: …" | No printer or printer error. Save the report and print it later. |
+| "Verification could not be run: …" | Unexpected error. Read the reason, repeat the verification from the command line, otherwise contact service support. |
 
-## Prüfbericht und Ablage
+## Verification report and storage
 
-Jede Prüfung legt zwei Dateien unter `C:\ProgramData\AppStart\Reports` ab, benannt mit Datum und Uhrzeit:
+Every verification saves two files under `C:\ProgramData\AppStart\Reports`, named with date and time:
 
-| Datei | Inhalt |
+| File | Content |
 |---|---|
-| `verify-<JJJJ-MM-TT-hhmmss>.html` | Lesbarer Bericht «Prüfbericht AppStart», gleiche Gliederung wie die Prüfansicht. Abweichende Zeilen sind rot; ihr Soll steht nach «Soll:». Bei Abweichungen listet der Kasten «Einsatz nicht abschliessen» alle Abweichungen und endet mit «Korrigieren und Prüfung wiederholen:» `AppStart.Setup.exe verify`. Ohne Abweichung: «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt». |
-| `verify-<JJJJ-MM-TT-hhmmss>.json` | Dieselben Angaben maschinenlesbar, für Auswertungen |
+| `verify-<YYYY-MM-DD-hhmmss>.html` | Readable report "AppStart verification report", same structure as the verification view. Rows with a deviation are red; their expected state follows "Expected:". With deviations, the box "Do not close the service visit" lists all deviations and ends with "Correct and repeat the verification:" `AppStart.Setup.exe verify`. Without deviation: "Verification passed – 10 of 10 checks passed". |
+| `verify-<YYYY-MM-DD-hhmmss>.json` | The same details in machine-readable form, for evaluations |
 
-Mit `verify --report "<Pfad>"` wird der HTML-Bericht zusätzlich an den angegebenen Ort kopiert. Berichte bleiben auch nach `uninstall` erhalten. Für den Einsatz: Bericht ausdrucken und unterschreiben oder die HTML-Datei dem Einsatzrapport beilegen.
+With `verify --report "<path>"`, the HTML report is also copied to the given location. Reports are kept even after `uninstall`. For the service visit: print and sign the report, or attach the HTML file to the service report.
 
-Jede Zeile im HTML-Bericht trägt die Kennung des Prüfpunkts (z.B. `#pipe`); sie entspricht den Abschnitten unten.
+Every row in the HTML report carries the ID of the check (e.g. `#pipe`); it matches the sections below.
 
-## Ausgabe auf der Kommandozeile
+## Output on the command line
 
 ```text
-OK          Dienst
-OK          Programmordner
-ABWEICHUNG  Konten
-            appstart-user ist Mitglied der Administratoren
-OK          Administratoren mit Passwort
+OK          Service
+OK          Program folder
+DEVIATION   Accounts
+            appstart-user is a member of Administrators
+OK          Administrators with password
 OK          Pipe
 OK          apps.json
-OK          Datenordner je App
-OK          Registry-Key je App
-OK          Verknüpfungen
+OK          Data folder per app
+OK          Helper programs per app
+OK          Registry key per app
+OK          Shortcuts
 
-Prüfung nicht bestanden – 1 Abweichung(en). Einsatz nicht abschliessen.
-Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html
+Verification failed – 1 deviation(s). Do not close the service visit.
+Verification report: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html
 ```
 
-Ohne Abweichung lautet die vorletzte Zeile «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt.»
+Without deviation, the second-to-last line reads "Verification passed – 10 of 10 checks passed."
 
-![Ausgabe von verify in der Eingabeaufforderung](images/verify-konsole.png)
+![Output of verify in the command prompt](images/verify-konsole.png)
 
-## Die zehn Prüfpunkte
+## The ten checks
 
-Je Prüfpunkt: das Soll, jede mögliche Abweichung, wie sie im Bericht steht, mit Ursache und Behebung. Werte in spitzen Klammern ersetzt der Bericht durch die gefundenen Namen und Pfade. Nach jeder Behebung die Prüfung wiederholen.
+For each check: the expected state and every possible deviation as it appears in the report, with cause and fix. The report replaces values in angle brackets with the names and paths found. Repeat the verification after every fix.
 
-**Einrichtung erneut ausführen** heisst in den Tabellen: Startmenü «AppStart – Einrichtung», Schritt 1 und 2 unverändert lassen, zweimal «Weiter». Das Setup legt fehlende Konten, Gruppe und Verknüpfungen neu an, schützt `apps.json` und sperrt Datenordner und Registry-Keys erneut, ohne die Freigaben zu ändern. Gleichwertig auf der Kommandozeile: `AppStart.Setup.exe rehash --app <AppId>` (erfasst dabei auch Signatur bzw. Prüfsumme dieser Applikation neu).
+**Run the setup again** means in the tables: Start menu "AppStart – Setup", leave steps 1 and 2 unchanged, click "Next" twice. The setup recreates missing accounts, group and shortcuts, protects `apps.json` and locks data folders and registry keys again, without changing the approvals. Equivalent on the command line: `AppStart.Setup.exe rehash --app <AppId>` (this also records the signature or checksum of this application again).
 
-Bei jedem Prüfpunkt möglich:
+Possible for every check:
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «Prüfung nicht möglich: \<Grund>» | Der Prüfpunkt konnte nicht ausgewertet werden, z.B. Zugriff verweigert, weil `verify` ohne Admin-Rechte lief | Prüfung mit Admin-Rechten wiederholen. Bleibt es, den Grund an den Service melden. Ein nicht prüfbarer Punkt gilt immer als Abweichung. |
+| "Verification not possible: \<Reason>" | The check could not be evaluated, e.g. access denied because `verify` ran without admin rights | Repeat the verification with admin rights. If it persists, report the reason to service support. A check that cannot be evaluated always counts as a deviation. |
 
 <a id="dienst"></a>
-### Dienst
+### Service
 
-**Soll:** installiert, läuft, Start automatisch, LocalSystem
+**Expected:** installed, running, starts automatically, LocalSystem
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «Dienst «AppStart» ist nicht installiert» | MSI nicht installiert, Installation abgebrochen oder Dienst von Hand gelöscht | MSI erneut installieren: `AppStart-Setup.exe` oder `msiexec /i AppStart-<Version>.msi /qn`. Die Einrichtung bleibt erhalten. |
-| «Dienst «AppStart» läuft nicht (Status: \<Status>)» | Dienst gestoppt oder abgestürzt. Status: «beendet», «wird gestartet», «wird beendet», «wird fortgesetzt», «wird angehalten», «angehalten» oder «unbekannt (\<Nummer>)» | Ereignisprotokoll (Quelle AppStart) prüfen, besonders 1300 und 1301. Dienst starten: `sc start AppStart` oder «Dienste» → AppStart → Starten. «wird gestartet» kurz nach einem Neustart: Prüfung nach einer Minute wiederholen. |
-| «Dienst «AppStart» startet nicht automatisch (Starttyp: \<Starttyp>)» | Starttyp geändert. Starttyp: «manuell», «deaktiviert», «Boot», «System» oder «unbekannt (\<Nummer>)» | `sc config AppStart start= auto` (Leerzeichen nach `=` beachten), danach `sc start AppStart` |
-| «Dienst «AppStart» läuft unter «\<Konto>» statt LocalSystem» | Anmeldekonto des Dienstes geändert | `sc config AppStart obj= LocalSystem`, Dienst neu starten. Wer hat das Konto geändert? Als möglichen Sicherheitsvorfall behandeln. |
+| "Service "AppStart" is not installed" | MSI not installed, installation canceled or service deleted by hand | Install the MSI again: `AppStart-Setup.exe` or `msiexec /i AppStart-<Version>.msi /qn`. The setup is kept. |
+| "Service "AppStart" is not running (status: \<Status>)" | Service stopped or crashed. Status: "stopped", "starting", "stopping", "resuming", "pausing", "paused" or "unknown (\<Number>)" | Check the Event Log (source AppStart), especially 1300 and 1301. Start the service: `sc start AppStart` or "Services" → AppStart → "Start". "starting" shortly after a restart: repeat the verification after one minute. |
+| "Service "AppStart" does not start automatically (start type: \<Start type>)" | Start type changed. Start type: "manual", "disabled", "Boot", "System" or "unknown (\<Number>)" | `sc config AppStart start= auto` (note the space after `=`), then `sc start AppStart` |
+| "Service "AppStart" runs as "\<Account>" instead of LocalSystem" | Logon account of the service changed | `sc config AppStart obj= LocalSystem`, restart the service. Who changed the account? Treat as a possible security incident. |
 
 <a id="programmordner"></a>
-### Programmordner
+### Program folder
 
-**Soll:** nur SYSTEM und Administratoren schreiben
+**Expected:** only SYSTEM and Administrators can write
 
-Geprüft wird `C:\Program Files\AppStart`. Könnte ein Bediener dort schreiben, könnte er die Dienst-EXE austauschen und SYSTEM-Rechte erlangen.
+The folder `C:\Program Files\AppStart` is verified. If an operator could write there, they could replace the service EXE and gain SYSTEM rights.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «Programmordner C:\Program Files\AppStart fehlt» | AppStart nicht installiert oder Ordner gelöscht | MSI erneut installieren |
-| «C:\Program Files\AppStart: Besitzer \<Konto> ist nicht SYSTEM, Administratoren oder TrustedInstaller.» | Besitz des Ordners wurde übernommen, z.B. von einem Benutzerkonto | Besitzer zurücksetzen: `icacls "C:\Program Files\AppStart" /setowner *S-1-5-32-544 /T /C` (SID der Administratoren, unabhängig von der Sprache) |
-| «C:\Program Files\AppStart: Keine Zugriffsliste (NULL DACL): jeder hat Vollzugriff.» | Rechte wurden entfernt | Rechte von «Program Files» neu erben: `icacls "C:\Program Files\AppStart" /reset /T /C` |
-| «C:\Program Files\AppStart: \<Konto> hat Schreibrechte (Maske 0x\<Maske>).» | Ein Benutzer oder eine Gruppe (z.B. «Benutzer» oder «Jeder») hat Schreibrechte erhalten | `icacls "C:\Program Files\AppStart" /reset /T /C`. Prüfen, ob Dateien im Ordner verändert wurden: im Zweifel MSI neu installieren. Als möglichen Sicherheitsvorfall behandeln. |
+| "Program folder C:\Program Files\AppStart is missing" | AppStart not installed or folder deleted | Install the MSI again |
+| "C:\Program Files\AppStart: Owner \<Account> is not SYSTEM, Administrators or TrustedInstaller." | Ownership of the folder was taken, e.g. by a user account | Reset the owner: `icacls "C:\Program Files\AppStart" /setowner *S-1-5-32-544 /T /C` (SID of Administrators, independent of the language) |
+| "C:\Program Files\AppStart: No access control list (NULL DACL): everyone has full access." | Permissions were removed | Inherit the permissions of "Program Files" again: `icacls "C:\Program Files\AppStart" /reset /T /C` |
+| "C:\Program Files\AppStart: \<Account> has write permissions (mask 0x\<Mask>)." | A user or a group (e.g. "Users" or "Everyone") was given write permissions | `icacls "C:\Program Files\AppStart" /reset /T /C`. Check whether files in the folder were changed: if in doubt, reinstall the MSI. Treat as a possible security incident. |
 
 <a id="konten"></a>
-### Konten
+### Accounts
 
-**Soll:** appstart-app vorhanden, keine interaktive Anmeldung; Bediener ohne Admin-Rechte
+**Expected:** appstart-app exists, no interactive sign-in; operators without admin rights
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «Konto «appstart-app» fehlt» | Einrichtung nie abgeschlossen oder Konto gelöscht | Einrichtung erneut ausführen. Das Konto wird mit neuem Zufallspasswort angelegt. |
-| «appstart-app ist nicht Mitglied der Administratoren» | Mitgliedschaft entfernt. Applikationen starten dann ohne Admin-Rechte. | Einrichtung erneut ausführen oder in PowerShell als Administrator: `Add-LocalGroupMember -SID S-1-5-32-544 -Member appstart-app` |
-| «appstart-app: Recht SeDenyInteractiveLogonRight fehlt (lokale Anmeldung verweigern)» | Anmeldesperre entfernt, oder eine Gruppenrichtlinie setzt «Lokal anmelden verweigern» ohne `appstart-app` | Einrichtung erneut ausführen. Bei Gruppenrichtlinie: `appstart-app` in die Richtlinie aufnehmen (sonst überschreibt sie die Einstellung bei der nächsten Aktualisierung), danach `gpupdate /force`. |
-| «appstart-app: Recht SeDenyRemoteInteractiveLogonRight fehlt (Anmeldung über Remotedesktop verweigern)» | Wie oben, Richtlinie «Anmelden über Remotedesktopdienste verweigern» | Wie oben |
-| «\<Konto> ist Mitglied der Administratoren» | Ein Mitglied von `AppStart Users` (z.B. `appstart-user` oder `DOMAIN\bediener01`) ist Administrator, oft nach einem Serviceeinsatz vergessen. Auch über eine Gruppe (z.B. Domänen-Admins). | Konto aus den Administratoren entfernen («Computerverwaltung» → «Gruppen» → «Administratoren») oder, wenn es Administrator bleiben muss, aus `AppStart Users` entfernen. Benutzer neu anmelden lassen. |
-| «Gruppe «AppStart Users» ist nicht lesbar: \<Grund>» | Gruppe gelöscht oder Domänenkonto eines Mitglieds nicht auflösbar (keine Verbindung zum Domänencontroller) | Gruppe fehlt: Einrichtung erneut ausführen, danach Dienst neu starten. Domäne nicht erreichbar: Netzwerk prüfen, Prüfung wiederholen. |
+| "Account "appstart-app" is missing" | Setup never completed or account deleted | Run the setup again. The account is created with a new random password. |
+| "appstart-app is not a member of Administrators" | Membership removed. Applications then start without admin rights. | Run the setup again, or in PowerShell as administrator: `Add-LocalGroupMember -SID S-1-5-32-544 -Member appstart-app` |
+| "appstart-app: right SeDenyInteractiveLogonRight is missing (deny log on locally)" | Logon restriction removed, or a Group Policy sets "Deny log on locally" without `appstart-app` | Run the setup again. With Group Policy: add `appstart-app` to the policy (otherwise it overwrites the setting at the next refresh), then `gpupdate /force`. |
+| "appstart-app: right SeDenyRemoteInteractiveLogonRight is missing (deny log on through Remote Desktop Services)" | As above, policy "Deny log on through Remote Desktop Services" | As above |
+| "\<Account> is a member of Administrators" | A member of `AppStart Users` (e.g. `appstart-user` or `DOMAIN\operator01`) is an administrator, often forgotten after a service visit. Also through a group (e.g. Domain Admins). | Remove the account from Administrators ("Computer Management" → "Local Users and Groups" → "Groups" → "Administrators") or, if it must remain an administrator, remove it from `AppStart Users`. Have the user sign in again. |
+| "Group "AppStart Users" is not readable: \<Reason>" | Group deleted, or the domain account of a member cannot be resolved (no connection to the domain controller) | Group missing: run the setup again, then restart the service. Domain not reachable: check the network, repeat the verification. |
 
 <a id="adminpasswort"></a>
-### Administratoren mit Passwort
+### Administrators with password
 
-**Soll:** jedes aktive Konto in der Gruppe Administratoren hat ein Passwort
+**Expected:** every enabled account in the Administrators group has a password
 
-Geprüft werden alle aktivierten lokalen Konten, die direkt oder über eine Gruppe Administrator sind. Ein Administrator ohne Passwort hebt die ganze Absicherung auf: Jeder an diesem PC kann sich damit anmelden, Bediener zu Administratoren machen und `apps.json` ändern. Deaktivierte Konten zählen nicht. Für die Prüfung meldet `verify` jedes Konto einmal mit leerem Passwort an (Netzwerk-Anmeldung, ohne Sitzung). Bei Konten mit Passwort erscheint das im Sicherheitsprotokoll als fehlgeschlagene Anmeldung (Ereignis 4625) und zählt einmal zur Kontosperrung.
+All enabled local accounts that are administrators, directly or through a group, are verified. An administrator without a password undoes the entire protection: anyone at this PC can sign in with it, make operators administrators and change `apps.json`. Disabled accounts do not count. For the verification, `verify` signs in each account once with an empty password (network logon, without a session). For accounts with a password, this appears in the Security log as a failed logon (event 4625) and counts once toward the account lockout.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «\<Konto> ist Administrator und hat kein Passwort. Passwort setzen oder Konto deaktivieren» | Konto ohne Passwort angelegt, oft ein Servicekonto oder das bei der Windows-Einrichtung erstellte Konto | Passwort setzen: «Computerverwaltung» → «Benutzer» → Konto → «Kennwort festlegen», oder in einer Eingabeaufforderung «Als Administrator ausführen»: `net user <Konto> *`. Wird das Konto nicht gebraucht: deaktivieren (`net user <Konto> /active:no`). Prüfung wiederholen. |
-| «Passwort von \<Konto> nicht prüfbar (Windows-Fehler \<Nummer>), z.B. weil das Konto gesperrt ist» | Konto gesperrt (Fehler 1909) oder Anmeldung aus einem anderen Grund nicht möglich | Sperre aufheben («Computerverwaltung» → Konto → «Konto ist gesperrt» abwählen) und Prüfung wiederholen. Ein nicht prüfbares Konto gilt als Abweichung. |
+| "\<Account> is an administrator and has no password. Set a password or disable the account" | Account created without a password, often a service account or the account created during Windows setup | Set a password: "Computer Management" → "Local Users and Groups" → "Users" → account → "Set Password…", or in a command prompt opened with "Run as administrator": `net user <Account> *`. If the account is not needed: disable it (`net user <Account> /active:no`). Repeat the verification. |
+| "Password of \<Account> cannot be verified (Windows error \<Number>), e.g. because the account is locked out" | Account locked out (error 1909) or sign-in not possible for another reason | Unlock the account ("Computer Management" → account → clear "Account is locked out") and repeat the verification. An account that cannot be verified counts as a deviation. |
 
 <a id="pipe"></a>
 ### Pipe
 
-**Soll:** Rechte gemäss SDDL, keine Fernzugriffe
+**Expected:** permissions as per SDDL, no remote access
 
-Die Named Pipe `\\.\pipe\AppStart` muss genau diese Rechte haben (SDDL siehe [Referenz](09-reference.md)): SYSTEM und Administratoren Vollzugriff, `AppStart Users` nur Verbinden, Netzwerk-Anmeldungen verweigert, Zugriffsliste geschützt.
+The named pipe `\\.\pipe\AppStart` must have exactly these permissions (SDDL see [Reference](09-reference.md)): SYSTEM and Administrators full access, `AppStart Users` connect only, network logons denied, access control list protected.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «Gruppe «AppStart Users» fehlt, Rechte der Pipe können nicht geprüft werden» | Einrichtung nie abgeschlossen oder Gruppe gelöscht | Einrichtung erneut ausführen, danach `sc stop AppStart` und `sc start AppStart` |
-| «\\\\.\pipe\AppStart existiert nicht (läuft der Dienst?)» | Dienst gestoppt, oder er wartet noch auf die Gruppe (Ereignis 1301), oder er konnte die Pipe nicht anlegen (1300, 1301) | Prüfpunkt «Dienst» zuerst beheben. Dienst neu starten. Ereignisprotokoll prüfen. |
-| «Rechte von \\\\.\pipe\AppStart sind nicht lesbar: \<Grund>» | `verify` ohne Admin-Rechte oder Pipe gerade belegt | Mit Admin-Rechten wiederholen |
-| «Pipe hat keine Zugriffsliste (NULL DACL): jeder hat Vollzugriff» | Die Pipe stammt nicht vom Dienst AppStart. **Sicherheitsvorfall:** ein anderes Programm hat sie angelegt. | PC vom Netz trennen, Service informieren. Ereignis 1300 prüfen. PC neu starten; der Dienst legt die Pipe beim Start als erste Instanz an. |
-| «Zugriffsliste der Pipe ist nicht geschützt (erbt Rechte)» | Wie oben: fremde Pipe oder veraltete Version des Dienstes | Dienst neu starten. Bleibt es: MSI neu installieren, sonst als Sicherheitsvorfall behandeln. |
-| «Eintrag fehlt: SYSTEM Vollzugriff» | Fremde Pipe oder veraltete Version des Dienstes | Wie oben |
-| «Eintrag fehlt: Administratoren Vollzugriff» | Wie oben | Wie oben |
-| «Eintrag fehlt: AppStart Users Verbinden (Maske 0x0012018B, ohne FILE_CREATE_PIPE_INSTANCE)» | Die Gruppe wurde gelöscht und neu angelegt, während der Dienst lief: Die Pipe enthält noch die alte Gruppe (meist zusammen mit «Unerwarteter Eintrag … S-1-5-21-…»). Oder Gruppe mit falschen Rechten. | `sc stop AppStart`, `sc start AppStart`, Prüfung wiederholen |
-| «Eintrag fehlt: Netzwerk-Anmeldungen verweigert (keine Fernzugriffe)» | Fremde Pipe oder veraltete Version des Dienstes | Dienst neu starten, sonst MSI neu installieren |
-| «Unerwarteter Eintrag: Erlaubt für \<Konto> (Maske 0x\<Maske>)» | Zusätzliches Recht für ein Konto, z.B. alte SID der neu angelegten Gruppe oder eine fremde Pipe | Dienst neu starten. Bleibt es: als Sicherheitsvorfall behandeln. |
-| «Unerwarteter Eintrag: Verweigert für \<Konto> (Maske 0x\<Maske>)» | Zusätzliche Sperre; stammt nicht vom Dienst | Wie oben |
+| "Group "AppStart Users" is missing, permissions of the pipe cannot be verified" | Setup never completed or group deleted | Run the setup again, then `sc stop AppStart` and `sc start AppStart` |
+| "\\\\.\pipe\AppStart does not exist (is the service running?)" | Service stopped, or it is still waiting for the group (event 1301), or it could not create the pipe (1300, 1301) | Fix the check "Service" first. Restart the service. Check the Event Log. |
+| "Permissions of \\\\.\pipe\AppStart are not readable: \<Reason>" | `verify` without admin rights, or the pipe is busy at the moment | Repeat with admin rights |
+| "Pipe has no access control list (NULL DACL): everyone has full access" | The pipe does not come from the AppStart service. **Security incident:** another program created it. | Disconnect the PC from the network, inform service support. Check event 1300. Restart the PC; the service creates the pipe as the first instance at startup. |
+| "Access control list of the pipe is not protected (inherits permissions)" | As above: foreign pipe or outdated version of the service | Restart the service. If it persists: reinstall the MSI, otherwise treat as a security incident. |
+| "Entry missing: SYSTEM full access" | Foreign pipe or outdated version of the service | As above |
+| "Entry missing: Administrators full access" | As above | As above |
+| "Entry missing: AppStart Users connect (mask 0x0012018B, without FILE_CREATE_PIPE_INSTANCE)" | The group was deleted and recreated while the service was running: the pipe still contains the old group (usually together with "Unexpected entry: … S-1-5-21-…"). Or a group with wrong permissions. | `sc stop AppStart`, `sc start AppStart`, repeat the verification |
+| "Entry missing: Network logons denied (no remote access)" | Foreign pipe or outdated version of the service | Restart the service, otherwise reinstall the MSI |
+| "Unexpected entry: Allow for \<Account> (mask 0x\<Mask>)" | Additional permission for an account, e.g. the old SID of the recreated group or a foreign pipe | Restart the service. If it persists: treat as a security incident. |
+| "Unexpected entry: Deny for \<Account> (mask 0x\<Mask>)" | Additional restriction; does not come from the service | As above |
 
 <a id="appsjson"></a>
 ### apps.json
 
-**Soll:** geschützt, jede EXE besteht die Prüfung
+**Expected:** protected, every EXE passes the verification
 
-Geprüft wird `C:\ProgramData\AppStart\apps.json`: Ordner und Datei dürfen nur SYSTEM, Administratoren und TrustedInstaller verändern, der Inhalt muss gültig sein, und jede freigegebene EXE muss die Prüfung von Signatur bzw. SHA-256 bestehen. Solange dieser Punkt abweicht, verweigert der Dienst **jeden** Start mit «Die Einrichtung von AppStart ist nicht in Ordnung» (Ereignis 1202), ausser bei abweichenden EXE: dann nur deren Start (Ereignis 1201).
+The file `C:\ProgramData\AppStart\apps.json` is verified: only SYSTEM, Administrators and TrustedInstaller may change the folder and the file, the content must be valid, and every approved EXE must pass the signature or SHA-256 verification. As long as this check shows a deviation, the service denies **every** start with "The AppStart setup is not in order" (event 1202), except for EXEs with a deviation: then only their start is denied (event 1201).
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «C:\ProgramData\AppStart\apps.json fehlt.» | Noch keine Applikation freigegeben oder Datei gelöscht | Applikationen freigeben (Assistent oder `add`) |
-| «C:\ProgramData\AppStart ist nicht geschützt: \<Grund>» bzw. «C:\ProgramData\AppStart\apps.json ist nicht geschützt: \<Grund>». Grund z.B. «\<Konto> hat Schreibrechte (Maske 0x\<Maske>).», «Besitzer \<Konto> ist nicht SYSTEM, Administratoren oder TrustedInstaller.» oder «Keine Zugriffsliste (NULL DACL): jeder hat Vollzugriff.» | Rechte wurden geändert, oder der Ordner wurde von einem Benutzer angelegt | Einrichtung erneut ausführen; das Setup schützt Ordner und Datei neu. Prüfen, ob `apps.json` verändert wurde (Freigaben mit `list` kontrollieren). |
-| «C:\ProgramData\AppStart\apps.json kann nicht gelesen werden: \<Grund>» | Datei gesperrt (z.B. im Editor offen) oder Datenträgerfehler | Editor schliessen, Prüfung wiederholen |
-| «apps.json ist kein gültiges JSON (Zeile \<n>, \<Stelle>): \<Grund>» | Datei von Hand bearbeitet und dabei beschädigt | Fehler an der genannten Stelle korrigieren (Komma, Anführungszeichen) oder Sicherung zurückholen |
-| «apps.json ist leer.» | Datei leer | Sicherung zurückholen oder Datei löschen und Applikationen neu freigeben |
-| «version: \<n> wird nicht unterstützt, erwartet 1.» | Falsche Version oder Datei einer neueren AppStart-Version | `"version": 1` setzen bzw. passende AppStart-Version installieren |
-| «apps[\<i>].id: «\<AppId>» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis 32 Zeichen.» | AppId von Hand geändert | AppId korrigieren. Verknüpfungen müssen dazu passen: danach Einrichtung erneut ausführen. |
-| «apps[\<i>].id: «\<AppId>» kommt mehrfach vor.» | Eintrag doppelt | Doppelten Eintrag entfernen |
-| «apps[\<i>].name: fehlt.» | Name leer | Namen eintragen |
-| «apps[\<i>].exe: «\<Pfad>» ist kein absoluter Pfad auf eine EXE.» | Relativer Pfad, Netzwerkpfad oder keine `.exe` | Vollständigen lokalen Pfad eintragen |
-| «apps[\<i>].workingDir: «\<Pfad>» ist kein absoluter Pfad.» | Arbeitsordner ungültig | Vollständigen lokalen Pfad eintragen |
-| «apps[\<i>].dataDir: «\<Pfad>» ist kein absoluter Pfad.» | Datenordner ungültig | Vollständigen lokalen Pfad eintragen |
-| «apps[\<i>].registryKey: «\<Key>» muss unter HKLM\ liegen.» | Key ausserhalb von `HKLM` | Key unter `HKLM\` eintragen |
-| «apps[\<i>].signerThumbprint: bei check «signature» sind 40 Hex-Zeichen nötig.» | Thumbprint fehlt oder falsch | `AppStart.Setup.exe rehash --app <AppId>` |
-| «apps[\<i>].sha256: bei check «sha256» sind 64 Hex-Zeichen nötig.» | Prüfsumme fehlt oder falsch | `AppStart.Setup.exe rehash --app <AppId>` |
-| «\<Name> (\<EXE>): Datei fehlt» | Applikation deinstalliert oder verschoben | Applikation neu installieren, oder Freigabe mit `remove --app <AppId>` entziehen und neue EXE mit `add` freigeben |
-| «\<Name> (\<EXE>): Datei nicht lesbar: \<Grund>» | Datei gesperrt oder Rechte fehlen | Grund prüfen, Prüfung wiederholen |
-| «\<Name> (\<EXE>): SHA-256 weicht ab: erwartet \<Prüfsumme>, gefunden \<Prüfsumme>.» | Die EXE wurde verändert: Update der Applikation oder Manipulation | Bekanntes Update: `rehash --app <AppId>`. Sonst **Sicherheitsvorfall**: EXE nicht starten, Service informieren. |
-| «\<Name> (\<EXE>): Authenticode-Prüfung fehlgeschlagen (0x\<Code>).» | Signatur ungültig: Datei verändert, Signatur entfernt oder Zertifikat nicht vertrauenswürdig | Herkunft der EXE klären. Original neu installieren. Ist die EXE nach einem Update unsigniert, nach Prüfung `rehash` (Prüfart wechselt auf SHA-256). |
-| «\<Name> (\<EXE>): Signaturzertifikat nicht lesbar.» | Signatur beschädigt | Original neu installieren |
-| «\<Name> (\<EXE>): Signatur gültig, aber fremdes Zertifikat: erwartet \<Thumbprint>, gefunden \<Thumbprint>.» | Neues Zertifikat des Herstellers nach Update, oder EXE eines anderen Herausgebers | Neues Herstellerzertifikat bestätigt: `rehash --app <AppId>`. Sonst Sicherheitsvorfall. |
+| "C:\ProgramData\AppStart\apps.json is missing." | No application approved yet, or file deleted | Approve applications (wizard or `add`) |
+| "C:\ProgramData\AppStart is not protected: \<Reason>" or "C:\ProgramData\AppStart\apps.json is not protected: \<Reason>". Reason e.g. "\<Account> has write permissions (mask 0x\<Mask>).", "Owner \<Account> is not SYSTEM, Administrators or TrustedInstaller." or "No access control list (NULL DACL): everyone has full access." | Permissions were changed, or the folder was created by a user | Run the setup again; the setup protects the folder and file again. Check whether `apps.json` was changed (check the approvals with `list`). |
+| "C:\ProgramData\AppStart\apps.json cannot be read: \<Reason>" | File locked (e.g. open in an editor) or disk error | Close the editor, repeat the verification |
+| "apps.json is not valid JSON (line \<n>, \<JSON path>): \<Reason>" | File edited by hand and damaged in the process | Correct the error at the given location (comma, quotation marks) or restore a backup |
+| "apps.json is empty." | File empty | Restore a backup, or delete the file and approve the applications again |
+| "version: \<n> is not supported, expected 1 to 2." | Wrong version, or file of a newer AppStart version | Set `"version": 2`, or install the matching AppStart version |
+| "apps[\<i>].id: "\<AppId>" is invalid. Allowed are a-z, 0-9 and -, 1 to 32 characters." | AppId changed by hand | Correct the AppId. The shortcuts must match it: then run the setup again. |
+| "apps[\<i>].id: "\<AppId>" occurs more than once." | Duplicate entry | Remove the duplicate entry |
+| "apps[\<i>].name: is missing." | Name empty | Enter a name |
+| "apps[\<i>].exe: "\<Path>" is not an absolute path to an EXE." | Relative path, network path or not an `.exe` | Enter the full local path |
+| "apps[\<i>].workingDir: "\<Path>" is not an absolute path." | Working folder invalid | Enter the full local path |
+| "apps[\<i>].dataDir: "\<Path>" is not an absolute path." | Data folder invalid | Enter the full local path |
+| "apps[\<i>].registryKey: "\<Key>" must lie under HKLM\\." | Key outside of `HKLM` | Enter a key under `HKLM\` |
+| "apps[\<i>].signerThumbprint: check "signature" needs 40 hex characters." | Thumbprint missing or wrong | `AppStart.Setup.exe rehash --app <AppId>` |
+| "apps[\<i>].sha256: check "sha256" needs 64 hex characters." | Checksum missing or wrong | `AppStart.Setup.exe rehash --app <AppId>` |
+| "\<Name> (\<EXE>): File missing" | Application uninstalled or moved | Reinstall the application, or revoke the approval with `remove --app <AppId>` and approve the new EXE with `add` |
+| "\<Name> (\<EXE>): File not readable: \<Reason>" | File locked or permissions missing | Check the reason, repeat the verification |
+| "\<Name> (\<EXE>): SHA-256 differs: expected \<Checksum>, found \<Checksum>." | The EXE was changed: update of the application or tampering | Known update: `rehash --app <AppId>`. Otherwise **security incident**: do not start the EXE, inform service support. |
+| "\<Name> (\<EXE>): Authenticode check failed (0x\<Code>)." | Signature invalid: file changed, signature removed or certificate not trusted | Clarify the origin of the EXE. Reinstall the original. If the EXE is unsigned after an update, run `rehash` after checking it (the check type changes to SHA-256). |
+| "\<Name> (\<EXE>): Signing certificate not readable." | Signature damaged | Reinstall the original |
+| "\<Name> (\<EXE>): Signature valid, but foreign certificate: expected \<Thumbprint>, found \<Thumbprint>." | New certificate of the vendor after an update, or EXE of a different publisher | New vendor certificate confirmed: `rehash --app <AppId>`. Otherwise security incident. |
 
-Ist `apps.json` nicht lesbar, melden die folgenden Prüfpunkte zusätzlich «apps.json ist nicht lesbar, Prüfpunkt kann nicht geprüft werden». Das verschwindet mit der Behebung dieses Punkts.
+If `apps.json` is not readable, the following checks additionally report "apps.json is not readable, check cannot be verified". This disappears once this check is fixed.
 
 <a id="datenordner"></a>
-### Datenordner je App
+### Data folder per app
 
-**Soll:** nur appstart-app, SYSTEM, Administratoren
+**Expected:** only appstart-app, SYSTEM, Administrators
 
-Für jede Applikation mit Datenordner. Bediener dürfen den Ordner weder lesen noch schreiben.
+For every application with a data folder. Operators may neither read nor write the folder.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «\<Ordner>: Ordner fehlt» | Applikation deinstalliert, Ordner gelöscht oder verschoben | Ordner wird gebraucht: Applikation reparieren, dann Einrichtung erneut ausführen. Wird nicht mehr gebraucht: Freigabe mit `add --exe … --data-dir <neu>` anpassen oder mit `remove` entziehen. |
-| «\<Ordner>: \<Konto>: \<Rechte> (0x\<Maske>)», z.B. «C:\ProgramData\AppStartTest: VORDEFINIERT\Benutzer (S-1-5-32-545): Lesen, Schreiben (0x001301BF)». Rechte: «Vollzugriff», «Lesen», «Schreiben», «Löschen», «Rechte ändern», «Besitz übernehmen», «Rechte lesen» oder «Sonstige» | Rechte wurden geändert, oft durch ein Update oder eine Reparatur der Applikation oder von Hand bei einem Serviceeinsatz | Einrichtung erneut ausführen; das Setup sperrt den Ordner neu |
-| «\<Ordner>: \<Konto>: Besitzer (darf Rechte lesen und ändern)» | Ein Benutzer ist Besitzer des Ordners und kann die Rechte jederzeit ändern | Einrichtung erneut ausführen (setzt Administratoren als Besitzer) |
-| «\<Ordner>: Jeder (NULL DACL): Vollzugriff» | Zugriffsliste entfernt | Einrichtung erneut ausführen |
-| «Konto «appstart-app» fehlt, Rechte können nicht geprüft werden» | Siehe Prüfpunkt [Konten](#konten) | Konto wiederherstellen, dann Einrichtung erneut ausführen |
+| "\<Folder>: folder is missing" | Application uninstalled, folder deleted or moved | Folder is needed: repair the application, then run the setup again. No longer needed: adjust the approval with `add --exe … --data-dir <new>` or revoke it with `remove`. |
+| "\<Folder>: \<Account>: \<Rights> (0x\<Mask>)", e.g. "C:\ProgramData\AppStartTest: BUILTIN\Users (S-1-5-32-545): Read, Write (0x001301BF)". Rights: "Full access", "Read", "Write", "Delete", "Change permissions", "Take ownership", "Read permissions" or "Other" | Permissions were changed, often by an update or repair of the application, or by hand during a service visit | Run the setup again; the setup locks the folder again |
+| "\<Folder>: \<Account>: owner (may read and change permissions)" | A user owns the folder and can change the permissions at any time | Run the setup again (sets Administrators as owner) |
+| "\<Folder>: Everyone (NULL DACL): full access" | Access control list removed | Run the setup again |
+| "Account "appstart-app" is missing, permissions cannot be verified" | See check [Accounts](#konten) | Restore the account, then run the setup again |
 
 <a id="hilfsprogramme"></a>
-### Hilfsprogramme je App
+### Helper programs per app
 
-**Soll:** vorhanden, Prüfung bestanden, Ordner für Bediener nicht beschreibbar; kein Lernmodus aktiv; «Alle erlaubt» als Hinweis
+**Expected:** present, verification passed, folder not writable by operators; no learning mode active; "All allowed" as a note
 
-Für jede Applikation mit «nur erlaubte Hilfsprogramme» jedes Programm der Liste (siehe [Applikationen verwalten → Weitere Programme](04-managing-applications.md)). Applikationen mit «Alle erlaubt (unsicher)» erscheinen als «Hinweis: Alle weiteren Programme erlaubt (app-a)»; der Prüfpunkt bleibt erfüllt, weil der Modus bewusst gewählt ist.
+For every application with "Allowed helper programs only", every program on the list (see [Managing applications → Other programs](04-managing-applications.md)). Applications with "All allowed (unsafe)" appear as "Note: All other programs allowed (app-a)"; the check stays passed because the mode was chosen deliberately.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «app-a: Hilfsprogramm \<Pfad> fehlt» | Programm deinstalliert oder verschoben | Neu installieren, oder mit `deny-child` aus der Liste entfernen |
-| «app-a: \<Pfad> besteht die Prüfung nicht (…). Nach einem Update: AppStart.Setup.exe rehash --app app-a --child "\<Pfad>"» | Datei nach einem Update geändert (SHA-256) oder Signatur ungültig bzw. von einem anderen Zertifikat | Nach einem gewollten Update den angezeigten Befehl ausführen; sonst Datei prüfen und dem Service melden |
-| «app-a: Ordner oder Datei von \<Pfad> ist für Bediener beschreibbar» | Bediener könnten das Programm austauschen | Rechte des Ordners korrigieren oder das Programm in einen geschützten Ordner installieren |
-| «app-a: Lernmodus aktiv bis 15.11.2026 11:07. Beenden: AppStart.Setup.exe learn stop --app app-a» | Lernmodus vergessen; der Schutz ist bis dahin schwächer | Angezeigten Befehl ausführen, danach Vorschläge mit `learn apply` übernehmen |
-| «Steuerdatei des Lernmodus wird vom Dienst ignoriert: …» | `C:\ProgramData\AppStart\learn.json` für Bediener beschreibbar oder ungültig | Einrichtung erneut ausführen, Lernmodus neu starten |
+| "app-a: helper program \<Path> is missing" | Program uninstalled or moved | Reinstall it, or remove it from the list with `deny-child` |
+| "app-a: \<Path> fails the verification (…). After an update: AppStart.Setup.exe rehash --app app-a --child "\<Path>"" | File changed after an update (SHA-256), or signature invalid or from a different certificate | After an intended update, run the command shown; otherwise check the file and report it to service support |
+| "app-a: folder or file of \<Path> is writable by operators" | Operators could replace the program | Correct the permissions of the folder, or install the program in a protected folder |
+| "app-a: learning mode active until 15.11.2026 11:07. To end it: AppStart.Setup.exe learn stop --app app-a" | Learning mode forgotten; until then the protection is weaker | Run the command shown, then apply the suggestions with `learn apply` |
+| "The service ignores the learning mode control file: …" | `C:\ProgramData\AppStart\learn.json` is writable by operators or invalid | Run the setup again, restart learning mode |
 
 <a id="registry"></a>
-### Registry-Key je App
+### Registry key per app
 
-**Soll:** für Bediener nicht lesbar
+**Expected:** not readable by operators
 
-Für jede Applikation mit Registry-Key. Der Key enthält typischerweise Passwörter der Applikation.
+For every application with a registry key. The key typically contains passwords of the application.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «\<Key>: Schlüssel fehlt» | Applikation deinstalliert oder Key gelöscht | Applikation reparieren, dann Einrichtung erneut ausführen; oder Freigabe anpassen bzw. entziehen |
-| «\<Key>: \<Konto>: \<Rechte> (0x\<Maske>)», z.B. «HKLM\SOFTWARE\AppStartTest: VORDEFINIERT\Benutzer (S-1-5-32-545): Lesen (0x00020019)» | Rechte wurden geändert, z.B. durch Update der Applikation oder von Hand | Einrichtung erneut ausführen. Passwörter im Key gelten als offengelegt, wenn Bediener sie lesen konnten: beim Hersteller ändern lassen. |
-| «\<Key>: \<Konto>: Besitzer (darf Rechte lesen und ändern)» | Ein Benutzer ist Besitzer des Keys | Einrichtung erneut ausführen |
-| «\<Key>: Jeder (NULL DACL): Vollzugriff» | Zugriffsliste entfernt | Einrichtung erneut ausführen |
-| «Konto «appstart-app» fehlt, Rechte können nicht geprüft werden» | Siehe Prüfpunkt [Konten](#konten) | Konto wiederherstellen, dann Einrichtung erneut ausführen |
+| "\<Key>: key is missing" | Application uninstalled or key deleted | Repair the application, then run the setup again; or adjust or revoke the approval |
+| "\<Key>: \<Account>: \<Rights> (0x\<Mask>)", e.g. "HKLM\SOFTWARE\AppStartTest: BUILTIN\Users (S-1-5-32-545): Read (0x00020019)" | Permissions were changed, e.g. by an update of the application or by hand | Run the setup again. Passwords in the key count as disclosed if operators could read them: have the vendor change them. |
+| "\<Key>: \<Account>: owner (may read and change permissions)" | A user owns the key | Run the setup again |
+| "\<Key>: Everyone (NULL DACL): full access" | Access control list removed | Run the setup again |
+| "Account "appstart-app" is missing, permissions cannot be verified" | See check [Accounts](#konten) | Restore the account, then run the setup again |
 
 <a id="verknuepfungen"></a>
-### Verknüpfungen
+### Shortcuts
 
-**Soll:** zeigen auf den Launcher, keine direkte Verknüpfung auf die App-EXE
+**Expected:** point to the launcher, no direct shortcut to the app EXE
 
-Je Applikation muss `<Name>.lnk` im öffentlichen Startmenü oder auf dem öffentlichen Desktop auf `C:\Program Files\AppStart\current\AppStart.Launcher.exe --app <AppId>` zeigen. Keine Verknüpfung im öffentlichen Startmenü, auf dem öffentlichen Desktop oder in einem Benutzerprofil darf direkt auf die EXE zeigen.
+For each application, `<Name>.lnk` in the public Start menu or on the public desktop must point to `C:\Program Files\AppStart\current\AppStart.Launcher.exe --app <AppId>`. No shortcut in the public Start menu, on the public desktop or in a user profile may point directly to the EXE.
 
-| Abweichung | Ursache | Behebung |
+| Deviation | Cause | Fix |
 |---|---|---|
-| «\<Name>: keine Verknüpfung «\<Name>.lnk» auf den Launcher im öffentlichen Startmenü oder auf dem öffentlichen Desktop» | Verknüpfung gelöscht oder umbenannt | Einrichtung erneut ausführen |
-| «\<Pfad>: zeigt auf «\<Ziel> \<Argumente>» statt auf den Launcher mit --app \<AppId>» | Die Verknüpfung wurde ersetzt, meist durch ein Update der Applikation, das seine eigene Verknüpfung gleichen Namens angelegt hat | Verknüpfung löschen, Einrichtung erneut ausführen |
-| «\<Pfad>: keine lesbare Verknüpfung» | Datei beschädigt oder keine Verknüpfung | Datei löschen, Einrichtung erneut ausführen |
-| «\<Pfad>: zeigt direkt auf \<EXE>» | Eine Verknüpfung umgeht AppStart, z.B. neu angelegt durch ein Update der Applikation. Bediener würden damit die EXE ohne Admin-Rechte starten. | Einrichtung erneut ausführen; das Setup sichert die Verknüpfung nach `C:\ProgramData\AppStart\ShortcutBackup` und entfernt sie |
+| "\<Name>: no shortcut "\<Name>.lnk" to the launcher in the public Start menu or on the public desktop" | Shortcut deleted or renamed | Run the setup again |
+| "\<Path>: points to "\<Target> \<Arguments>" instead of the launcher with --app \<AppId>" | The shortcut was replaced, usually by an update of the application that created its own shortcut with the same name | Delete the shortcut, run the setup again |
+| "\<Path>: not a readable shortcut" | File damaged or not a shortcut | Delete the file, run the setup again |
+| "\<Path>: points directly to \<EXE>" | A shortcut bypasses AppStart, e.g. newly created by an update of the application. Operators would use it to start the EXE without admin rights. | Run the setup again; the setup backs up the shortcut to `C:\ProgramData\AppStart\ShortcutBackup` and removes it |

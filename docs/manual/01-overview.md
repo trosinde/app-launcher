@@ -1,65 +1,65 @@
-# Überblick
+# Overview
 
-## Zweck
+## Purpose
 
-Manche Desktop-Applikationen (Fat Clients) verlangen beim Start zwingend Admin-Rechte und speichern Passwörter oder Austauschdateien an Orten, die jeder Benutzer lesen kann. AppStart löst beides, ohne die Applikationen zu ändern:
+Some desktop applications (fat clients) require admin rights at startup and store passwords or exchange files in places that every user can read. AppStart solves both without changing the applications:
 
-- Bediener starten freigegebene Applikationen über eine gewohnte Verknüpfung, **ohne selbst Admin-Rechte zu haben**, ohne Passwort und ohne UAC-Abfrage.
-- Die Applikation läuft unter einem eigenen Konto (`appstart-app`) mit Admin-Rechten. Ihr Datenordner und ihr Registry-Key sind für Bediener gesperrt.
-- Nur Applikationen, die der Installateur freigegeben hat, und nur unveränderte Programmdateien (Signatur oder SHA-256) werden gestartet.
-- Jeder Startversuch steht im Windows-Ereignisprotokoll.
-- Ein Prüfbefehl (`verify`) belegt nach Installation und jedem Serviceeinsatz, dass die Einrichtung dem Soll entspricht.
+- Operators start approved applications through a familiar shortcut, **without having admin rights themselves**, without a password and without a UAC prompt.
+- The application runs under a dedicated account (`appstart-app`) with admin rights. Its data folder and registry key are locked for operators.
+- Only applications that the installer has approved, and only unmodified program files (signature or SHA-256), are started.
+- Every start attempt is recorded in the Windows Event Log.
+- A verification command (`verify`) proves after the installation and after every service visit that the setup matches the expected state.
 
-Was AppStart nicht leistet:
+What AppStart does not do:
 
-- Applikationen, die weitere Programme starten müssen, sind nur eingeschränkt geeignet (siehe `allowChildProcesses` in der [Referenz](09-reference.md)).
-- Das Konto `appstart-app` hat keine Netzwerk-Anmeldedaten. Applikationen, die mit der Windows-Anmeldung auf Netzlaufwerke oder Datenbanken zugreifen, funktionieren darüber nicht.
-- Administratoren können Datenordner und Registry-Key weiterhin lesen.
+- Applications that need to start other programs are only suitable to a limited extent (see `allowChildProcesses` in the [Reference](09-reference.md)).
+- The account `appstart-app` has no network credentials. Applications that access network drives or databases with the Windows sign-in do not work through it.
+- Administrators can still read the data folder and registry key.
 
-> **Wichtig:** Eine freigegebene Applikation läuft mit Admin-Rechten, auch ihre Dialoge wie «Datei öffnen». Deshalb verhindert AppStart, dass sie weitere Programme startet, und gibt nur Applikationen frei, die der Installateur bewusst ausgewählt hat.
+> **Important:** An approved application runs with admin rights, including its dialogs such as "Open file". This is why AppStart prevents it from starting other programs and only approves applications that the installer has deliberately selected.
 
-## Funktionsweise in einem Bild
+## How it works at a glance
 
-![Funktionsweise von AppStart: Verknüpfung, Launcher, Named Pipe, Dienst, Applikation](images/funktionsweise.svg)
+![How AppStart works: shortcut, launcher, named pipe, service, application](images/funktionsweise.svg)
 
-1. Der Bediener klickt die Verknüpfung der Applikation. Sie zeigt auf den Launcher `AppStart.Launcher.exe --app <AppId>` und trägt das Icon der Applikation.
-2. Der Launcher prüft nur das Format der AppId und sendet `START <AppId>` an die Named Pipe `\\.\pipe\AppStart`. Er übergibt keine Pfade, Argumente oder Umgebungsvariablen.
-3. Der Dienst `AppStart` ermittelt Sitzung und Benutzer des Anfragenden. Je Sitzung bearbeitet er eine Anfrage gleichzeitig; danach gilt eine Sperrzeit von 2 Sekunden.
-4. Der Dienst liest `C:\ProgramData\AppStart\apps.json` bei jeder Anfrage neu. Ist die Datei für Nicht-Administratoren beschreibbar oder ungültig, verweigert er jeden Start.
-5. Der Dienst öffnet die EXE so, dass sie bis zum Start nicht verändert, umbenannt oder gelöscht werden kann, und prüft Signatur oder SHA-256.
-6. Der Dienst meldet `appstart-app` ohne Passwort an (S4U-Anmeldung) und startet die Applikation in der Sitzung des Bedieners, eingeschlossen in ein Job-Objekt. Der Launcher erhält `OK` und beendet sich ohne Fenster. Bei einer Ablehnung zeigt er eine Meldung (siehe [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md)).
+1. The operator clicks the shortcut of the application. It points to the launcher `AppStart.Launcher.exe --app <AppId>` and carries the icon of the application.
+2. The launcher only checks the format of the AppId and sends `START <AppId>` to the named pipe `\\.\pipe\AppStart`. It passes no paths, arguments or environment variables.
+3. The service `AppStart` determines the session and user of the requester. It handles one request per session at a time; after that, a lockout period of 2 seconds applies.
+4. The service reads `C:\ProgramData\AppStart\apps.json` again for every request. If non-administrators can write to the file or the file is invalid, it denies every start.
+5. The service opens the EXE so that it cannot be changed, renamed or deleted until it has started, and checks the signature or SHA-256.
+6. The service signs in `appstart-app` without a password (S4U logon) and starts the application in the operator's session, enclosed in a job object. The launcher receives `OK` and exits without a window. If the start is denied, it shows a message (see [Messages and troubleshooting](07-messages-and-troubleshooting.md)).
 
-## Bestandteile
+## Components
 
-| Bestandteil | Datei | Aufgabe | Läuft mit |
+| Component | File | Task | Runs with |
 |---|---|---|---|
-| Installationsprogramm | `AppStart-Setup.exe` | Installiert das MSI und öffnet danach die Einrichtung | Admin-Rechten (UAC) |
-| Installationspaket | `AppStart-<Version>.msi` | Installiert alles nach `C:\Program Files\AppStart`, registriert den Dienst. Für die Softwareverteilung. | Admin-Rechten oder SYSTEM |
-| Dienst | `AppStart.Service.exe` | Nimmt Startanfragen an, prüft sie und startet die Applikation | LocalSystem |
-| Launcher | `AppStart.Launcher.exe` | Steht hinter jeder Verknüpfung, sendet die Startanfrage, zeigt Meldungen | Rechten des Bedieners |
-| Setup | `AppStart.Setup.exe` | Einrichtung (Assistent und Kommandozeile), Prüfung `verify` | Admin-Rechten (UAC) |
-| Testapplikation | `TestApp\AppStart.TestApp.exe` | Verhält sich wie ein betroffener Fat Client, für Abnahme und Fehlersuche | über AppStart |
+| Installer | `AppStart-Setup.exe` | Installs the MSI and then opens the setup | admin rights (UAC) |
+| Installation package | `AppStart-<Version>.msi` | Installs everything to `C:\Program Files\AppStart`, registers the service. For software distribution. | admin rights or SYSTEM |
+| Service | `AppStart.Service.exe` | Accepts start requests, checks them and starts the application | LocalSystem |
+| Launcher | `AppStart.Launcher.exe` | Sits behind every shortcut, sends the start request, shows messages | the operator's rights |
+| Setup | `AppStart.Setup.exe` | Setup (wizard and command line), verification `verify` | admin rights (UAC) |
+| Test application | `TestApp\AppStart.TestApp.exe` | Behaves like an affected fat client, for acceptance and troubleshooting | through AppStart |
 
-Programmdateien liegen in `C:\Program Files\AppStart\current\`. Alle Pfade stehen in der [Referenz](09-reference.md).
+Program files are located in `C:\Program Files\AppStart\current\`. All paths are listed in the [Reference](09-reference.md).
 
-## Begriffe
+## Terms
 
-| Begriff | Bedeutung |
+| Term | Meaning |
 |---|---|
-| **Bediener** | Person, die am PC arbeitet. Hat keine Admin-Rechte. |
-| **Installateur** | Richtet AppStart ein. Braucht Admin-Rechte. |
-| **Servicetechniker** | Wartet den PC und die Applikationen, prüft danach die Einrichtung mit `verify`. |
-| **Freigegebene Applikation** | Applikation, die in `apps.json` eingetragen ist und über AppStart starten darf |
-| **AppId** | Kurze Kennung einer freigegebenen Applikation, z.B. `app-a`. Nur Kleinbuchstaben `a-z`, Ziffern und Bindestrich, 1 bis 32 Zeichen. Das Setup bildet sie aus dem Dateinamen der EXE. |
-| **App-Konto** `appstart-app` | Lokales Konto mit Admin-Rechten, unter dem die Applikationen laufen. Niemand kann sich damit anmelden, sein Passwort kennt niemand. |
-| **Bedienerkonto** `appstart-user` | Optionales lokales Standardkonto ohne Admin-Rechte für die Bediener |
-| **Gruppe** `AppStart Users` | Lokale Gruppe. Nur ihre Mitglieder dürfen Applikationen über AppStart starten. |
-| **Launcher** | Kleine EXE hinter jeder Verknüpfung. Sendet die Startanfrage an den Dienst. |
-| **Dienst** | Windows-Dienst `AppStart`, prüft und startet die Applikationen |
-| **Named Pipe** | Lokaler Kanal `\\.\pipe\AppStart` zwischen Launcher und Dienst, von anderen Rechnern aus nicht erreichbar |
-| **Job-Objekt** | Windows-Mechanismus, der verhindert, dass die Applikation weitere Programme startet (z.B. eine Eingabeaufforderung über «Datei öffnen») |
-| **S4U-Anmeldung** | Der Dienst meldet `appstart-app` an, ohne ein Passwort zu kennen |
-| **Signatur / Thumbprint** | Digitale Signatur der EXE. Der Thumbprint ist der Fingerabdruck des Signaturzertifikats; AppStart akzeptiert nur das bei der Freigabe erfasste Zertifikat. |
-| **SHA-256** | Prüfsumme der EXE für unsignierte Applikationen. Ändert sich bei jedem Update der Applikation. |
-| **Vorgangsnummer** | Zufällige, bis 10-stellige Nummer je abgelehntem Start. Steht in der Meldung des Launchers und im Ereignisprotokoll. |
-| **Prüfbericht** | Ergebnis von `verify` mit zehn Prüfpunkten, als HTML und JSON unter `C:\ProgramData\AppStart\Reports` |
+| **Operator** | Person who works at the PC. Has no admin rights. |
+| **Installer** | Sets up AppStart. Needs admin rights. |
+| **Service technician** | Maintains the PC and the applications, then verifies the setup with `verify`. |
+| **Approved application** | Application that is listed in `apps.json` and may start through AppStart |
+| **AppId** | Short identifier of an approved application, e.g. `app-a`. Only lowercase letters `a-z`, digits and hyphen, 1 to 32 characters. The setup derives it from the file name of the EXE. |
+| **App account** `appstart-app` | Local account with admin rights under which the applications run. Nobody can sign in with it, nobody knows its password. |
+| **Operator account** `appstart-user` | Optional local standard account without admin rights for the operators |
+| **Group** `AppStart Users` | Local group. Only its members may start applications through AppStart. |
+| **Launcher** | Small EXE behind every shortcut. Sends the start request to the service. |
+| **Service** | Windows service `AppStart`, checks and starts the applications |
+| **Named pipe** | Local channel `\\.\pipe\AppStart` between launcher and service, not reachable from other computers |
+| **Job object** | Windows mechanism that prevents the application from starting other programs (e.g. a command prompt through "Open file") |
+| **S4U logon** | The service signs in `appstart-app` without knowing a password |
+| **Signature / thumbprint** | Digital signature of the EXE. The thumbprint is the fingerprint of the signing certificate; AppStart only accepts the certificate recorded at approval. |
+| **SHA-256** | Checksum of the EXE for unsigned applications. Changes with every update of the application. |
+| **Incident ID** | Random number of up to 10 digits for each denied start. Shown in the launcher's message (as "Event ID …") and in the Event Log. |
+| **Verification report** | Result of `verify` with ten checks, as HTML and JSON under `C:\ProgramData\AppStart\Reports` |

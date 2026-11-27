@@ -14,7 +14,7 @@ This page explains what happens when an application starts, which accounts and f
 | **Group** `AppStart Users` | Only its members may start applications through AppStart |
 | **Launcher** | Small EXE behind every shortcut; sends the start request to the service |
 | **Named pipe** | Local channel between launcher and service. Not reachable from other computers. |
-| **Job object** | Windows mechanism that groups all processes of an application: in mode "Blocked" with a limit of one process, in mode "Allowed helper programs only" monitored by the service |
+| **Job object** | Windows mechanism that groups all processes of an application: in mode "Blocked (recommended)" with a limit of one process, in mode "Allowed helper programs only" monitored by the service |
 | **Helper program** | Program that an application starts itself (export, updater, PDF viewer). In mode "Allowed helper programs only" it runs only if it is on the application's list. |
 | **Learning mode** | For a limited time (5–120 minutes) the service records which programs an application starts instead of ending them; the suggestions can be adopted |
 | **S4U logon** | The service logs on `appstart-app` without knowing a password |
@@ -130,20 +130,20 @@ On success the launcher shows nothing. Otherwise one of these messages appears. 
 For a rejection (except "Start already in progress") a 10-digit number is shown at the bottom, currently labeled "Event ID". It is the **incident number**, not the ID of the event type. To find the entry: Event Viewer → Windows Logs → Application, source AppStart, search for the number with "Find…".
 
 <p align="center">
-  <img src="images/launcher-meldungen.png" width="420" alt="Two launcher messages: launch service unreachable, and start denied with incident number">
+  <img src="images/launcher-meldungen.png" width="420" alt="Two launcher messages: Launch service not reachable, and Launch denied with incident number">
   <br>
   <sub>Top: the service is not running. Bottom: EXE modified, with incident number for searching the Event Log. (UI design)</sub>
 </p>
 
 | Message | Cause | Action |
 |---|---|---|
-| **Launch service unreachable** | Service `AppStart` is not running | Start the service, check the Event Log |
+| **Launch service not reachable** | Service `AppStart` is not running | Start the service, check the Event Log |
 | **No permission** | User is not in the group `AppStart Users` | Add the user to the group, log on again |
 | **Invalid shortcut** | Shortcut without an AppId or with a wrong one | Create the shortcut again through the setup |
-| **Start denied** – application modified | Signature or checksum does not match | Clarify where the EXE came from; after a legitimate update `rehash` |
-| **Start denied** – not approved | AppId is not in `apps.json` | Approve the application in the setup |
-| **Start denied** – setup not in order | `apps.json` is missing, invalid or writable for non-admins | Run `verify`, repair the setup |
-| **Start denied** – other error | Start failed technically | Check the Event Log entry for the incident number |
+| **Launch denied** – application modified | Signature or checksum does not match | Clarify where the EXE came from; after a legitimate update `rehash` |
+| **Launch denied** – not approved | AppId is not in `apps.json` | Approve the application in the setup |
+| **Launch denied** – setup not in order | `apps.json` is missing, invalid or writable for non-admins | Run `verify`, repair the setup |
+| **Launch denied** – other error | Start failed technically | Check the Event Log entry for the incident number |
 | **Start already in progress** | Second click during the start | Wait a moment, try again |
 | **Unexpected response** | Response from the service not readable | Check the Event Log, compare the versions of launcher and service |
 
@@ -153,37 +153,37 @@ Log **Application**, source **AppStart**.
 
 | ID | Event |
 |---|---|
-| 1000 | Service started |
-| 1001 | Service stopped |
-| 1100 | Application started |
+| 1000 | Service AppStart started, pipe ready |
+| 1001 | Service AppStart stopped |
+| 1100 | Launch succeeded |
 | 1101 | Helper program allowed (mode "Allowed helper programs only") |
 | 1102 | Learning mode: program recorded |
-| 1200 | Rejected: AppId unknown |
-| 1201 | Rejected: signature or checksum wrong |
-| 1202 | Rejected: configuration faulty or unsafe |
-| 1203 | Rejected: start already in progress in this session |
-| 1204 | Invalid request (format, length, timeout) |
-| 1205 | Start failed technically |
-| 1206 | Disallowed program ended immediately, with reason |
-| 1207 | Learning mode ignored: `learn.json` unprotected or invalid |
-| 1208 | Monitoring disrupted |
-| 1300 | Pipe already exists – service does not start |
-| 1301 | Pipe could not be created |
-| 1302 | Pipe error |
-| 1400 | Learning mode started |
-| 1401 | Learning mode ended or expired |
+| 1200 | Launch denied (unknown-app): AppId is not approved in apps.json |
+| 1201 | Launch denied (integrity): signature or checksum wrong |
+| 1202 | Launch denied (config): configuration faulty or unsafe |
+| 1203 | Launch denied (busy): session already has a request in progress or is in the lockout period |
+| 1204 | Invalid request discarded, or no request within the timeout |
+| 1205 | Launch denied (error): start failed technically |
+| 1206 | Program ended (not allowed), with reason |
+| 1207 | Learning mode ignored, the allowlist applies (`learn.json` unprotected or invalid) |
+| 1208 | Monitoring of the application failed, all its processes are ended |
+| 1300 | Service does not start: pipe already exists |
+| 1301 | Service does not start: pipe cannot be created |
+| 1302 | Pipe error (instance cannot be created, connection aborted) |
+| 1400 | Learning mode for "`<AppId>`" started, ends automatically at … |
+| 1401 | Learning mode for "`<AppId>`" ended, or learning mode expired, the configured mode applies again |
 
 Event 1300 is a security event: another process created the pipe before the service. The service then deliberately does not start.
 
 ## Setup
 
-> Work in progress. The images show the binding UI designs, not the finished software.
+> The images show the UI designs the software was built from; the manual (`docs/manual`) has screenshots of the finished software.
 
-The setup guides you through the setup in three steps. The same works silently from the command line (see [README](../README.md#installation-vorschau)).
+The setup guides you through the setup in three steps. The same works silently from the command line (see [README](../README.md#installation)).
 
-**1 · Select applications.** Add an EXE, specify the data folder and registry key for each application. The setup detects whether the EXE is signed and chooses the check type: signature or SHA-256.
+**1 · Select application.** Add an EXE, specify the data folder and registry key for each application. The setup detects whether the EXE is signed and chooses the check type: signature or SHA-256.
 
-<p align="center"><img src="images/setup-1-applikationen.png" width="640" alt="Setup step 1: Select applications"></p>
+<p align="center"><img src="images/setup-1-applikationen.png" width="640" alt="Setup step 1: Select application"></p>
 
 **2 · Accounts and group.** The app account and the group are always created. Create the operator account `appstart-user` or add existing users to the group.
 
@@ -195,7 +195,7 @@ The setup guides you through the setup in three steps. The same works silently f
 
 ## Verify setup (`verify`)
 
-> Work in progress.
+> Implemented: `AppStart.Setup.exe verify`, the "AppStart – Verify setup" Start menu entry and the automatic check at the end of every setup.
 
 `AppStart.Setup.exe verify` verifies the entire setup against the expected state and saves a report as HTML and JSON under `C:\ProgramData\AppStart\Reports`. Exit code 0 only if everything is correct. Intended for checking after the installation and after every service visit – for example when a technician has temporarily changed rights.
 
@@ -207,16 +207,16 @@ The setup guides you through the setup in three steps. The same works silently f
 
 | Check | Expected |
 |---|---|
-| Service | installed, running, automatic start, account LocalSystem |
+| Service | installed, running, starts automatically, LocalSystem |
 | Program folder | only SYSTEM and Administrators can write |
-| Accounts | `appstart-app` present, no interactive logon, right "Log on as a batch job"; operators without admin rights |
-| Administrators with password | every active account in the Administrators group has a password |
-| Pipe | rights as intended, no remote access |
-| `apps.json` | only SYSTEM and Administrators; every EXE passes verification |
+| Accounts | `appstart-app` exists, no interactive sign-in; operators without admin rights |
+| Administrators with password | every enabled account in the Administrators group has a password |
+| Pipe | permissions as per SDDL, no remote access |
+| `apps.json` | protected, every EXE passes the verification |
 | Data folder per app | only `appstart-app`, SYSTEM, Administrators |
-| Helper programs per app | present, verification passed, folder not writable for operators; no learning mode active; "All allowed" as a notice |
-| Registry key per app | not readable for operators |
-| Shortcuts | point to the launcher, no direct shortcut to the EXE |
+| Helper programs per app | present, verification passed, folder not writable by operators; no learning mode active; "All allowed" as a note |
+| Registry key per app | not readable by operators |
+| Shortcuts | point to the launcher, no direct shortcut to the app EXE |
 
 ## Update and uninstallation
 

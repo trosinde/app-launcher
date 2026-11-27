@@ -1,206 +1,208 @@
-# Applikationen verwalten
+# Managing applications
 
-Alle Änderungen gehen über den Assistenten («AppStart – Einrichtung») oder die Kommandozeile `AppStart.Setup.exe` mit Admin-Rechten. `apps.json` von Hand zu bearbeiten ist nicht nötig. Nach jeder Änderung läuft automatisch `verify`; der Bericht liegt unter `C:\ProgramData\AppStart\Reports`.
+All changes are made through the wizard ("AppStart – Setup") or the command line `AppStart.Setup.exe` with admin rights. You do not need to edit `apps.json` by hand. After every change, `verify` runs automatically; the report is stored under `C:\ProgramData\AppStart\Reports`.
 
-In den Beispielen steht `%SETUP%` für `"C:\Program Files\AppStart\current\AppStart.Setup.exe"`.
+In the examples, `%SETUP%` stands for `"C:\Program Files\AppStart\current\AppStart.Setup.exe"`.
 
-## Freigegebene Applikationen anzeigen
+## Showing approved applications
 
 ```text
 %SETUP% list
 ```
 
-Ausgabe je Applikation: AppId und Name, darunter EXE und Prüfart («Signatur» oder «SHA-256»). Danach die Mitglieder der Gruppe und der Zustand des Dienstes:
+Output per application: AppId and name, below it the EXE and verification type ("Signature" or "SHA-256") and the mode for other programs. Then the members of the group and the state of the service:
 
 ```text
-app-a                Applikation A
-                     C:\Program Files\Hersteller\AppA\AppA.exe (Signatur)
+app-a                Application A
+                     C:\Program Files\Vendor\AppA\AppA.exe (Signature)
+                     Other programs: blocked
 appstart-testapp     AppStart TestApp
                      C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe (SHA-256)
+                     Other programs: blocked
 
-Gruppe AppStart Users: PC-014\appstart-user, DOMAIN\bediener01
-Dienst AppStart: läuft
+Group AppStart Users: PC-014\appstart-user, DOMAIN\operator01
+Service AppStart: running
 ```
 
-Ohne Freigabe steht dort «Keine Applikation freigegeben.», ohne Mitglieder «Gruppe AppStart Users: –», bei gestopptem Dienst «Dienst AppStart: läuft nicht».
+Without any approval it shows "No application approved.", without members "Group AppStart Users: –", and with a stopped service "Service AppStart: not running".
 
-## Applikation hinzufügen
+## Adding an application
 
-**Im Assistenten:** «AppStart – Einrichtung» öffnen, in Schritt 1 «EXE hinzufügen…», Datenordner und Registry-Key eintragen, «Weiter», Schritt 2 unverändert lassen, «Weiter». Bestehende Applikationen bleiben angehakt und unverändert.
+**In the wizard:** Open "AppStart – Setup", in step 1 click "Add EXE…", enter the data folder and registry key, "Next", leave step 2 unchanged, "Next". Existing applications remain checked and unchanged.
 
-**Über die Kommandozeile:**
+**Through the command line:**
 
 ```text
-%SETUP% add --exe "C:\Program Files\Hersteller\AppA\AppA.exe" --data-dir "C:\ProgramData\Hersteller\AppA" --reg-key "HKLM\SOFTWARE\Hersteller\AppA" --name "Applikation A"
+%SETUP% add --exe "C:\Program Files\Vendor\AppA\AppA.exe" --data-dir "C:\ProgramData\Vendor\AppA" --reg-key "HKLM\SOFTWARE\Vendor\AppA" --name "Application A"
 ```
 
-Was das Setup dabei tut:
+What the setup does:
 
-1. EXE lesen: Ist sie gültig signiert, wird der Thumbprint des Zertifikats erfasst (Prüfart «Signatur»), sonst die SHA-256-Prüfsumme.
-2. AppId aus dem Dateinamen bilden (`AppA.exe` → `appa`, `AppStart.TestApp.exe` → `appstart-testapp`); bei Gleichstand mit Zusatz `-2`, `-3` …
-3. Eintrag in `apps.json` schreiben, Datei geschützt (nur SYSTEM und Administratoren).
-4. Datenordner und Registry-Key sperren: Zugriff nur für `appstart-app`, SYSTEM und Administratoren. Die ursprünglichen Rechte werden gesichert und bei `remove` und `uninstall` zurückgestellt.
-5. Verknüpfungen, die direkt auf die EXE zeigen (öffentliches Startmenü, öffentlicher Desktop, Desktop und Startmenü jedes Benutzerprofils), nach `C:\ProgramData\AppStart\ShortcutBackup` sichern und entfernen.
-6. Neue Verknüpfung `<Name>.lnk` im öffentlichen Startmenü (`C:\ProgramData\Microsoft\Windows\Start Menu\Programs`) und auf dem öffentlichen Desktop (`C:\Users\Public\Desktop`) anlegen: Ziel `AppStart.Launcher.exe --app <AppId>`, Icon aus der EXE, Arbeitsordner = Ordner der EXE.
-7. Dienst prüfen und bei Bedarf starten, danach `verify`.
+1. Reads the EXE: if it is validly signed, the thumbprint of the certificate is recorded (verification type "Signature"), otherwise the SHA-256 checksum.
+2. Derives the AppId from the file name (`AppA.exe` → `appa`, `AppStart.TestApp.exe` → `appstart-testapp`); if the AppId is already taken, with the suffix `-2`, `-3` …
+3. Writes the entry to `apps.json`, file protected (only SYSTEM and Administrators).
+4. Locks the data folder and registry key: access only for `appstart-app`, SYSTEM and Administrators. The original permissions are backed up and restored on `remove` and `uninstall`.
+5. Backs up shortcuts that point directly to the EXE (public Start menu, public desktop, desktop and Start menu of every user profile) to `C:\ProgramData\AppStart\ShortcutBackup` and removes them.
+6. Creates a new shortcut `<Name>.lnk` in the public Start menu (`C:\ProgramData\Microsoft\Windows\Start Menu\Programs`) and on the public desktop (`C:\Users\Public\Desktop`): target `AppStart.Launcher.exe --app <AppId>`, icon from the EXE, working folder = folder of the EXE.
+7. Checks the service and starts it if necessary, then runs `verify`.
 
-Ist die EXE schon freigegeben, aktualisiert `add` die Freigabe: neue Signatur bzw. Prüfsumme, und wenn angegeben neuer Name, Datenordner oder Registry-Key. AppId und bisherige Angaben bleiben sonst erhalten.
+If the EXE is already approved, `add` updates the approval: new signature or checksum and, if specified, new name, data folder or registry key. Otherwise the AppId and previous settings are kept.
 
-> **Hinweis:** Existiert am Zielort bereits eine Verknüpfung mit demselben Namen, die nicht von AppStart stammt, überschreibt das Setup sie nicht und meldet «Verknüpfungen konnten nicht angelegt werden: Die Verknüpfung «…» existiert bereits und gehört nicht zu dieser Applikation. Sie wird nicht überschrieben. Bitte die Datei prüfen und von Hand sichern oder entfernen.» Datei prüfen, entfernen und den Befehl wiederholen, oder mit `--name` einen anderen Namen wählen.
+> **Note:** If a shortcut with the same name that does not come from AppStart already exists at the target location, the setup does not overwrite it and reports "Shortcuts could not be created: The shortcut "…" already exists and does not belong to this application. It is not overwritten. Please check the file and back it up or remove it by hand." Check the file, remove it and repeat the command, or choose a different name with `--name`.
 
-## Datenordner oder Registry-Key ändern
+## Changing the data folder or registry key
 
 ```text
-%SETUP% add --exe "C:\Program Files\Hersteller\AppA\AppA.exe" --data-dir "D:\Daten\AppA"
+%SETUP% add --exe "C:\Program Files\Vendor\AppA\AppA.exe" --data-dir "D:\Data\AppA"
 ```
 
-Ein neu angegebener Ordner oder Key wird zusätzlich gesperrt. Ein früher gesperrter Ordner bleibt gesperrt, bis die Applikation entfernt wird. Soll der alte Ordner wieder frei sein: Applikation mit `remove` entfernen und mit den neuen Angaben neu hinzufügen.
+A newly specified folder or key is locked in addition. A previously locked folder stays locked until the application is removed. If the old folder should be accessible again: remove the application with `remove` and add it again with the new settings.
 
-## Applikation entfernen
+## Removing an application
 
-**Im Assistenten:** In Schritt 1 die Applikation markieren und «Entfernen» klicken (oder den Haken entfernen), dann «Weiter», «Weiter».
+**In the wizard:** In step 1, select the application and click "Remove" (or clear its check box), then "Next", "Next".
 
-**Über die Kommandozeile:**
+**Through the command line:**
 
 ```text
 %SETUP% remove --app app-a
 ```
 
-Das Setup entzieht die Freigabe und stellt zurück:
+The setup revokes the approval and restores:
 
-- Rechte von Datenordner und Registry-Key auf den Stand vor der Freigabe,
-- die gesicherten Verknüpfungen, die direkt auf die EXE zeigten,
-- die AppStart-Verknüpfungen der Applikation werden gelöscht.
+- the permissions of the data folder and registry key to the state before the approval,
+- the backed-up shortcuts that pointed directly to the EXE,
+- and it deletes the AppStart shortcuts of the application.
 
-Die Applikation selbst bleibt installiert. Unbekannte AppId: «Applikation «app-x» ist nicht freigegeben», Exit-Code 1. Die AppIds zeigt `list`.
+The application itself remains installed. Unknown AppId: "Application "app-x" is not approved", exit code 1. `list` shows the AppIds.
 
-## Nach einem Update der Applikation
+## After an update of the application
 
-| Prüfart | Was tun |
+| Verification type | What to do |
 |---|---|
-| «Signatur» | Nichts, solange der Hersteller mit demselben Zertifikat signiert. Hat er ein neues Zertifikat (z.B. nach Ablauf), lehnt der Dienst den Start ab (Ereignis 1201, «Signatur gültig, aber fremdes Zertifikat»). Dann `rehash` ausführen. |
-| «SHA-256» | **Immer** `rehash` ausführen, sonst lehnt der Dienst jeden Start ab (Meldung «Start verweigert», Ereignis 1201). |
+| "Signature" | Nothing, as long as the vendor signs with the same certificate. If the vendor uses a new certificate (e.g. after expiry), the service denies the start (event 1201, "Signature valid, but foreign certificate"). Then run `rehash`. |
+| "SHA-256" | **Always** run `rehash`, otherwise the service denies every start (message "Launch denied", event 1201). |
 
 ```text
 %SETUP% rehash --app app-a
 ```
 
-`rehash` liest die EXE neu und erfasst Signatur oder Prüfsumme neu. Ist die EXE inzwischen signiert, wechselt die Prüfart auf «Signatur». Danach läuft `verify`.
+`rehash` reads the EXE again and records the signature or checksum again. If the EXE is now signed, the verification type changes to "Signature". Then `verify` runs.
 
-> **Achtung:** `rehash` erst ausführen, wenn feststeht, dass die neue EXE vom Hersteller stammt (Update-Protokoll, Signatur in den Dateieigenschaften). Ohne bekanntes Update ist eine veränderte EXE ein Sicherheitsvorfall.
+> **Caution:** Only run `rehash` once it is certain that the new EXE comes from the vendor (update log, signature in the file properties). Without a known update, a modified EXE is a security incident.
 
-Prüfen nach dem Update auch:
+After the update, also check:
 
-- Hat das Update der Applikation eigene Verknüpfungen angelegt, die direkt auf die EXE zeigen? `verify` meldet sie unter «Verknüpfungen». Behebung: Einrichtung erneut ausführen («AppStart – Einrichtung», «Weiter», «Weiter») oder `rehash`; das Setup sichert und entfernt solche Verknüpfungen.
-- Hat das Update die Rechte von Datenordner oder Registry-Key zurückgesetzt? `verify` meldet es unter «Datenordner je App» bzw. «Registry-Key je App». Behebung wie oben.
-- Liegt die EXE an einem neuen Pfad? Dann mit `remove` die alte Freigabe entziehen und mit `add` die neue EXE freigeben.
+- Has the update of the application created its own shortcuts that point directly to the EXE? `verify` reports them under "Shortcuts". Fix: run the setup again ("AppStart – Setup", "Next", "Next") or `rehash`; the setup backs up and removes such shortcuts.
+- Has the update reset the permissions of the data folder or registry key? `verify` reports it under "Data folder per app" or "Registry key per app". Fix as above.
+- Is the EXE located at a new path? Then revoke the old approval with `remove` and approve the new EXE with `add`.
 
-## Weitere Programme (Hilfsprogramme)
+## Other programs (helper programs)
 
-Manche Applikationen starten eigene Hilfsprogramme, etwa für Export, Update oder PDF-Anzeige. Je Applikation gilt einer von drei Modi:
+Some applications start their own helper programs, for example for export, update or PDF viewing. One of three modes applies per application:
 
-| Modus | Anzeige | Wirkung |
+| Mode | Display | Effect |
 |---|---|---|
-| `blocked` | gesperrt | Standard. Die Applikation kann keine weiteren Programme starten. |
-| `allowlist` | nur erlaubte Hilfsprogramme | Nur Programme aus der Liste starten, geprüft mit Signatur oder SHA-256. Jedes andere Programm beendet der Dienst sofort (Ereignis 1206). |
-| `all` | alle erlaubt (unsicher) | Jedes Programm startet, auch eine Eingabeaufforderung **mit Admin-Rechten**. Nur nach Abwägung und mit Vermerk im Service and Security Manual. |
+| `blocked` | blocked | Default. The application cannot start other programs. |
+| `allowlist` | allowed helper programs only | Only programs from the list start, verified with signature or SHA-256. The service ends any other program immediately (event 1206). |
+| `all` | all allowed (unsafe) | Every program starts, including a command prompt **with admin rights**. Only after careful consideration and with a note in the Service and Security Manual. |
 
-Das Konsolenfenster von Windows (`conhost.exe` aus `C:\Windows\System32`) ist immer erlaubt; ohne es zeigen Konsolen-Hilfsprogramme kein Fenster.
+The Windows console window (`conhost.exe` from `C:\Windows\System32`) is always allowed; without it, console helper programs show no window.
 
-### Im Assistenten
+### In the wizard
 
-In Schritt 1 zeigt die Spalte «Weitere Programme» den Modus jeder Applikation, z.B. «2 erlaubt», «gesperrt» oder «alle erlaubt». Unter «Schutz für …» wählen Sie bei «Weitere Programme»:
+In step 1, the column "Other programs" shows the mode of each application, e.g. "2 allowed", "blocked" or "all allowed". Under "Protection for …", choose one of the following for "Other programs":
 
-- «Gesperrt (empfohlen)»: Hinweis «Applikation … kann keine weiteren Programme starten.»
-- «Nur erlaubte Hilfsprogramme»: Hinweis «Nur Programme auf der Liste dürfen aus … starten. Alle anderen beendet der Dienst sofort.» Daneben öffnet «Hilfsprogramme (2)…» die Liste. Solange sie leer ist, steht dort «Mindestens ein Hilfsprogramm hinzufügen («Hilfsprogramme…») oder «Gesperrt» wählen.» und «Weiter» bleibt gesperrt.
-- «Alle erlaubt (unsicher)»: Erst nach der Rückfrage «Alle weiteren Programme erlauben?» mit dem Text «Applikation A darf dann jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten. Bediener können so den Schutz umgehen. Nur nach Abwägung und mit Vermerk im Service and Security Manual.» Danach Hinweis «Applikation A darf jedes Programm starten, auch eine Eingabeaufforderung mit Admin-Rechten.»
+- "Blocked (recommended)": note "Application … cannot start other programs."
+- "Allowed helper programs only": note "Only programs on the list may start from …. The service ends all others immediately." Next to it, "Helper programs (2)…" opens the list. As long as it is empty, it shows "Add at least one helper program ("Helper programs…") or choose "Blocked"." and "Next" stays disabled.
+- "All allowed (unsafe)": only after the confirmation "Allow all other programs?" with the text "Application A may then start any program, including a command prompt with admin rights. Operators can use this to bypass the protection. Only after careful consideration and with a note in the Service and Security Manual." Afterwards the note "Application A may start any program, including a command prompt with admin rights."
 
-Die Änderungen gelten erst, wenn Sie den Assistenten mit «Weiter» abschliessen.
+The changes only take effect when you complete the wizard with "Next".
 
-![Setup Schritt 1: Weitere Programme «Nur erlaubte Hilfsprogramme», ein Hilfsprogramm erlaubt](images/setup-weitere-programme.png)
+![Setup step 1: other programs "Allowed helper programs only", one helper program allowed](images/setup-weitere-programme.png)
 
-**Dialog «Erlaubte Hilfsprogramme – Applikation A».** Überschrift «Erlaubte Hilfsprogramme», darunter «Diese Programme darf Applikation A starten. Sie laufen dann ebenfalls mit Admin-Rechten. Jedes andere Programm beendet der Dienst sofort und protokolliert es.» Die Liste zeigt je Programm die Prüfung und den Zustand:
+**Dialog "Allowed helper programs – Application A".** Heading "Allowed helper programs", below it "Application A may start these programs. They then also run with admin rights. The service ends any other program immediately and logs it." The list shows the "Program", its "Verification" and its "State":
 
-| Zustand | Bedeutung |
+| State | Meaning |
 |---|---|
-| «In Ordnung» | Datei vorhanden, Signatur bzw. Prüfsumme stimmt. |
-| «Prüfsumme neu» | Die Datei hat sich geändert, meist nach einem Update. «Prüfsumme aktualisieren» erfasst sie neu (bei markierten Einträgen, sonst bei allen mit SHA-256). |
-| «Datei fehlt» | Programm deinstalliert oder verschoben. Entfernen oder neu hinzufügen. |
-| «Prüfung fehlgeschlagen» | Signatur ungültig oder Datei nicht lesbar. Entfernen und neu hinzufügen. |
+| "OK" | File present, signature or checksum matches. |
+| "New checksum" | The file has changed, usually after an update. "Update checksum" records it again (for the selected entries, otherwise for all with SHA-256). |
+| "File missing" | Program uninstalled or moved. Remove it or add it again. |
+| "Verification failed" | Signature invalid or file not readable. Remove it and add it again. |
 
-Knöpfe: «EXE hinzufügen…», «Lernmodus starten…», «Prüfsumme aktualisieren», «Entfernen» (markierte Einträge). Ist ein Programm nicht signiert, erscheint der gelbe Hinweis «Updater.exe ist nicht signiert» mit «Nach jedem Update der Applikation stimmt die Prüfsumme nicht mehr und der Start wird blockiert. Dann hier «Prüfsumme aktualisieren».» Unten steht: «Erlaubt sind nur Programme aus Ordnern, in die Bediener nicht schreiben können. Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts nur mit ausdrücklicher Bestätigung.»
+Buttons: "Add EXE…", "Start learning mode…", "Update checksum", "Remove" (selected entries). If a program is not signed, the yellow note "Updater.exe is not signed" appears with "After every update of the application the checksum no longer matches and the start is blocked. Then click "Update checksum" here." At the bottom: "Only programs from folders that operators cannot write to are allowed. Command prompt, PowerShell, Explorer and script hosts only with explicit confirmation."
 
-- Wählen Sie eine Shell, fragt der Dialog «cmd.exe erlauben?» mit «Dies ist eine Shell oder ein Skript-Host. Wer die Applikation bedient, kann damit jedes Programm mit Admin-Rechten starten.»
-- Liegt das Programm in einem Ordner, den Bediener beschreiben können: «Export.exe kann nicht erlaubt werden: Der Ordner ist für Bediener beschreibbar. Programm in einen geschützten Ordner installieren.»
+- If you select a shell, the dialog asks "Allow cmd.exe?" with "This is a shell or a script host. Whoever operates the application can use it to start any program with admin rights."
+- If the program is located in a folder that operators can write to: "Export.exe cannot be allowed: operators can write to its folder. Install the program in a protected folder."
 
-«Übernehmen» gibt die Liste an den Assistenten zurück, «Abbrechen» verwirft die Änderungen im Dialog.
+"Apply" returns the list to the wizard, "Cancel" discards the changes in the dialog.
 
-![Dialog «Erlaubte Hilfsprogramme» mit einem nicht signierten Hilfsprogramm](images/hilfsprogramme.png)
+![Dialog "Allowed helper programs" with an unsigned helper program](images/hilfsprogramme.png)
 
-### Lernmodus: Hilfsprogramme ermitteln
+### Learning mode: finding helper programs
 
-Welche Programme eine Applikation braucht, ist oft nicht bekannt. Der Lernmodus zeichnet es auf: Für eine begrenzte Zeit beendet der Dienst bei dieser Applikation nichts, sondern notiert jedes gestartete Programm (Ereignis 1102). Danach gilt wieder der eingestellte Modus, auch in einer noch laufenden Applikation.
+Which programs an application needs is often not known. Learning mode records it: for a limited time, the service ends nothing for this application but records every started program (event 1102). Afterwards the configured mode applies again, even in an application that is still running.
 
-Der Lernmodus ist erst möglich, wenn die Applikation eingerichtet ist. Sonst meldet der Dialog «Der Lernmodus ist erst möglich, wenn Applikation A eingerichtet ist. Zuerst den Assistenten abschliessen, dann erneut öffnen.»
+Learning mode is only possible once the application is set up. Otherwise the dialog reports "Learning mode is only possible once Application A is set up. Finish the wizard first, then open this again."
 
-1. Im Dialog «Erlaubte Hilfsprogramme» auf «Lernmodus starten…». Es öffnet sich «Lernmodus – Applikation A» mit der Überschrift «Lernmodus läuft» und dem Text «Starten Sie Applikation A jetzt über ihre Verknüpfung und benutzen Sie alle Funktionen, die Hilfsprogramme brauchen: Export, Drucken, Update, Hilfe.» Rechts oben läuft «endet automatisch in» 30:00 ab.
-2. Der gelbe Hinweis «Während des Lernmodus ist der Schutz für Applikation A schwächer. Programme werden nicht beendet, nur aufgezeichnet. Den PC dabei nicht unbeaufsichtigt lassen.» gilt wörtlich.
-3. Die Liste «Aufgezeichnete Programme» zeigt «Starts» und «Zuletzt» je Programm, anfangs «Noch nichts aufgezeichnet.»
-4. «Lernmodus beenden» (oder Ablauf der Zeit) führt zu «Vorschläge übernehmen». «Abbrechen, nichts übernehmen» beendet den Lernmodus und löscht die Aufzeichnung. Kann der Lernmodus nicht starten, steht «Der Lernmodus konnte nicht gestartet werden: …» mit dem Grund im Dialog.
+1. In the dialog "Allowed helper programs", click "Start learning mode…". "Learning mode – Application A" opens with the heading "Learning mode running" and the text "Start Application A now through its shortcut and use all functions that need helper programs: export, print, update, help." At the top right, "ends automatically in" counts down from 30:00.
+2. The yellow note "During learning mode the protection for Application A is weaker." "Programs are not ended, only recorded. Do not leave the PC unattended meanwhile." applies literally.
+3. The list "Recorded programs" shows "Starts" and "Last" per program, initially "Nothing recorded yet."
+4. "End learning mode" (or expiry of the time) leads to "Apply suggestions". "Cancel, apply nothing" ends learning mode and deletes the recording. If learning mode cannot start, the dialog shows "Learning mode could not be started: …" with the reason.
 
-![Lernmodus läuft: zwei aufgezeichnete Programme, Restzeit rechts oben](images/lernmodus.png)
+![Learning mode running: two recorded programs, remaining time at the top right](images/lernmodus.png)
 
-**Dialog «Vorschläge übernehmen».** «Der Lernmodus ist beendet, der Schutz wieder aktiv. Wählen Sie, welche Programme Applikation A künftig starten darf.» Gültig signierte Programme werden mit Signatur vorgeschlagen, alle anderen mit SHA-256. Die Spalte «Hinweis»:
+**Dialog "Apply suggestions".** "Learning mode has ended, the protection is active again. Choose which programs Application A may start from now on." Validly signed programs are suggested with signature, all others with SHA-256. The column "Note":
 
-| Hinweis | Vorauswahl |
+| Note | Preselection |
 |---|---|
-| «–» | angehakt |
-| «nicht signiert» | angehakt, Prüfung SHA-256 |
-| «kann Dateien öffnen – abwägen» (z.B. PDF-Anzeige, Browser, Editor) | nicht angehakt. Mit Admin-Rechten kann das Programm beliebige Dateien öffnen und speichern. |
-| «Eingabeaufforderung – nur von Hand», «Shell oder Skript-Host – nur von Hand» | nicht auswählbar |
-| «Ordner für Bediener beschreibbar» | nicht auswählbar |
+| "–" | checked |
+| "not signed" | checked, verification SHA-256 |
+| "can open files – consider carefully" (e.g. PDF viewer, browser, editor) | not checked. With admin rights, the program can open and save any file. |
+| "command prompt – manual only", "shell or script host – manual only" | not selectable |
+| "folder writable by operators" | not selectable |
 
-Unten: «Eingabeaufforderung, PowerShell, Explorer und Skript-Hosts werden nie vorgeschlagen. Wer sie trotzdem braucht, trägt sie in «Erlaubte Hilfsprogramme» von Hand ein und bestätigt die Warnung.» «2 Programme übernehmen» (bei einem: «1 Programm übernehmen») übernimmt die angehakten in die Liste, «Verwerfen» nichts; beide löschen die Aufzeichnung. Wurde nichts aufgezeichnet: «Es wurde nichts aufgezeichnet. Wurde die Applikation während des Lernmodus über ihre Verknüpfung gestartet?»
+At the bottom: "Command prompt, PowerShell, Explorer and script hosts are never suggested. Whoever still needs them adds them by hand in "Allowed helper programs" and confirms the warning." "Apply 2 programs" (for one: "Apply 1 program") adds the checked programs to the list, "Discard" adds nothing; both delete the recording. If nothing was recorded: "Nothing was recorded. Was the application started through its shortcut during learning mode?"
 
-![Vorschläge übernehmen: Hilfsprogramm angehakt, cmd.exe nicht auswählbar](images/lernergebnis.png)
+![Apply suggestions: helper program checked, cmd.exe not selectable](images/lernergebnis.png)
 
-Meldungen des Lernmodus auf der Kommandozeile:
+Messages of learning mode on the command line:
 
-| Meldung | Bedeutung |
+| Message | Meaning |
 |---|---|
-| «Lernmodus für «app-a» gestartet, endet automatisch um 10:55 Uhr» | Lernmodus läuft (Ereignis 1400). |
-| «Lernmodus für «app-a» beendet» | Von Hand beendet (Ereignis 1401). |
-| «Lernmodus für «app-a» war nicht aktiv» | Nichts zu beenden. |
-| «Dauer des Lernmodus: 5 bis 120 Minuten.» | Ungültige Dauer, nichts geändert. |
-| «Für «app-a» wurde nichts aufgezeichnet. Zuerst learn start und die Applikation benutzen.» | Keine Aufzeichnung vorhanden. |
-| «… steht nicht in der Aufzeichnung.» | Pfad wie in der Aufzeichnung angeben. |
-| «cmd.exe ist eine Shell oder ein Skript-Host und wird nie übernommen. Falls nötig von Hand: allow-child --allow-shell.» | Shells übernimmt der Lernmodus nie. |
-| «Für «app-a» gibt es keine übernehmbaren Vorschläge (nur Shells oder Skript-Hosts aufgezeichnet).» | Nichts zu übernehmen. |
-| «2 Hilfsprogramm(e) aus dem Lernmodus für «app-a» übernommen, Aufzeichnung gelöscht» | Erledigt, Modus «nur erlaubte Hilfsprogramme». |
+| "Learning mode for "app-a" started, ends automatically at 10:55" | Learning mode is running (event 1400). |
+| "Learning mode for "app-a" ended" | Ended by hand (event 1401). |
+| "Learning mode for "app-a" was not active" | Nothing to end. |
+| "Learning mode duration: 5 to 120 minutes." | Invalid duration, nothing changed. |
+| "Nothing was recorded for "app-a". Run learn start first and use the application." | No recording available. |
+| "… is not in the recording." | Specify the path as in the recording. |
+| "cmd.exe is a shell or a script host and is never applied. If needed, by hand: allow-child --allow-shell." | Learning mode never applies shells. |
+| "There are no suggestions to apply for "app-a" (only shells or script hosts recorded)." | Nothing to apply. |
+| "2 helper program(s) from learning mode applied for "app-a", recording deleted" | Done, mode "allowed helper programs only". |
 
-### Auf der Kommandozeile
+### On the command line
 
-Hilfsprogramm erlauben, Modus wird «nur erlaubte Hilfsprogramme»:
+Allow a helper program; the mode becomes "allowed helper programs only":
 
 ```text
-%SETUP% allow-child --app app-a --exe "C:\Program Files\Hersteller\AppA\Export.exe"
+%SETUP% allow-child --app app-a --exe "C:\Program Files\Vendor\AppA\Export.exe"
 ```
 
-Ausgabe: «Hilfsprogramm … für «app-a» erlaubt (Signatur)» bzw. «(SHA-256)» und «Weitere Programme für «app-a»: nur erlaubte Hilfsprogramme». Ist das Programm gültig signiert, gilt die Signatur, sonst die Prüfsumme. Ein Eintrag mit demselben Pfad wird ersetzt.
+Output: "Helper program … allowed for "app-a" (Signature)" or "(SHA-256)" and "Other programs for "app-a": allowed helper programs only". If the program is validly signed, the signature applies, otherwise the checksum. An entry with the same path is replaced.
 
-Hilfsprogramm entfernen: «Hilfsprogramm … für «app-a» entfernt». Beim letzten Eintrag zusätzlich «Letztes Hilfsprogramm entfernt: weitere Programme für «app-a» wieder gesperrt».
+Remove a helper program: "Helper program … removed for "app-a"". For the last entry, additionally "Last helper program removed: other programs for "app-a" blocked again".
 
-Nach einem Update unsignierter Hilfsprogramme stimmt die Prüfsumme nicht mehr und der Dienst beendet sie. `rehash` erfasst sie neu: «Prüfsummen der Hilfsprogramme von «app-a» neu erfasst (1)».
+After an update of unsigned helper programs, the checksum no longer matches and the service ends them. `rehash` records them again: "Checksums of the helper programs of "app-a" recorded again (1)".
 
-Meldungen, bei denen nichts geändert wird:
+Messages for which nothing is changed:
 
-| Meldung | Bedeutung |
+| Message | Meaning |
 |---|---|
-| «… ist eine Shell oder ein Skript-Host. Nur mit ausdrücklicher Bestätigung (--allow-shell) erlaubt.» | Eingabeaufforderung, PowerShell, Explorer, Skript-Hosts, `rundll32.exe`, `regsvr32.exe` und `mshta.exe` erlaubt AppStart nur, wenn Sie es ausdrücklich bestätigen. Damit kann jeder Bediener jedes Programm mit Admin-Rechten starten. |
-| «Hilfsprogramm nicht erlaubt: … liegt in einem Ordner, den Bediener beschreiben können» | Ein Bediener könnte die Datei austauschen. Programm in einen geschützten Ordner (z.B. unter `C:\Program Files`) installieren. |
-| «… ist nicht gültig signiert. Prüfung «signature» nicht möglich, «sha256» verwenden.» | Mit `--check signature` angegeben, die Datei hat aber keine gültige Signatur. |
-| ««…» ist kein Pfad auf eine EXE.», «… existiert nicht.» | Pfad prüfen. |
-| ««nur erlaubte Hilfsprogramme» braucht mindestens ein Hilfsprogramm. Zuerst allow-child ausführen.» | Der Modus lässt sich erst mit mindestens einem Eintrag einstellen. |
-| «Hilfsprogramm … steht nicht in der Liste von «app-a»» | Beim Entfernen oder `rehash --child`: Pfad wie in `list` angeben. |
+| "… is a shell or a script host. Allowed only with explicit confirmation (--allow-shell)." | AppStart allows the command prompt, PowerShell, Explorer, script hosts, `rundll32.exe`, `regsvr32.exe` and `mshta.exe` only if you confirm it explicitly. With them, every operator can start any program with admin rights. |
+| "Helper program not allowed: … lies in a folder that operators can write to" | An operator could replace the file. Install the program in a protected folder (e.g. under `C:\Program Files`). |
+| "… is not validly signed. Check "signature" not possible, use "sha256"." | Specified with `--check signature`, but the file has no valid signature. |
+| ""…" is not a path to an EXE.", "… does not exist." | Check the path. |
+| ""allowed helper programs only" needs at least one helper program. Run allow-child first." | The mode can only be set with at least one entry. |
+| "Helper program … is not in the list of "app-a"" | When removing or with `rehash --child`: specify the path as shown by `list`. |
 
-Modus direkt setzen, z.B. alle erlauben: «Weitere Programme für «app-a»: alle erlaubt (unsicher)». Der Dienst liest `apps.json` bei jedem Start neu; ein Neustart des Dienstes ist nicht nötig.
+Set the mode directly, e.g. allow all: "Other programs for "app-a": all allowed (unsafe)". The service reads `apps.json` again for every start; a restart of the service is not required.

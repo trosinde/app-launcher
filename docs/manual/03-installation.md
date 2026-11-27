@@ -1,240 +1,240 @@
 # Installation
 
-Es gibt zwei Wege:
+There are two ways:
 
-| Weg | Für | Ablauf |
+| Way | For | Procedure |
 |---|---|---|
-| **Interaktiv** mit `AppStart-Setup.exe` | Installateur am PC | Installationsprogramm starten, UAC bestätigen, Einrichtung in drei Schritten |
-| **Still** mit `AppStart-<Version>.msi` | Softwareverteilung, Skripte | `msiexec` ohne Oberfläche, danach Einrichtung über die Kommandozeile |
+| **Interactive** with `AppStart-Setup.exe` | Installer at the PC | Start the installer, confirm UAC, setup in three steps |
+| **Silent** with `AppStart-<Version>.msi` | Software distribution, scripts | `msiexec` without user interface, then setup through the command line |
 
-Beide Wege installieren dasselbe MSI nach `C:\Program Files\AppStart`, registrieren und starten den Dienst `AppStart` und legen im Startmenü den Ordner «AppStart» an:
+Both ways install the same MSI to `C:\Program Files\AppStart`, register and start the service `AppStart` and create the folder "AppStart" in the Start menu:
 
-| Eintrag | Öffnet |
+| Entry | Opens |
 |---|---|
-| «AppStart – Einrichtung» | Den Assistenten (`AppStart.Setup.exe` ohne Argumente) |
-| «AppStart – Einrichtung prüfen» | Die Prüfansicht (`AppStart.Setup.exe verify --ui`), siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) |
-| «AppStart – Handbuch» | Dieses Handbuch als PDF |
+| "AppStart – Setup" | The wizard (`AppStart.Setup.exe` without arguments) |
+| "AppStart – Verify setup" | The verification view (`AppStart.Setup.exe verify --ui`), see [Verification after a service visit](06-verification-after-a-service-visit.md) |
+| "AppStart – Manual" | This manual as a PDF |
 
-![Startmenü-Ordner AppStart mit den drei Einträgen](images/startmenue.png)
+![Start menu folder AppStart with the three entries](images/startmenue.png)
 
-Nach jeder Installation und jedem Update prüft das MSI die Einrichtung automatisch (`verify`) und legt den Bericht unter `C:\ProgramData\AppStart\Reports` ab. Solange die Einrichtung nicht abgeschlossen ist, meldet dieser erste Bericht Abweichungen, und der Dienst läuft zwar, wartet aber auf die Gruppe `AppStart Users` (Ereignis 1301, siehe [Meldungen](07-messages-and-troubleshooting.md)). Das ist normal.
+After every installation and every update, the MSI verifies the setup automatically (`verify`) and stores the report under `C:\ProgramData\AppStart\Reports`. As long as the setup is not complete, this first report shows deviations, and the service runs but waits for the group `AppStart Users` (event 1301, see [Messages](07-messages-and-troubleshooting.md)). This is normal.
 
-## Interaktive Installation mit AppStart-Setup.exe
+## Interactive installation with AppStart-Setup.exe
 
-1. `AppStart-Setup.exe` auf den PC kopieren, z.B. nach `Downloads`, und per Doppelklick starten.
-2. Die UAC-Abfrage mit Admin-Zugangsdaten bestätigen. Es ist die einzige UAC-Abfrage der Installation.
-3. Das Installationsprogramm zeigt «AppStart wird installiert …» mit dem Hinweis «Bitte warten. Die Installation kann einige Minuten dauern. Danach startet die Einrichtung.» Es entpackt das eingebettete MSI in den geschützten Ordner `C:\ProgramData\AppStart\Installer\<Guid>` (nie nach `%TEMP%` oder in den Download-Ordner), installiert es ohne weitere Dialoge und löscht die entpackte Kopie danach wieder.
-4. Danach prüft es, ob `C:\Program Files\AppStart\current\AppStart.Setup.exe` mit demselben Zertifikat signiert ist wie das Installationsprogramm, und öffnet daraus den Assistenten (Schritt 1). Er erbt die Admin-Rechte, eine zweite UAC-Abfrage gibt es nicht.
+1. Copy `AppStart-Setup.exe` to the PC, e.g. to `Downloads`, and double-click it.
+2. Confirm the UAC prompt with admin credentials. This is the only UAC prompt of the installation.
+3. The installer shows "Installing AppStart …" with the note "Please wait. The installation can take a few minutes. Afterwards the setup starts." It extracts the embedded MSI to the protected folder `C:\ProgramData\AppStart\Installer\<Guid>` (never to `%TEMP%` or the download folder), installs it without further dialogs and then deletes the extracted copy.
+4. It then checks whether `C:\Program Files\AppStart\current\AppStart.Setup.exe` is signed with the same certificate as the installer, and opens the wizard from it (step 1). The wizard inherits the admin rights; there is no second UAC prompt.
 
-![Installationsprogramm AppStart-Setup.exe während der MSI-Installation](images/bootstrapper.png)
+![Installer AppStart-Setup.exe during the MSI installation](images/bootstrapper.png)
 
-Protokolle legt das Installationsprogramm unter `C:\ProgramData\AppStart\Logs` ab:
+The installer stores logs under `C:\ProgramData\AppStart\Logs`:
 
-| Datei | Inhalt |
+| File | Content |
 |---|---|
-| `install-<JJJJMMTT-hhmmss>.log` | Ausführliches Protokoll von Windows Installer (`msiexec /l*v`) |
-| `bootstrapper-<JJJJMMTT-hhmmss>.log` | Schritte des Installationsprogramms: Version, Modus, Ordnerprüfung, Exit-Code von `msiexec`, Signaturprüfung. Bei unsignierten Entwicklungs-Builds steht hier eine Zeile «WARNUNG», weil die Signaturprüfung übersprungen wurde. |
+| `install-<YYYYMMDD-hhmmss>.log` | Verbose log of Windows Installer (`msiexec /l*v`) |
+| `bootstrapper-<YYYYMMDD-hhmmss>.log` | Steps of the installer: version, mode, folder check, exit code of `msiexec`, signature check. For unsigned development builds, this log contains a "WARNING" line because the signature check was skipped. |
 
-Fehler- und Hinweismeldungen zeigen eine Überschrift, die Ursache, eine Zeile «Massnahme: …» und, wenn vorhanden, unten «Protokoll: C:\ProgramData\AppStart\Logs\install-20261115-104212.log». Alle Meldungen mit Ursache und Massnahme stehen im Kapitel [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md#installationsprogramm). Bei einem Fehler startet der Assistent nicht.
+Error and information messages show a heading, the cause, a line "Action: …" and, if available, at the bottom "Log: C:\ProgramData\AppStart\Logs\install-20261115-104212.log". All messages with cause and action are listed in the chapter [Messages and troubleshooting](07-messages-and-troubleshooting.md#installationsprogramm). If an error occurs, the wizard does not start.
 
-**Bereits installiert:** Ist dieselbe oder eine neuere Version von AppStart installiert, überspringt das Installationsprogramm die Installation, meldet «AppStart ist bereits installiert» und öffnet direkt den Assistenten. So lässt sich `AppStart-Setup.exe` auch nur zum Öffnen der Einrichtung verwenden.
+**Already installed:** If the same or a newer version of AppStart is installed, the installer skips the installation, reports "AppStart is already installed" and opens the wizard directly. This way you can also use `AppStart-Setup.exe` just to open the setup.
 
-**Neustart:** Meldet Windows Installer, dass ein Neustart nötig ist (Code 3010), erscheint «Neustart erforderlich». Zuerst die Einrichtung durchführen, danach den PC neu starten.
+**Restart:** If Windows Installer reports that a restart is required (code 3010), "Restart required" appears. Complete the setup first, then restart the PC.
 
-**Parameter von AppStart-Setup.exe** (Details in der [Referenz](09-reference.md#appstart-setup-exe)):
+**Parameters of AppStart-Setup.exe** (details in the [Reference](09-reference.md#appstart-setup-exe)):
 
-| Aufruf | Wirkung |
+| Call | Effect |
 |---|---|
-| `AppStart-Setup.exe` | Installiert AppStart und startet danach die Einrichtung |
-| `AppStart-Setup.exe /quiet` | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec` (0 oder 3010 = erfolgreich). Ist AppStart schon in derselben oder neueren Version installiert: Exit-Code 0. |
-| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installiert und richtet danach in einem Schritt ohne Oberfläche nach der Antwortdatei ein: Applikationen, Schutz, weitere Programme und Bediener (Format: [Referenz → `apply`](09-reference.md#apply)). Für die Softwareverteilung als SYSTEM. Exit-Code 0 oder 3010 = eingerichtet, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig; Ausgabe in `C:\ProgramData\AppStart\Logs\apply-….log`. Das lokale Konto `appstart-user` legt die Antwortdatei nicht an (kein Passwort in Dateien). |
-| `AppStart-Setup.exe /?` | Zeigt die Hilfe |
+| `AppStart-Setup.exe` | Installs AppStart and then starts the setup |
+| `AppStart-Setup.exe /quiet` | Installs only, without user interface and without setup. Exit code = exit code of `msiexec` (0 or 3010 = success). If AppStart is already installed in the same or a newer version: exit code 0. |
+| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installs and then sets up in one step without user interface from the answer file: applications, protection, other programs and operators (format: [Reference → `apply`](09-reference.md#apply)). For software distribution as SYSTEM. Exit code 0 or 3010 = set up, 10 = setup with error or deviation, 11 = answer file invalid; output in `C:\ProgramData\AppStart\Logs\apply-….log`. The answer file does not create the local account `appstart-user` (no password in files). |
+| `AppStart-Setup.exe /?` | Shows the help |
 
-Ohne Installationsprogramm (nur MSI vorhanden): `AppStart-<Version>.msi` per Doppelklick oder `msiexec /i` installieren und danach im Startmenü «AppStart – Einrichtung» öffnen.
+Without the installer (only the MSI available): install `AppStart-<Version>.msi` by double-clicking it or with `msiexec /i`, then open "AppStart – Setup" from the Start menu.
 
-## Einrichtung in drei Schritten
+## Setup in three steps
 
-Der Assistent «AppStart Setup» führt in drei Schritten durch die Einrichtung. Links zeigt er die Schritte «Applikationen», «Konten und Gruppe» und «Zusammenfassung»; erledigte Schritte sind mit einem Häkchen markiert. Er lässt sich jederzeit erneut über «AppStart – Einrichtung» öffnen und zeigt dann die bestehende Konfiguration: freigegebene Applikationen, vorhandene Konten und Mitglieder der Gruppe.
+The wizard "AppStart Setup" guides you through the setup in three steps. On the left it shows the steps "Applications", "Accounts and group" and "Summary"; completed steps are marked with a check mark. You can open it again at any time through "AppStart – Setup"; it then shows the existing configuration: approved applications, existing accounts and members of the group.
 
-Knöpfe: «Abbrechen» (Schritte 1 und 2), «Zurück» (Schritt 2), «Weiter», nach der Einrichtung «Prüfbericht öffnen» und «Fertig».
+Buttons: "Cancel" (steps 1 and 2), "Back" (step 2), "Next", and after the setup "Open verification report" and "Finish".
 
-### Schritt 1: Applikationen auswählen
+### Step 1: Select applications
 
-![Setup Schritt 1: Applikationen auswählen, mit Datenordner und Registry-Key](images/setup-1.png)
+![Setup step 1: select applications, with data folder and registry key](images/setup-1.png)
 
-Überschrift «Applikationen auswählen», darunter: «Diese Applikationen starten Bediener künftig über den Start-Dienst. Jede bekommt eine eigene Verknüpfung mit ihrem Icon.»
+Heading "Select application", below it: "Operators will start these applications through the AppStart service. Each one gets its own shortcut with its icon."
 
-1. «EXE hinzufügen…» klicken. Im Dialog «Programmdatei auswählen» (Filter `Programme (*.exe)|*.exe`) eine oder mehrere EXE wählen.
-2. Das Setup liest jede EXE und zeigt sie in der Liste mit den Spalten «Applikation» (Name und Pfad) und «Prüfung». Die Prüfung ist «Signatur», wenn die EXE gültig signiert ist, sonst «SHA-256».
-3. Nur angehakte Applikationen werden freigegeben. Mit «Entfernen» verschwindet die markierte Applikation aus der Liste; nach «Weiter» und Abschluss der Einrichtung wird ihre Freigabe entzogen.
-4. Für die markierte Applikation im Bereich «Schutz für Applikation A» (Name der markierten Applikation) eintragen. Unter der Überschrift steht: «Datenordner und Registry-Key werden beim Übernehmen gesperrt: Danach haben nur appstart-app, SYSTEM und Administratoren Zugriff, Bediener nicht. Fehlt das Ziel, legt das Setup es an. Bei der Deinstallation kommen die ursprünglichen Rechte zurück. Leer lassen, wenn die Applikation dort nichts speichert; dann wird nichts gesperrt. Beispiele: `C:\ProgramData\<Hersteller>\<App>` und `HKLM\SOFTWARE\<Hersteller>\<App>`.»
-   - «Datenordner»: Ordner, in den die Applikation schreibt (Messwerte, Austauschdateien, Logs), mit «Durchsuchen…» wählbar (Dialog «Datenordner auswählen»). Die Applikation läuft als `appstart-app` und darf dort schreiben; Bediener sehen den Ordner danach nicht mehr. Leer lassen, wenn es keinen gibt.
-   - «Registry-Key»: Key unter `HKLM`, in dem die Applikation Einstellungen oder Passwörter speichert, z.B. `HKLM\SOFTWARE\Hersteller\AppA`. Hinweis rechts: «wird gesperrt». Bediener können ihn danach in regedit nicht öffnen.
-   - **Nicht den Programmordner als Datenordner wählen.** Ist der Datenordner der Ordner der EXE, liegt er darin oder enthält er ihn, erscheint ein gelber Kasten: «Achtung: Dieser Datenordner ist der Programmordner der Applikation, liegt darin oder enthält ihn. appstart-app bekäme Schreibrechte auf EXE und DLLs. Eine ausgetauschte EXE erkennt die Prüfung, ausgetauschte DLLs nicht. Empfohlen ist ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`.» «Weiter» bleibt gesperrt, bis der Ordner geändert oder «Risiko verstanden, diesen Ordner trotzdem verwenden» angehakt ist. Die Zusammenfassung in Schritt 3 und die Kommandozeile melden es zusätzlich als «Warnung: Datenordner … von … liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`».
-5. «Weiter».
+1. Click "Add EXE…". In the dialog "Select program file" (filter `Programs (*.exe)|*.exe`), select one or more EXEs.
+2. The setup reads each EXE and shows it in the list with the columns "Application" (name and path) and "Verification". The verification is "Signature" if the EXE is validly signed, otherwise "SHA-256".
+3. Only checked applications are approved. "Remove" removes the selected application from the list; after "Next" and completion of the setup, its approval is revoked.
+4. For the selected application, fill in the area "Protection for Application A" (name of the selected application). Below the heading it says: "The data folder and registry key are locked when the setup is applied: afterwards only appstart-app, SYSTEM and Administrators have access, operators do not. If the target is missing, the setup creates it. On uninstall the original permissions are restored. Leave empty if the application stores nothing there; then nothing is locked. Examples: `C:\ProgramData\<Vendor>\<App>` and `HKLM\SOFTWARE\<Vendor>\<App>`."
+   - "Data folder": folder the application writes to (measured values, exchange files, logs), selectable with "Browse…" (dialog "Select data folder"). The application runs as `appstart-app` and may write there; operators can no longer see the folder afterwards. Leave empty if there is none.
+   - "Registry key": key under `HKLM` in which the application stores settings or passwords, e.g. `HKLM\SOFTWARE\Vendor\AppA`. Note on the right: "will be locked". Operators can no longer open it in regedit afterwards.
+   - **Do not choose the program folder as the data folder.** If the data folder is the folder of the EXE, lies inside it or contains it, a yellow box appears: "Caution: This data folder is the program folder of the application, lies inside it or contains it. appstart-app would get write access to the EXE and DLLs. The verification detects a replaced EXE, but not replaced DLLs. A folder under C:\ProgramData is recommended, e.g. `C:\ProgramData\<Vendor>\<App>`." "Next" stays disabled until you change the folder or check "I understand the risk, use this folder anyway". The summary in step 3 and the command line also report it as "Warning: Data folder … of … lies in the program folder of the application or contains it. appstart-app can then change the EXE and DLLs; the hash and signature check does not detect replaced DLLs. Recommended: a folder under C:\ProgramData, e.g. `C:\ProgramData\<Vendor>\<App>`".
+5. "Next".
 
-Unten links öffnet «Einrichtung prüfen» jederzeit die Prüfansicht mit dem aktuellen Stand, ohne etwas zu ändern (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)).
+At the bottom left, "Verify setup" opens the verification view with the current state at any time, without changing anything (see [Verification after a service visit](06-verification-after-a-service-visit.md)).
 
-Leere Liste: «Noch keine Applikation. Mit «EXE hinzufügen…» eine Programmdatei wählen.»
+Empty list: "No application yet. Choose a program file with "Add EXE…"."
 
-Hinweise und Fehler in Schritt 1:
+Notes and errors in step 1:
 
-| Meldung | Ursache | Massnahme |
+| Message | Cause | Action |
 |---|---|---|
-| «Mindestens eine Applikation auswählen.» | Keine Applikation angehakt. «Weiter» ist gesperrt. | Mindestens eine Applikation anhaken |
-| «Datenordner von Applikation A liegt im Programmordner: ändern oder das Risiko bestätigen.» | Bei einer angehakten Applikation ist die Warnung zum Datenordner offen. «Weiter» ist gesperrt. | Applikation markieren, Datenordner ändern oder das Risiko bestätigen |
-| «Der Datenordner muss ein vollständiger Pfad sein, z.B. C:\ProgramData\Hersteller\App.» | Relativer Pfad oder Netzwerkpfad | Vollständigen Pfad mit Laufwerksbuchstabe angeben |
-| «Der Registry-Key muss mit HKLM\ beginnen.» | Key unter `HKCU` oder ohne Wurzel | Key unter `HKLM\` angeben. Schlüssel des Benutzers (`HKCU`) kann AppStart nicht schützen. |
-| «AppA.exe kann nicht hinzugefügt werden: …» | Die EXE lässt sich nicht lesen oder ist gerade gesperrt; nach dem Doppelpunkt steht der Grund | Pfad und Rechte prüfen, laufende Applikation beenden, erneut hinzufügen |
-| «Die bestehende Konfiguration konnte nicht gelesen werden: …» | `apps.json` ist ungültig oder nicht lesbar | Siehe Prüfpunkt [apps.json](06-verification-after-a-service-visit.md); notfalls `apps.json` aus einer Sicherung zurückholen |
+| "Select at least one application." | No application checked. "Next" is disabled. | Check at least one application |
+| "The data folder of Application A lies in the program folder: change it or confirm the risk." | The data folder warning is open for a checked application. "Next" is disabled. | Select the application, change the data folder or confirm the risk |
+| "The data folder must be a full path, e.g. C:\ProgramData\Vendor\App." | Relative path or network path | Enter a full path with drive letter |
+| "The registry key must start with HKLM\\." | Key under `HKCU` or without a root | Enter a key under `HKLM\`. AppStart cannot protect keys of the user (`HKCU`). |
+| "AppA.exe cannot be added: …" | The EXE cannot be read or is currently locked; the reason follows the colon | Check the path and permissions, close the running application, add it again |
+| "The existing configuration could not be read: …" | `apps.json` is invalid or not readable | See check [apps.json](06-verification-after-a-service-visit.md#appsjson); if necessary, restore `apps.json` from a backup |
 
-### Schritt 2: Konten und Gruppe
+### Step 2: Accounts and group
 
-![Setup Schritt 2: Konten und Gruppe](images/setup-2.png)
+![Setup step 2: accounts and group](images/setup-2.png)
 
-Überschrift «Konten und Gruppe», darunter: «Die Applikationen laufen unter einem eigenen Konto. Nur Mitglieder der Gruppe dürfen den Launcher nutzen.»
+Heading "Accounts and group", below it: "The applications run under a dedicated account. Only members of the group may use the launcher."
 
-- **«App-Konto appstart-app»** (Kennzeichen «automatisch»): wird immer eingerichtet. Text bei der Erstinstallation: «Wird angelegt. Admin-Rechte, Zufallspasswort pro PC, keine interaktive Anmeldung und kein Remote Desktop.» Bei bestehender Einrichtung: «Ist vorhanden und wird geprüft. Admin-Rechte, Zufallspasswort pro PC, keine interaktive Anmeldung und kein Remote Desktop.»
-- **«Bedienerkonto appstart-user anlegen»**: anhaken, wenn die Bediener ein gemeinsames lokales Konto nutzen sollen. Dann «Passwort» und «Passwort bestätigen» ausfüllen. Hinweis: «Standard-Benutzer ohne Admin-Rechte, Mitglied der Gruppe AppStart Users.» Existiert das Konto schon, steht dort «Bedienerkonto appstart-user ist bereits vorhanden» mit dem Kennzeichen «vorhanden»; sein Passwort ändert das Setup nicht.
-- **«Weitere Mitglieder der Gruppe AppStart Users»**: bestehende Benutzer eintragen (Feld «Benutzer hinzufügen», Platzhalter `DOMAIN\Benutzer`) und «Hinzufügen» klicken. Mit dem Knopf «Mitglied entfernen» neben einem Eintrag wird er wieder entfernt.
+- **"App account appstart-app"** (badge "automatic"): always set up. Text on first installation: "Will be created. Admin rights, random password per PC, no interactive sign-in and no Remote Desktop." With an existing setup: "Exists and will be verified. Admin rights, random password per PC, no interactive sign-in and no Remote Desktop."
+- **"Create operator account appstart-user"**: check this if the operators should use a shared local account. Then fill in "Password" and "Confirm password". Note: "Standard user without admin rights, member of the group AppStart Users." If the account already exists, it shows "Operator account appstart-user already exists" with the badge "exists"; the setup does not change its password.
+- **"Other members of the group AppStart Users"**: enter existing users (field "Add user", placeholder `DOMAIN\user`) and click "Add". The button "Remove member" next to an entry removes it again.
 
-Meldungen in Schritt 2:
+Messages in step 2:
 
-| Meldung | Ursache | Massnahme |
+| Message | Cause | Action |
 |---|---|---|
-| «Bitte ein Passwort eingeben.» | Bedienerkonto angehakt, Passwort leer | Passwort eingeben oder Haken entfernen |
-| «Die Passwörter stimmen nicht überein.» | «Passwort» und «Passwort bestätigen» unterscheiden sich | Beide Felder neu eingeben |
-| «Konto als DOMAIN\Benutzer, .\Benutzer oder Benutzer angeben.» | Ungültige Schreibweise des Kontos | Konto in einer der drei Schreibweisen eingeben |
-| «Dieses Konto ist bereits in der Liste.» | Konto doppelt eingetragen | – |
+| "Please enter a password." | Operator account checked, password empty | Enter a password or clear the check box |
+| "The passwords do not match." | "Password" and "Confirm password" differ | Enter both fields again |
+| "Enter the account as DOMAIN\user, .\user or user." | Invalid notation of the account | Enter the account in one of the three notations |
+| "This account is already in the list." | Account entered twice | – |
 
-Ob ein eingetragenes Konto existiert, prüft das Setup erst in Schritt 3. Ein unbekanntes Konto oder eine Gruppe (statt eines Benutzers) führt dort zu «Konten und Gruppe konnten nicht eingerichtet werden».
+The setup only checks in step 3 whether an entered account exists. An unknown account or a group (instead of a user) leads to "Accounts and group could not be set up" there.
 
-### Schritt 3: Zusammenfassung und Prüfung
+### Step 3: Summary and verification
 
-Mit «Weiter» in Schritt 2 beginnt die Einrichtung. Überschrift «Einrichtung läuft», Text «Die Schritte werden ausgeführt. Bitte warten.» Darunter erscheint der Fortschritt: «Einrichtung wird gestartet…», dann nacheinander
+"Next" in step 2 starts the setup. Heading "Setup running", text "The steps are being carried out. Please wait." Below it the progress appears: "Starting setup…", then one after the other
 
-1. «Konten und Gruppe werden eingerichtet …»
-2. «Konfiguration wird geschrieben …»
-3. «Datenordner und Registry-Keys werden gesperrt …»
-4. «Verknüpfungen werden angelegt …»
-5. «Dienst wird geprüft …»
-6. «Abschliessende Prüfung läuft…» (`verify`)
+1. "Setting up accounts and group …"
+2. "Writing configuration …"
+3. "Locking data folders and registry keys …"
+4. "Creating shortcuts …"
+5. "Verifying service …"
+6. "Final verification running…" (`verify`)
 
-![Setup Schritt 3: Einrichtung läuft](images/setup-3-laeuft.png)
+![Setup step 3: setup running](images/setup-3-laeuft.png)
 
-Während die Einrichtung läuft, lässt sich das Fenster nicht schliessen. Danach steht je Schritt eine Zeile mit ✓ (erfolgreich) oder ✗ (fehlgeschlagen, mit Grund). Bei Erfolg:
+While the setup is running, you cannot close the window. Afterwards there is one line per step with ✓ (successful) or ✗ (failed, with reason). On success:
 
-- ✓ «Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt» (bzw. «Konto appstart-app und Gruppe AppStart Users angelegt» ohne Bedienerkonto)
-- ✓ «2 Applikationen freigegeben, Konfiguration geschützt»
-- ✓ «Datenordner und Registry-Keys gesperrt»
-- ✓ «Verknüpfungen mit App-Icon angelegt, 2 alte Verknüpfungen gesichert» (Anzahl der ersetzten Verknüpfungen, die direkt auf die EXE zeigten)
-- ✓ «Dienst AppStart läuft, Start automatisch»
+- ✓ "Accounts appstart-app and appstart-user, group AppStart Users created" (or "Account appstart-app and group AppStart Users created" without an operator account)
+- ✓ "2 applications approved, configuration protected"
+- ✓ "Data folders and registry keys locked"
+- ✓ "Shortcuts with app icon created, 2 old shortcuts backed up" (number of replaced shortcuts that pointed directly to the EXE)
+- ✓ "Service AppStart is running, starts automatically"
 
-![Setup Schritt 3: Einrichtung abgeschlossen, Prüfung bestanden](images/setup-3.png)
+![Setup step 3: setup complete, verification passed](images/setup-3.png)
 
-Zum Schluss das Ergebnis der Prüfung und der Pfad des Berichts:
+Finally, the result of the verification and the path of the report:
 
-| Überschrift und Text | Bedeutung |
+| Heading and text | Meaning |
 |---|---|
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 9 von 10 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 8 von 10 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) beheben, Einrichtung erneut ausführen |
-| «Einrichtung unvollständig» – «Nicht alle Schritte waren erfolgreich. Die Prüfung zeigt, was fehlt.» | Mindestens eine Zeile mit ✗. Grund in der Zeile, Massnahme im Kapitel [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md) |
+| "Setup complete" – "All steps were carried out. The final verification passed." with "Verification passed – 10 of 10 checks passed" | Done. Close with "Finish" (exit code 0). |
+| "Setup complete" – "All steps were carried out. The final verification found deviations." with "Verification failed – 1 deviation, 9 of 10 checks passed" or "Verification failed – 2 deviations, 8 of 10 checks passed" | Open the report, correct the deviations as described in [Verification after a service visit](06-verification-after-a-service-visit.md), run the setup again |
+| "Setup incomplete" – "Not all steps succeeded. The verification shows what is missing." | At least one line with ✗. Reason in the line, action in the chapter [Messages and troubleshooting](07-messages-and-troubleshooting.md) |
 
-Weitere Zeilen, die erscheinen können:
+Other lines that can appear:
 
-| Meldung | Bedeutung |
+| Message | Meaning |
 |---|---|
-| «Bericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Pfad des abgelegten Prüfberichts |
-| «Einrichtung abgebrochen: …» | Unerwarteter Fehler; nach dem Doppelpunkt steht der Grund. Einrichtung erneut ausführen. |
-| «Prüfung konnte nicht ausgeführt werden: …» | `verify` ist gescheitert. Über das Startmenü «AppStart – Einrichtung prüfen» wiederholen. |
-| «Bericht konnte nicht gespeichert werden: …» | `C:\ProgramData\AppStart\Reports` ist nicht beschreibbar oder voll |
-| «Der Bericht kann nicht geöffnet werden: …» | Kein Programm für `.html`-Dateien. Bericht mit einem Browser öffnen. |
+| "Report: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html" | Path of the stored verification report |
+| "Setup aborted: …" | Unexpected error; the reason follows the colon. Run the setup again. |
+| "Verification could not be run: …" | `verify` failed. Repeat it through the Start menu entry "AppStart – Verify setup". |
+| "Report could not be saved: …" | `C:\ProgramData\AppStart\Reports` is not writable or full |
+| "The report cannot be opened: …" | No program for `.html` files. Open the report with a browser. |
 
-«Prüfbericht öffnen» zeigt den Bericht im Standard-Browser. «Fertig» schliesst den Assistenten.
+"Open verification report" shows the report in the default browser. "Finish" closes the wizard.
 
-**Abbrechen:** «Abbrechen» in Schritt 1 oder 2 ändert nichts am System (Exit-Code 2). AppStart bleibt installiert, der Assistent lässt sich über «AppStart – Einrichtung» erneut starten, und `verify` meldet die fehlende Einrichtung als Abweichung.
+**Cancel:** "Cancel" in step 1 or 2 changes nothing on the system (exit code 2). AppStart remains installed, you can start the wizard again through "AppStart – Setup", and `verify` reports the missing setup as a deviation.
 
-Exit-Codes des Assistenten: 0 = eingerichtet und Prüfung bestanden, 1 = Fehler oder Abweichungen, 2 = vor der Einrichtung abgebrochen.
+Exit codes of the wizard: 0 = set up and verification passed, 1 = error or deviations, 2 = canceled before the setup.
 
-## Stille Installation
+## Silent installation
 
-Für Softwareverteilung und Skripte. Alles läuft ohne Oberfläche, als SYSTEM oder in einer Eingabeaufforderung «Als Administrator ausführen».
+For software distribution and scripts. Everything runs without a user interface, as SYSTEM or in a command prompt opened with "Run as administrator".
 
-**1. MSI installieren**
+**1. Install the MSI**
 
 ```text
 msiexec /i AppStart-<Version>.msi /qn /l*v C:\Windows\Temp\AppStart-msi.log
 ```
 
-Danach ist AppStart unter `C:\Program Files\AppStart` installiert, der Dienst läuft (wartet auf die Einrichtung), und es erscheint keine Oberfläche. Exit-Codes von `msiexec`: 0 = erfolgreich, 3010 = erfolgreich, Neustart nötig, 1618 = eine andere Installation läuft (später wiederholen), sonst Log-Datei prüfen.
+AppStart is then installed under `C:\Program Files\AppStart`, the service is running (waiting for the setup), and no user interface appears. Exit codes of `msiexec`: 0 = success, 3010 = success, restart required, 1618 = another installation is in progress (try again later), otherwise check the log file.
 
-**2. Applikationen freigeben, Konten einrichten, prüfen**
+**2. Approve applications, set up accounts, verify**
 
 ```text
 set SETUP="C:\Program Files\AppStart\current\AppStart.Setup.exe"
-%SETUP% add --exe "C:\Program Files\Hersteller\AppA\AppA.exe" --data-dir "C:\ProgramData\Hersteller\AppA" --reg-key "HKLM\SOFTWARE\Hersteller\AppA" --name "Applikation A"
-%SETUP% add --exe "C:\Program Files\Hersteller\AppB\AppB.exe"
-%SETUP% add-user --member "DOMAIN\bediener01"
-%SETUP% verify --report "C:\Windows\Temp\appstart-pruefung.html"
+%SETUP% add --exe "C:\Program Files\Vendor\AppA\AppA.exe" --data-dir "C:\ProgramData\Vendor\AppA" --reg-key "HKLM\SOFTWARE\Vendor\AppA" --name "Application A"
+%SETUP% add --exe "C:\Program Files\Vendor\AppB\AppB.exe"
+%SETUP% add-user --member "DOMAIN\operator01"
+%SETUP% verify --report "C:\Windows\Temp\appstart-verification.html"
 ```
 
-Jeder ändernde Befehl (`add`, `add-user`, `remove`, `rehash`) schreibt je Schritt eine Zeile mit ✓ oder ✗, danach «Automatische Prüfung nach der Änderung:» mit dem Ergebnis von `verify`, und endet mit Exit-Code 0 (alles erfolgreich und keine Abweichung), 1 (Fehler oder Abweichung) oder 2 (falsche Angaben bei `add-user`). Massgebend für den Abschluss ist das Ergebnis des abschliessenden `verify`. Alle Befehle und Optionen: [Referenz](09-reference.md).
+Every changing command (`add`, `add-user`, `remove`, `rehash`) writes one line per step with ✓ or ✗, then "Automatic verification after the change:" with the result of `verify`, and ends with exit code 0 (everything successful and no deviation), 1 (error or deviation) or 2 (invalid input for `add-user`). The result of the final `verify` is what counts for completion. All commands and options: [Reference](09-reference.md).
 
-**Bedienerkonto `appstart-user` ohne Eingabe:** Das Passwort wird als eine Zeile über die Standardeingabe übergeben und erscheint so in keiner Befehlszeile:
+**Operator account `appstart-user` without input:** The password is passed as one line through standard input and therefore does not appear on any command line:
 
 ```text
-%SETUP% add-user --name appstart-user --password-stdin < passwort.txt
+%SETUP% add-user --name appstart-user --password-stdin < password.txt
 ```
 
-Die Datei danach sofort löschen. Ohne `--password-stdin` fragt der Befehl «Passwort für appstart-user: » und «Passwort wiederholen: » in der Konsole.
+Delete the file immediately afterwards. Without `--password-stdin`, the command prompts "Password for appstart-user: " and "Repeat password: " in the console.
 
-**Aus PowerShell** wartet der Aufruf mit `Start-Process` auf das Ende und liefert den Exit-Code:
+**From PowerShell**, a call with `Start-Process` waits for the end and returns the exit code:
 
 ```powershell
 $setup = 'C:\Program Files\AppStart\current\AppStart.Setup.exe'
 $p = Start-Process $setup -ArgumentList 'verify' -Wait -PassThru -NoNewWindow
-if ($p.ExitCode -ne 0) { throw "AppStart: Prüfung nicht bestanden (Exit-Code $($p.ExitCode))" }
+if ($p.ExitCode -ne 0) { throw "AppStart: verification failed (exit code $($p.ExitCode))" }
 ```
 
-## Nach der Installation
+## After the installation
 
-1. Prüfbericht ansehen: Ergebnis «Keine Abweichung» (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)).
-2. Als Bediener (Mitglied von `AppStart Users`) anmelden und die Applikation über ihre Verknüpfung im Startmenü oder auf dem Desktop starten. Sie erscheint ohne UAC-Abfrage.
-3. Für die Abnahme die Testapplikation freigeben und prüfen (nächster Abschnitt).
+1. Look at the verification report: result "No deviation" (see [Verification after a service visit](06-verification-after-a-service-visit.md)).
+2. Sign in as an operator (member of `AppStart Users`) and start the application through its shortcut in the Start menu or on the desktop. It appears without a UAC prompt.
+3. For the acceptance test, approve and check the test application (next section).
 
-## Abnahme mit der Testapplikation
+## Acceptance test with the test application
 
-Die Testapplikation `C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe` wird mit AppStart installiert, aber nicht automatisch freigegeben. Sie verhält sich wie ein betroffener Fat Client: Sie verlangt Admin-Rechte, schreibt ein Test-Passwort im Klartext nach `HKLM\SOFTWARE\AppStartTest` und Austauschdateien nach `C:\ProgramData\AppStartTest`.
+The test application `C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe` is installed with AppStart but not approved automatically. It behaves like an affected fat client: it requires admin rights, writes a test password in plain text to `HKLM\SOFTWARE\AppStartTest` and exchange files to `C:\ProgramData\AppStartTest`.
 
 ```text
 %SETUP% add --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe" --data-dir "C:\ProgramData\AppStartTest" --reg-key "HKLM\SOFTWARE\AppStartTest" --name "AppStart TestApp"
 ```
 
-![Testapplikation: alle Anzeigen grün, Kindprozess blockiert](images/testapp.png)
+![Test application: all indicators green, child process blocked](images/testapp.png)
 
-Fenster «AppStart TestApp», Überschrift «Zustand der Testapplikation», darunter «Prüft, ob der Start über AppStart wie vorgesehen funktioniert.» Je Zeile ein Wert und ein Kennzeichen:
+Window "AppStart TestApp", heading "State of the test application", below it "Checks whether starting through AppStart works as intended." Each row shows a value and a badge:
 
-| Zeile | Soll beim Start über AppStart | Abweichung |
+| Row | Expected when started through AppStart | Deviation |
 |---|---|---|
-| «Laufendes Konto» | `<PC>\appstart-app`, «OK» | «Nicht via AppStart»: die TestApp läuft unter einem anderen Konto, wurde also nicht über AppStart gestartet |
-| «Admin-Rechte» | «Ja», «OK» | «Nein», «Fehler» |
-| «Registry lesen/schreiben» | `HKLM\SOFTWARE\AppStartTest`, «OK» | «Fehler» mit Grund: Key gesperrt ohne `appstart-app` oder Rechte falsch |
-| «Dateien lesen/schreiben» | `C:\ProgramData\AppStartTest`, «OK» | «Fehler» mit Grund |
-| «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt» (Modus «gesperrt») oder «Von AppStart sofort beendet (nicht erlaubt)» (Modus «nur erlaubte Hilfsprogramme»), jeweils «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: Modus «alle erlaubt» oder die Eingabeaufforderung steht auf der Liste. «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
-| «Hilfsprogramm (TestHelper)» | nach Klick auf «Erlaubtes Hilfsprogramm starten», je nach Modus der TestApp (siehe [Weitere Programme](04-managing-applications.md)): «Gestartet und beendet: AppStart TestHelper läuft als …» mit «Erlaubt», wenn `AppStart.TestHelper.exe` erlaubt ist; «Start blockiert durch Job-Objekt (Modus gesperrt)» oder «Von AppStart sofort beendet (nicht auf der Liste)» mit «Gesperrt» | «Start fehlgeschlagen: …» mit «Prüfen» |
+| "Running account" | `<PC>\appstart-app`, "OK" | "Not via AppStart": the TestApp runs under a different account, so it was not started through AppStart |
+| "Admin rights" | "Yes", "OK" | "No", "Error" |
+| "Read/write registry" | `HKLM\SOFTWARE\AppStartTest`, "OK" | "Error" with reason: key locked without `appstart-app` or wrong permissions |
+| "Read/write files" | `C:\ProgramData\AppStartTest`, "OK" | "Error" with reason |
+| "Child process (cmd.exe)" | after clicking "Start command prompt": "Start blocked by job object" (mode "blocked") or "Ended immediately by AppStart (not allowed)" (mode "allowed helper programs only"), each with "OK" | "Started – breakout possible" with the badge "Breakout": mode "all allowed" or the command prompt is on the list. "Start failed: …" with the badge "Check": other error, read the reason. |
+| "Helper program (TestHelper)" | after clicking "Start allowed helper program", depending on the mode of the TestApp (see [Other programs](04-managing-applications.md)): "Started and ended: AppStart TestHelper running as …" with "Allowed" if `AppStart.TestHelper.exe` is allowed; "Start blocked by job object (mode blocked)" or "Ended immediately by AppStart (not on the list)" with "Blocked" | "Start failed: …" with "Check" |
 
-Das Hilfsprogramm `AppStart.TestHelper.exe` liegt neben der TestApp. Zum Ausprobieren der Positivliste: `%SETUP% allow-child --app appstart-testapp --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestHelper.exe"`. Danach startet das Hilfsprogramm, die Eingabeaufforderung dagegen beendet AppStart sofort.
+The helper program `AppStart.TestHelper.exe` is located next to the TestApp. To try out the allowlist: `%SETUP% allow-child --app appstart-testapp --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestHelper.exe"`. After that, the helper program starts, whereas AppStart ends the command prompt immediately.
 
-Vor der ersten Prüfung steht beim Kindprozess «Noch nicht geprüft» mit dem Kennzeichen «Offen». «Erneut prüfen» wiederholt die Anzeigen und zeigt «Geprüft um 10:42:17». Im Feld «Testwert» (Vorgabe «Testwert 42») lässt sich ein Wert eingeben; «In Registry und Datei speichern» schreibt ihn und zeigt «Gespeichert um 10:42:30» oder «Speichern fehlgeschlagen: …».
+Before the first check, the child process row shows "Not checked yet" with the badge "Open". "Check again" repeats the checks and shows "Checked at 10:42:17". In the field "Test value" (default "Test value 42") you can enter a value; "Save to registry and file" writes it and shows "Saved at 10:42:30" or "Saving failed: …".
 
-Abnahmeschritte:
+Acceptance steps:
 
-1. Als Bediener über die Verknüpfung «AppStart TestApp» starten: alle Anzeigen «OK».
-2. Als Bediener `HKLM\SOFTWARE\AppStartTest` in regedit öffnen: Zugriff verweigert.
-3. Als Bediener `C:\ProgramData\AppStartTest` im Explorer öffnen: Zugriff verweigert.
-4. Als Bediener `AppStart.TestApp.exe` direkt starten: Meldung «AppStart TestApp» – «Die Testapplikation benötigt Administratorrechte und wird beendet. Bitte über die Verknüpfung von AppStart starten.»
-5. In der TestApp «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt».
-6. Als Administrator ein Byte der TestApp-EXE ändern (auf einer Kopie der Test-VM): Start über die Verknüpfung wird mit «Start verweigert» abgelehnt, Ereignis 1201.
-7. `AppStart.Setup.exe verify` liefert Exit-Code 0; nach absichtlicher Fehlkonfiguration (z.B. Bediener in die Administratoren aufnehmen) ungleich 0.
+1. As an operator, start through the shortcut "AppStart TestApp": all indicators "OK".
+2. As an operator, open `HKLM\SOFTWARE\AppStartTest` in regedit: access denied.
+3. As an operator, open `C:\ProgramData\AppStartTest` in Explorer: access denied.
+4. As an operator, start `AppStart.TestApp.exe` directly: message "AppStart TestApp" – "The test application needs administrator rights and will exit." "Please start it through the AppStart shortcut."
+5. In the TestApp, "Start command prompt": "Start blocked by job object".
+6. As an administrator, change one byte of the TestApp EXE (on a copy on the test VM): the start through the shortcut is rejected with "Launch denied", event 1201.
+7. `AppStart.Setup.exe verify` returns exit code 0; after a deliberate misconfiguration (e.g. adding an operator to the Administrators group) a non-zero code.
 
-Nach der Abnahme die Freigabe der TestApp mit `AppStart.Setup.exe remove --app appstart-testapp` entziehen, wenn sie nicht gebraucht wird. Die AppId zeigt `AppStart.Setup.exe list`.
+After the acceptance test, revoke the approval of the TestApp with `AppStart.Setup.exe remove --app appstart-testapp` if it is not needed. `AppStart.Setup.exe list` shows the AppId.

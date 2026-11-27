@@ -1,82 +1,82 @@
-# Update und Deinstallation
+# Update and uninstall
 
-## Update von AppStart
+## Updating AppStart
 
-AppStart aktualisiert sich nie selbst. Updates installiert der Servicetechniker mit dem neuen Release.
+AppStart never updates itself. The service technician installs updates with the new release.
 
-**Interaktiv:** Neue `AppStart-Setup.exe` starten, UAC bestätigen. Das Installationsprogramm aktualisiert das MSI und öffnet danach den Assistenten mit der bestehenden Konfiguration. Dort ohne Änderung zweimal «Weiter»; am Ende läuft die Prüfung. Ist dieselbe oder eine neuere Version schon installiert, meldet es «AppStart ist bereits installiert» und öffnet nur den Assistenten.
+**Interactive:** Start the new `AppStart-Setup.exe` and confirm the UAC prompt. The installer updates the MSI and then opens the wizard with the existing configuration. Click "Next" twice without changing anything; the verification runs at the end. If the same or a newer version is already installed, it reports "AppStart is already installed" and only opens the wizard.
 
-**Still:**
+**Silent:**
 
 ```text
-msiexec /i AppStart-<neue Version>.msi /qn /l*v C:\Windows\Temp\AppStart-update.log
+msiexec /i AppStart-<new version>.msi /qn /l*v C:\Windows\Temp\AppStart-update.log
 "C:\Program Files\AppStart\current\AppStart.Setup.exe" verify
 ```
 
-Oder `AppStart-Setup.exe /quiet` (Exit-Code wie `msiexec`).
+Or `AppStart-Setup.exe /quiet` (exit code as for `msiexec`).
 
-Was beim Update geschieht:
+What happens during the update:
 
-1. Windows Installer erkennt die ältere Version und ersetzt sie (Major Upgrade).
-2. Der Dienst `AppStart` wird gestoppt und gelöscht, die Startmenü-Einträge von AppStart werden entfernt.
-3. Die neuen Programmdateien werden nach `C:\Program Files\AppStart\current` installiert.
-4. Der Dienst wird neu registriert (automatisch, LocalSystem, Neustart nach Absturz) und gestartet, die Startmenü-Einträge werden neu angelegt.
-5. Die Einrichtung wird automatisch geprüft; der Bericht liegt unter `C:\ProgramData\AppStart\Reports`.
+1. Windows Installer detects the older version and replaces it (major upgrade).
+2. The `AppStart` service is stopped and deleted, and the AppStart Start menu entries are removed.
+3. The new program files are installed to `C:\Program Files\AppStart\current`.
+4. The service is registered again (automatic, LocalSystem, restart after a crash) and started, and the Start menu entries are created again.
+5. The setup is verified automatically; the report is saved under `C:\ProgramData\AppStart\Reports`.
 
-**Unverändert bleiben:** `apps.json` mit allen Freigaben, Konten `appstart-app` und `appstart-user`, Gruppe `AppStart Users` mit ihren Mitgliedern, Verknüpfungen der Applikationen, Rechte auf Datenordnern und Registry-Keys, Prüfberichte.
+**Unchanged:** `apps.json` with all approvals, the accounts `appstart-app` and `appstart-user`, the group `AppStart Users` with its members, the shortcuts of the applications, the permissions on data folders and registry keys, and the verification reports.
 
-Während des Updates (wenige Sekunden) können Bediener keine Applikationen starten («Start-Dienst nicht erreichbar»). Laufende Applikationen bleiben offen.
+During the update (a few seconds) operators cannot start applications ("Launch service not reachable"). Running applications stay open.
 
-Nach dem Update: Prüfbericht ansehen («AppStart – Einrichtung prüfen»), Ergebnis «Keine Abweichung».
+After the update: look at the verification report ("AppStart – Verify setup"); the result must be "No deviation".
 
-## Update einer Applikation
+## Updating an application
 
-Siehe [Applikationen verwalten](04-managing-applications.md): bei Prüfart «SHA-256» immer, bei «Signatur» nur nach Zertifikatswechsel `AppStart.Setup.exe rehash --app <AppId>`, danach Prüfung. Updates der Applikation können Verknüpfungen und Rechte überschreiben; `verify` zeigt das.
+See [Managing applications](04-managing-applications.md): with check type "SHA-256" always, with "Signature" only after a certificate change, run `AppStart.Setup.exe rehash --app <AppId>`, then verify. Updates of the application can overwrite shortcuts and permissions; `verify` shows this.
 
-## Deinstallation
+## Uninstalling
 
-Die Deinstallation hat zwei Schritte in **dieser Reihenfolge**. Der zweite Schritt allein entfernt nur Dienst und Programmdateien, nicht die Einrichtung.
+Uninstalling has two steps, in **this order**. The second step on its own removes only the service and the program files, not the setup.
 
-**1. Einrichtung zurückstellen** (Eingabeaufforderung «Als Administrator ausführen»):
+**1. Restore the setup** (command prompt "Run as administrator"):
 
 ```text
 "C:\Program Files\AppStart\current\AppStart.Setup.exe" uninstall
 ```
 
-Das Setup stellt zurück, was es geändert hat:
+The setup restores what it changed:
 
-| Was | Zustand danach |
+| What | State afterwards |
 |---|---|
-| Verknüpfungen | AppStart-Verknüpfungen gelöscht; ursprüngliche Verknüpfungen, die direkt auf die EXE zeigten, an ihrem alten Ort wiederhergestellt |
-| Datenordner und Registry-Keys | Rechte wie vor der Freigabe (Besitzer und Zugriffsliste des Ordners bzw. Keys; darunterliegende Einträge erben wieder) |
-| Konten und Gruppe | `appstart-app` und `AppStart Users` gelöscht. `appstart-user` nur, wenn das Setup es angelegt hat. Aufgenommene Domänen-Benutzer bleiben unberührt (nur ihre Gruppenmitgliedschaft entfällt mit der Gruppe). |
-| `apps.json` | gelöscht |
-| Prüfberichte | bleiben unter `C:\ProgramData\AppStart\Reports` erhalten |
+| Shortcuts | AppStart shortcuts deleted; original shortcuts that pointed directly to the EXE restored at their old location |
+| Data folders and registry keys | Permissions as before the approval (owner and access control list of the folder or key; entries below inherit again) |
+| Accounts and group | `appstart-app` and `AppStart Users` deleted. `appstart-user` only if the setup created it. Added domain users stay untouched (only their group membership goes away with the group). |
+| `apps.json` | deleted |
+| Verification reports | kept under `C:\ProgramData\AppStart\Reports` |
 
-Erwartete Ausgabe:
+Expected output:
 
 ```text
-✓ Verknüpfungen zurückgestellt, Datenordner und Registry-Keys zurückgesetzt
-✓ Konten und Gruppe entfernt
-✓ Konfiguration entfernt (Prüfberichte bleiben erhalten)
+✓ Shortcuts restored, data folders and registry keys reset
+✓ Accounts and group removed
+✓ Configuration removed (verification reports are kept)
 ```
 
-Das Profil `C:\Users\appstart-app` bleibt nach dem Löschen des Kontos liegen. Es enthält Benutzereinstellungen der Applikationen; bei Bedarf über «Systemeigenschaften» → «Benutzerprofile» löschen.
+The profile `C:\Users\appstart-app` remains after the account is deleted. It contains user settings of the applications; delete it if needed via "System Properties" → "User Profiles".
 
-**2. MSI deinstallieren:** «Einstellungen» → «Apps» → «Installierte Apps» → «AppStart» → «Deinstallieren», oder still:
+**2. Uninstall the MSI:** "Settings" → "Apps" → "Installed apps" → "AppStart" → "Uninstall", or silently:
 
 ```text
 msiexec /x AppStart-<Version>.msi /qn
 ```
 
-Dabei wird der Dienst gestoppt und gelöscht, der Startmenü-Ordner «AppStart» und der Programmordner `C:\Program Files\AppStart` werden entfernt.
+This stops and deletes the service and removes the Start menu folder "AppStart" and the program folder `C:\Program Files\AppStart`.
 
-**Übrig bleibt** `C:\ProgramData\AppStart` mit den Prüfberichten (`Reports`), Protokollen des Installationsprogramms (`Logs`) und dem Ordner `ShortcutBackup`. Nach Ablage der Berichte kann der Ordner als Administrator gelöscht werden. Die Quelle «AppStart» im Ereignisprotokoll bleibt bestehen, damit ältere Einträge lesbar bleiben.
+**What remains** is `C:\ProgramData\AppStart` with the verification reports (`Reports`), the installer logs (`Logs`) and the folder `ShortcutBackup`. Once the reports are filed, an administrator can delete the folder. The source "AppStart" in the Event Log remains so that older entries stay readable.
 
-> **Hinweis:** Wurde das MSI zuerst deinstalliert, ist `AppStart.Setup.exe` nicht mehr vorhanden. Dann AppStart erneut installieren, `uninstall` ausführen und das MSI erneut deinstallieren.
+> **Note:** If the MSI was uninstalled first, `AppStart.Setup.exe` is no longer present. Then install AppStart again, run `uninstall` and uninstall the MSI again.
 
-Nach der Deinstallation starten Bediener die Applikationen wieder wie vorher über die ursprünglichen Verknüpfungen, mit den Rechten ihres eigenen Kontos.
+After uninstalling, operators start the applications as before through the original shortcuts, with the rights of their own account.
 
-### Versionen und Vorabversionen
+### Versions and pre-release versions
 
-Windows Installer vergleicht nur die ersten drei Stellen der Version und kennt keine Vorabversionen. Aus `0.2.0-dev.7` und `0.2.0-dev.8` wird für das MSI beide Male `0.2.0.0`: Das zweite MSI ist dann **kein Update** des ersten. Updates beim Kunden immer mit einer höheren Version ausliefern (z. B. `0.2.0` → `0.2.1`). Vorabversionen derselben Version vorher deinstallieren.
+Windows Installer compares only the first three parts of the version and knows no pre-release versions. Both `0.2.0-dev.7` and `0.2.0-dev.8` become `0.2.0.0` for the MSI: the second MSI is then **not an update** of the first. Always ship updates to customers with a higher version (e.g. `0.2.0` → `0.2.1`). Uninstall pre-release versions of the same version first.

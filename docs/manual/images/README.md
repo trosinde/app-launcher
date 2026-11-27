@@ -1,42 +1,44 @@
-# Bilder des Handbuchs
+# Images of the manual
 
-Bildschirmfotos stammen aus der **fertigen Software auf der Test-VM**, nicht aus den UI-Entwürfen. Format PNG, Fenster ohne Schatten, 100 % Skalierung, Windows 11. Keine echten Kunden- oder Domänennamen und keine Namen von Personen.
+Screenshots come from the **finished software on the test VM**, not from the UI designs. Format PNG, windows without shadow, 100 % scaling, Windows 11. No real customer or domain names and no names of persons.
 
-Aufgenommen werden sie mit `tests/e2e/Capture-ManualScreenshots.ps1` (im UAT-Runner Suite `Manual`). Die Test-VM heisst `WIN11`; dieser Name erscheint in den Bildern statt `PC-014` aus den UI-Entwürfen.
+> **To do (translate-to-english, task 4.2):** The existing screenshots still show the German user interface. They must be retaken from the English build with the same script. The "Content" column below already describes the English texts the new screenshots must show.
 
-Nachbearbeitung, damit kein Personenname im Handbuch steht:
+They are captured with `tests/e2e/Capture-ManualScreenshots.ps1` (suite `Manual` in the UAT runner). The test VM is named `WIN11`; this name appears in the images instead of `PC-014` from the UI designs.
 
-- `pruefansicht-ok.png`, `pruefansicht-abweichung.png`: Der Wert «Servicetechniker» zeigt das angemeldete Konto. Der Kontoname nach `WIN11\` ist durch «techniker» ersetzt.
-- `testapp.png`: Die Titelleiste ist abgeschnitten. Das Fenster läuft unter `appstart-app` und lässt sich aus der Testsitzung nicht in den Vordergrund holen, die Titelleiste erscheint dann blass.
+Post-processing, so that no person's name appears in the manual:
 
-Solange eine Datei fehlt, setzt `build/ManualBuilder` im PDF einen Platzhalter mit dem Bildtitel ein. Der Test `AppStart.Documentation.Tests` verlangt, dass jedes im Handbuch verwendete Bild entweder vorhanden ist oder hier aufgeführt wird.
+- `pruefansicht-ok.png`, `pruefansicht-abweichung.png`: The value "Service technician" shows the signed-in account. The account name after `WIN11\` is replaced with "technician".
+- `testapp.png`: The title bar is cut off. The window runs under `appstart-app` and cannot be brought to the foreground from the test session; the title bar then appears faded.
 
-## Vorhanden
+As long as a file is missing, `build/ManualBuilder` inserts a placeholder with the image title in the PDF. The test `AppStart.Documentation.Tests` requires that every image used in the manual either exists or is listed here.
 
-| Datei | Kapitel | Inhalt | Stand |
+## Available
+
+| File | Chapter | Content | Version |
 |---|---|---|---|
-| `funktionsweise.svg` | 1 Überblick | Funktionsweise in einem Bild, von Hand gezeichnet | – |
-| `bootstrapper.png` | 3 Installation | `AppStart-Setup.exe` während der MSI-Installation | 0.3.0-uat.5 |
-| `setup-1.png` | 3 Installation | Assistent Schritt 1, TestApp mit Datenordner und Registry-Key, «Weitere Programme: Gesperrt (empfohlen)» | 0.3.0-uat.5 |
-| `setup-2.png` | 3 Installation | Assistent Schritt 2, Bedienerkonto, Beispielmitglied `DOMAIN\bediener01` | 0.3.0-uat.5 |
-| `setup-3-laeuft.png` | 3 Installation | Assistent Schritt 3 während der Einrichtung | älterer Stand (vor add-allowed-child-processes); die Einrichtung ist auf der Test-VM zu schnell für eine neue Aufnahme |
-| `setup-3.png` | 3 Installation | Assistent Schritt 3 abgeschlossen, «Prüfung bestanden – 9 von 9 Prüfpunkten erfüllt» | 0.3.0-uat.5 |
-| `testapp.png` | 3 Installation | TestApp als Bediener, «Start blockiert durch Job-Objekt» | 0.3.0-uat.5 |
-| `setup-weitere-programme.png` | 4 Applikationen | Schritt 1 mit «Nur erlaubte Hilfsprogramme», «Hilfsprogramme (1)…», Spalte «1 erlaubt» | 0.3.0-uat.5 |
-| `hilfsprogramme.png` | 4 Applikationen | Dialog «Erlaubte Hilfsprogramme» mit TestHelper (SHA-256, nicht signiert) | 0.3.0-uat.5 |
-| `lernmodus.png` | 4 Applikationen | «Lernmodus läuft» mit TestHelper und cmd.exe aufgezeichnet | 0.3.0-uat.5 |
-| `lernergebnis.png` | 4 Applikationen | «Vorschläge übernehmen»: TestHelper angehakt, cmd.exe «Eingabeaufforderung – nur von Hand» | 0.3.0-uat.5 |
-| `pruefansicht-ok.png` | 6 Prüfung | Prüfansicht ohne Abweichung, 9 Prüfpunkte | 0.3.0-uat.5, anonymisiert |
-| `pruefansicht-abweichung.png` | 6 Prüfung | Abweichung bei «Konten»: `appstart-user` in den Administratoren | 0.3.0-uat.5, anonymisiert |
-| `verify-konsole.png` | 6 Prüfung | `AppStart.Setup.exe verify` mit derselben Abweichung | 0.3.0-uat.5 |
-| `launcher-nicht-erreichbar.png` | 7 Meldungen | Dienst gestoppt: «Start-Dienst nicht erreichbar» | 0.3.0-uat.5 |
-| `launcher-verweigert.png` | 7 Meldungen | Ein Byte der EXE geändert: «Start verweigert» mit Ereignis-ID | 0.3.0-uat.5 |
+| `funktionsweise.svg` | 1 Overview | How it works in one picture, drawn by hand | – |
+| `bootstrapper.png` | 3 Installation | `AppStart-Setup.exe` during the MSI installation | 0.3.0-uat.5 (German UI) |
+| `setup-1.png` | 3 Installation | Wizard step 1, TestApp with data folder and registry key, "Other programs: Blocked (recommended)" | 0.3.0-uat.5 (German UI) |
+| `setup-2.png` | 3 Installation | Wizard step 2, operator account, example member `DOMAIN\operator01` | 0.3.0-uat.5 (German UI) |
+| `setup-3-laeuft.png` | 3 Installation | Wizard step 3 during the setup | older version (before add-allowed-child-processes, German UI); the setup is too fast on the test VM for a new capture |
+| `setup-3.png` | 3 Installation | Wizard step 3 completed, "Verification passed – 9 of 9 checks passed" | 0.3.0-uat.5 (German UI) |
+| `testapp.png` | 3 Installation | TestApp as operator, "Start blocked by job object" | 0.3.0-uat.5 (German UI) |
+| `setup-weitere-programme.png` | 4 Applications | Step 1 with "Allowed helper programs only", "Helper programs (1)…", column "1 allowed" | 0.3.0-uat.5 (German UI) |
+| `hilfsprogramme.png` | 4 Applications | Dialog "Allowed helper programs" with TestHelper (SHA-256, not signed) | 0.3.0-uat.5 (German UI) |
+| `lernmodus.png` | 4 Applications | "Learning mode running" with TestHelper and cmd.exe recorded | 0.3.0-uat.5 (German UI) |
+| `lernergebnis.png` | 4 Applications | "Apply suggestions": TestHelper checked, cmd.exe "command prompt – manual only" | 0.3.0-uat.5 (German UI) |
+| `pruefansicht-ok.png` | 6 Verification | Verification view without deviation, 9 checks | 0.3.0-uat.5 (German UI), anonymized |
+| `pruefansicht-abweichung.png` | 6 Verification | Deviation at "Accounts": `appstart-user` in Administrators | 0.3.0-uat.5 (German UI), anonymized |
+| `verify-konsole.png` | 6 Verification | `AppStart.Setup.exe verify` with the same deviation | 0.3.0-uat.5 (German UI) |
+| `launcher-nicht-erreichbar.png` | 7 Messages | Service stopped: "Launch service not reachable" | 0.3.0-uat.5 (German UI) |
+| `launcher-verweigert.png` | 7 Messages | One byte of the EXE changed: "Launch denied" with event ID | 0.3.0-uat.5 (German UI) |
 
-## Fehlende Bildschirmfotos
+## Missing screenshots
 
-Beide zeigen Fenster von Windows selbst. Die Test-VM hat eine englische Oberfläche, das Handbuch braucht deutsches Windows. Aufnahme auf einer VM mit deutscher Oberfläche, mit demselben Skript.
+Both show windows of Windows itself. Capture them with the same script on the test VM, which has an English user interface.
 
-| Datei | Kapitel | Bildschirm | Zustand |
+| File | Chapter | Screen | State |
 |---|---|---|---|
-| `startmenue.png` | 3 Installation | Startmenü, Ordner «AppStart» aufgeklappt | Einträge «AppStart – Einrichtung», «AppStart – Einrichtung prüfen», «AppStart – Handbuch» sichtbar |
-| `ereignisanzeige.png` | 7 Meldungen | Ereignisanzeige, Protokoll «Anwendung», gefiltert auf Quelle AppStart | Eintrag 1201 markiert, Text mit «Vorgang: …» sichtbar; Windows aktiviert (kein Wasserzeichen) |
+| `startmenue.png` | 3 Installation | Start menu, folder "AppStart" expanded | Entries "AppStart – Setup", "AppStart – Verify setup", "AppStart – Manual" visible |
+| `ereignisanzeige.png` | 7 Messages | Event Viewer, log "Application", filtered on source AppStart | Entry 1201 selected, text with "Incident: …" visible; Windows activated (no watermark) |

@@ -1,72 +1,72 @@
-# Konten und Gruppe
+# Accounts and group
 
-## Übersicht
+## Overview
 
-| Konto / Gruppe | Wird angelegt | Eigenschaften |
+| Account / group | Created | Properties |
 |---|---|---|
-| `appstart-app` | immer | Lokales Konto, Mitglied der Administratoren. Benutzerrechte «Lokal anmelden verweigern» (`SeDenyInteractiveLogonRight`) und «Anmelden über Remotedesktopdienste verweigern» (`SeDenyRemoteInteractiveLogonRight`). Zufallspasswort pro PC, das niemand kennt und das nirgends gespeichert wird. Beschreibung: «AppStart: Konto für freigegebene Applikationen (keine interaktive Anmeldung)». |
-| `AppStart Users` | immer | Lokale Gruppe. Nur Mitglieder dürfen die Pipe des Dienstes öffnen, also Applikationen über AppStart starten. Sonst hat die Gruppe keine Rechte. |
-| `appstart-user` | auf Wunsch | Lokales Standardkonto ohne Admin-Rechte, Mitglied von `AppStart Users`. Passwort vergibt der Installateur. Beschreibung: «AppStart: Bedienerkonto». |
+| `appstart-app` | always | Local account, member of the Administrators group. User rights "Deny log on locally" (`SeDenyInteractiveLogonRight`) and "Deny log on through Remote Desktop Services" (`SeDenyRemoteInteractiveLogonRight`). Random password per PC that nobody knows and that is not stored anywhere. Description: "AppStart: account for approved applications (no interactive sign-in)". |
+| `AppStart Users` | always | Local group. Only members may open the pipe of the service, i.e. start applications through AppStart. Otherwise the group has no rights. |
+| `appstart-user` | on request | Local standard account without admin rights, member of `AppStart Users`. The installer assigns the password. Description: "AppStart: operator account". |
 
-Die Applikationen laufen als `appstart-app`. Der Dienst meldet das Konto per S4U an, ohne Passwort. Voraussetzung ist das Recht «Als Batchauftrag anmelden», das `appstart-app` über die Administratoren hat (Windows-Standard). Das Profil des Kontos liegt unter `C:\Users\appstart-app`; dort speichert die Applikation ihre Benutzereinstellungen (HKCU). Bediener können es nicht lesen.
+The applications run as `appstart-app`. The service signs in the account through S4U, without a password. This requires the right "Log on as a batch job", which `appstart-app` has through the Administrators group (Windows default). The profile of the account is located under `C:\Users\appstart-app`; the application stores its user settings (HKCU) there. Operators cannot read it.
 
-## Bedienerkonto anlegen
+## Creating the operator account
 
-**Im Assistenten:** Schritt 2, «Bedienerkonto appstart-user anlegen» anhaken, Passwort zweimal eingeben, «Weiter».
+**In the wizard:** Step 2, check "Create operator account appstart-user", enter the password twice, "Next".
 
-**Über die Kommandozeile:**
+**Through the command line:**
 
 ```text
 %SETUP% add-user --name appstart-user
 ```
 
-Der Befehl fragt «Passwort für appstart-user: » und «Passwort wiederholen: ». Die Eingabe bleibt unsichtbar. Sind beide leer oder verschieden: «Passwort leer oder nicht identisch.», Exit-Code 2.
+The command prompts "Password for appstart-user: " and "Repeat password: ". The input stays hidden. If both are empty or different: "Password empty or not identical.", exit code 2.
 
-Für Skripte das Passwort als eine Zeile über die Standardeingabe übergeben:
-
-```text
-%SETUP% add-user --name appstart-user --password-stdin < passwort.txt
-```
-
-Hinweise:
-
-- Mit `--name` lässt sich nur `appstart-user` anlegen. Ein anderer Name ergibt «Mit --name kann nur das Konto appstart-user angelegt werden.», Exit-Code 2.
-- Existiert `appstart-user` bereits, bleibt das Konto mit seinem Passwort unverändert.
-- Das Passwort muss die Kennwortrichtlinie des PCs erfüllen, sonst «Konten und Gruppe konnten nicht eingerichtet werden: … Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).»
-- Passwort später ändern: wie bei jedem lokalen Konto, z.B. «Computerverwaltung» → «Lokale Benutzer und Gruppen» → `appstart-user` → «Kennwort festlegen».
-
-## Weitere Benutzer in die Gruppe aufnehmen
-
-Bediener können statt `appstart-user` ihr eigenes lokales oder Domänen-Konto verwenden.
-
-**Im Assistenten:** Schritt 2, unter «Weitere Mitglieder der Gruppe AppStart Users» das Konto als `DOMAIN\Benutzer`, `.\Benutzer` (lokal) oder `Benutzer` eintragen, «Hinzufügen», «Weiter».
-
-**Über die Kommandozeile:**
+For scripts, pass the password as one line through standard input:
 
 ```text
-%SETUP% add-user --member "DOMAIN\bediener01"
+%SETUP% add-user --name appstart-user --password-stdin < password.txt
 ```
 
-Genau eine Angabe ist erlaubt: `--name appstart-user` **oder** `--member "<Konto>"`. Sonst: «Bitte genau eine Angabe machen: --name appstart-user oder --member "DOMAIN\User".», Exit-Code 2.
+Notes:
 
-Nur Benutzerkonten können aufgenommen werden, keine Gruppen wie «Jeder» oder «Benutzer»: Sonst stünde AppStart allen offen. Ein Konto, das nicht existiert, oder eine Gruppe führt zu «Konten und Gruppe konnten nicht eingerichtet werden» mit dem Grund, z.B. «Das Konto «DOMAIN\xy» wurde nicht gefunden.» oder «… ist kein Benutzerkonto. Nur Benutzer können in «AppStart Users» aufgenommen werden.»
+- With `--name`, you can only create `appstart-user`. Any other name results in "With --name only the account appstart-user can be created.", exit code 2.
+- If `appstart-user` already exists, the account and its password remain unchanged.
+- The password must meet the password policy of the PC, otherwise "Accounts and group could not be set up: … The password does not meet the password policy of this computer (length, complexity or history)."
+- To change the password later: as for any local account, e.g. "Computer Management" → "Local Users and Groups" → `appstart-user` → "Set Password…".
 
-> **Wichtig:** Die Mitgliedschaft wirkt erst nach einer **neuen Anmeldung** des Benutzers. Vorher zeigt der Launcher «Keine Berechtigung».
+## Adding other users to the group
 
-## Benutzer aus der Gruppe entfernen
+Instead of `appstart-user`, operators can use their own local or domain account.
 
-- **Im Assistenten:** Schritt 2, beim Konto auf ✕ («Mitglied entfernen») klicken, dann «Weiter». Das gilt für jedes Mitglied der Gruppe, auch für Konten aus früheren Einrichtungen und für von Hand eingetragene. Unter der Liste steht: «Mit ✕ entfernte Mitglieder nimmt das Setup beim Übernehmen aus der Gruppe. Die Änderung wirkt nach der nächsten Anmeldung des Benutzers.» `appstart-user` steht nicht in der Liste; es bleibt Mitglied, solange das Konto existiert.
-- **Von Hand:** «Computerverwaltung» → «Lokale Benutzer und Gruppen» → «Gruppen» → `AppStart Users` → Mitglied entfernen. Oder in PowerShell als Administrator: `Remove-LocalGroupMember -Group "AppStart Users" -Member "DOMAIN\bediener01"`.
+**In the wizard:** Step 2, under "Other members of the group AppStart Users", enter the account as `DOMAIN\user`, `.\user` (local) or `user`, "Add", "Next".
 
-Die Kommandozeile hat keinen Befehl zum Entfernen einzelner Mitglieder.
+**Through the command line:**
 
-## Warnung: Administratoren ohne Passwort
+```text
+%SETUP% add-user --member "DOMAIN\operator01"
+```
 
-Hat ein aktiviertes Konto in der Gruppe Administratoren kein Passwort, zeigt Schritt 2 einen gelben Kasten, z.B. «Administratoren ohne Passwort: PC-014\service. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.» Die Einrichtung ist trotzdem möglich. Passwort setzen: `net user <Konto> *` in einer Eingabeaufforderung «Als Administrator ausführen», oder das Konto deaktivieren. Siehe Prüfpunkt [Administratoren mit Passwort](06-verification-after-a-service-visit.md#adminpasswort).
+Exactly one option is allowed: `--name appstart-user` **or** `--member "<Account>"`. Otherwise: "Specify exactly one option: --name appstart-user or --member "DOMAIN\User".", exit code 2.
 
-## Regeln für den Betrieb
+Only user accounts can be added, no groups such as "Everyone" or "Users": otherwise AppStart would be open to everyone. An account that does not exist, or a group, leads to "Accounts and group could not be set up" with the reason, e.g. "The account "DOMAIN\xy" was not found." or "… is not a user account. Only users can be added to "AppStart Users"."
 
-- **Bediener nie in die Administratoren aufnehmen**, auch nicht vorübergehend für einen Serviceeinsatz, ohne die Mitgliedschaft danach zu entfernen. `verify` meldet jedes Mitglied von `AppStart Users`, das Administrator ist.
-- `appstart-app` nicht umbenennen, deaktivieren oder dessen Passwort setzen. Das Konto wird nur von AppStart genutzt.
-- Die Anmeldesperren von `appstart-app` nicht entfernen. Setzt eine Domänen-Gruppenrichtlinie die Rechte «Lokal anmelden verweigern» oder «Anmelden über Remotedesktopdienste verweigern», muss sie `appstart-app` (bzw. `<PC>\appstart-app`) enthalten.
-- Fehlt ein Konto oder die Gruppe (z.B. versehentlich gelöscht), die Einrichtung erneut ausführen («AppStart – Einrichtung», «Weiter», «Weiter»). Das Setup legt Fehlendes neu an. Nach dem Neuanlegen der Gruppe den Dienst neu starten (siehe Prüfpunkt [Pipe](06-verification-after-a-service-visit.md)).
+> **Important:** The membership only takes effect after the user **signs in again**. Until then, the launcher shows "No permission".
+
+## Removing users from the group
+
+- **In the wizard:** Step 2, click ✕ ("Remove member") next to the account, then "Next". This applies to every member of the group, including accounts from earlier setups and accounts entered by hand. Below the list it says: "Members removed with ✕ are taken out of the group when the setup is applied. The change takes effect at the user's next sign-in." `appstart-user` is not in the list; it remains a member as long as the account exists.
+- **By hand:** "Computer Management" → "Local Users and Groups" → "Groups" → `AppStart Users` → remove the member. Or in PowerShell as administrator: `Remove-LocalGroupMember -Group "AppStart Users" -Member "DOMAIN\operator01"`.
+
+The command line has no command for removing individual members.
+
+## Warning: administrators without a password
+
+If an enabled account in the Administrators group has no password, step 2 shows a yellow box, e.g. "Administrators without a password: PC-014\service. Anyone can then sign in to this PC as an administrator and remove the protection. Set a password or disable the account; otherwise the verification reports it as a deviation." The setup is still possible. To set a password: `net user <Account> *` in a command prompt opened with "Run as administrator", or disable the account. See check [Administrators with password](06-verification-after-a-service-visit.md#adminpasswort).
+
+## Rules for operation
+
+- **Never add operators to the Administrators group**, not even temporarily for a service visit, without removing the membership afterwards. `verify` reports every member of `AppStart Users` who is an administrator.
+- Do not rename or disable `appstart-app` and do not set its password. The account is used only by AppStart.
+- Do not remove the sign-in restrictions of `appstart-app`. If a domain Group Policy sets the rights "Deny log on locally" or "Deny log on through Remote Desktop Services", it must include `appstart-app` (or `<PC>\appstart-app`).
+- If an account or the group is missing (e.g. deleted by accident), run the setup again ("AppStart – Setup", "Next", "Next"). The setup creates whatever is missing. After the group has been created again, restart the service (see check [Pipe](06-verification-after-a-service-visit.md#pipe)).

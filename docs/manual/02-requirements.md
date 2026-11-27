@@ -1,49 +1,49 @@
-# Voraussetzungen
+# Requirements
 
 ## Windows
 
-| Punkt | Vorgabe |
+| Item | Requirement |
 |---|---|
-| Betriebssystem | Windows 11 x64 oder Windows 10 x64, deutsch oder andere Sprache. Getestet unter Windows 11 Pro; der Test unter Windows 10 ist noch offen. |
-| .NET | Nicht nötig. Alle Programme bringen ihre Laufzeit mit. |
-| Installationsort | Immer `C:\Program Files\AppStart` (Installation für den ganzen Rechner). Ein Installationsort, den Benutzer beschreiben können, ist nicht zulässig. |
-| Dienste | Der Dienst `AppStart` läuft als LocalSystem und startet automatisch. |
-| Gruppenrichtlinien | Werden die Benutzerrechte «Lokal anmelden verweigern» oder «Anmelden über Remotedesktopdienste verweigern» per Domänen-Richtlinie gesetzt, überschreibt die Richtlinie die Einstellung des Setups. Das Konto `appstart-app` muss dann in der Richtlinie ergänzt werden (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)). Das Recht «Als Batchauftrag anmelden» muss den Administratoren erhalten bleiben (Windows-Standard), sonst kann der Dienst `appstart-app` nicht anmelden. |
+| Operating system | Windows 11 x64 or Windows 10 x64, German or another language. Tested on Windows 11 Pro; the test on Windows 10 is still pending. |
+| .NET | Not required. All programs include their own runtime. |
+| Installation location | Always `C:\Program Files\AppStart` (per-machine installation). An installation location that users can write to is not permitted. |
+| Services | The service `AppStart` runs as LocalSystem and starts automatically. |
+| Group Policy | If the user rights "Deny log on locally" or "Deny log on through Remote Desktop Services" are set by a domain policy, the policy overrides the setting of the setup. The account `appstart-app` must then be added to the policy (see [Verification after a service visit](06-verification-after-a-service-visit.md)). The right "Log on as a batch job" must remain granted to the Administrators (Windows default), otherwise the service cannot sign in `appstart-app`. |
 
-## Rechte des Installateurs
+## Rights of the installer
 
-- Installation, Einrichtung, Änderungen und `verify` brauchen **Admin-Rechte**. `AppStart-Setup.exe` und `AppStart.Setup.exe` fragen per UAC danach.
-- Für die Kommandozeile eine **Eingabeaufforderung oder PowerShell «Als Administrator ausführen»** öffnen. Nur dann erscheinen die Ausgaben von `AppStart.Setup.exe` im selben Fenster.
-- Die stille Installation per Softwareverteilung läuft als SYSTEM.
-- Bediener brauchen keine Admin-Rechte. Sie müssen Mitglied der Gruppe `AppStart Users` sein.
+- Installation, setup, changes and `verify` require **admin rights**. `AppStart-Setup.exe` and `AppStart.Setup.exe` request them through UAC.
+- For the command line, open a **command prompt or PowerShell with "Run as administrator"**. Only then does the output of `AppStart.Setup.exe` appear in the same window.
+- The silent installation through software distribution runs as SYSTEM.
+- Operators do not need admin rights. They must be members of the group `AppStart Users`.
 
-## Angaben je Applikation
+## Information per application
 
-Vor der Einrichtung je Applikation klären und notieren:
+Before the setup, clarify and write down for each application:
 
-| Angabe | Beispiel | Pflicht | Hinweis |
+| Information | Example | Required | Note |
 |---|---|---|---|
-| Programmdatei (EXE) | `C:\Program Files\Hersteller\AppA\AppA.exe` | ja | Absoluter Pfad mit Laufwerksbuchstabe. Keine Netzwerkpfade (`\\server\…`). Die EXE muss in einem Ordner liegen, den Bediener nicht beschreiben können (z.B. unter `C:\Program Files`). |
-| Anzeigename | `Applikation A` | nein | Name der Verknüpfung und Fenstertitel von Meldungen. Ohne Angabe: Dateibeschreibung bzw. Produktname der EXE, sonst der Dateiname. |
-| Datenordner | `C:\ProgramData\Hersteller\AppA` | nein | Ordner mit Austauschdateien oder Passwörtern. Wird für Bediener gesperrt. Vollständiger Pfad, kein Laufwerk und kein Systemordner, keine Verknüpfung (Junction). |
-| Registry-Key | `HKLM\SOFTWARE\Hersteller\AppA` | nein | Key mit Passwörtern der Applikation. Muss mit `HKLM\` beginnen. Wird für Bediener gesperrt. |
-| Signiert? | ja / nein | – | Das Setup erkennt es selbst. Signierte EXE werden über das Zertifikat geprüft (übersteht Updates), unsignierte über SHA-256 (nach jedem Update `rehash`). |
-| Startet die Applikation weitere Programme? | nein | – | Standard: Kindprozesse sind gesperrt. Vorher mit der Applikation testen: Drucken, Export, Hilfe, Dialog «Datei öffnen». |
-| Netzwerkzugriff mit Windows-Anmeldung? | nein | – | Funktioniert über AppStart nicht (siehe [Überblick](01-overview.md)). |
+| Program file (EXE) | `C:\Program Files\Vendor\AppA\AppA.exe` | yes | Absolute path with drive letter. No network paths (`\\server\…`). The EXE must be in a folder that operators cannot write to (e.g. under `C:\Program Files`). |
+| Display name | `Application A` | no | Name of the shortcut and window title of messages. If omitted: file description or product name of the EXE, otherwise the file name. |
+| Data folder | `C:\ProgramData\Vendor\AppA` | no | Folder with exchange files or passwords. Locked for operators. Full path, not a drive and not a system folder, not a junction. |
+| Registry key | `HKLM\SOFTWARE\Vendor\AppA` | no | Key with passwords of the application. Must start with `HKLM\`. Locked for operators. |
+| Signed? | yes / no | – | The setup detects it automatically. Signed EXEs are verified through the certificate (survives updates), unsigned ones through SHA-256 (`rehash` after every update). |
+| Does the application start other programs? | no | – | Default: child processes are blocked. Test with the application beforehand: printing, export, help, "Open file" dialog. |
+| Network access with Windows sign-in? | no | – | Does not work through AppStart (see [Overview](01-overview.md)). |
 
-## Angaben zu den Bedienern
+## Information about the operators
 
-- Soll das lokale Bedienerkonto `appstart-user` angelegt werden? Dann ein Passwort festlegen, das der Kennwortrichtlinie des PCs entspricht.
-- Welche bestehenden lokalen oder Domänen-Benutzer (`DOMAIN\Benutzer`) sollen in die Gruppe `AppStart Users`? Nur Benutzerkonten, keine Gruppen.
-- Bediener dürfen **nicht** Mitglied der Administratoren sein; `verify` meldet das als Abweichung.
+- Should the local operator account `appstart-user` be created? Then choose a password that meets the password policy of the PC.
+- Which existing local or domain users (`DOMAIN\user`) should be added to the group `AppStart Users`? Only user accounts, no groups.
+- Operators must **not** be members of the Administrators group; `verify` reports this as a deviation.
 
-## Lieferumfang
+## Scope of delivery
 
-| Datei | Verwendung |
+| File | Use |
 |---|---|
-| `AppStart-Setup.exe` | Interaktive Installation: installiert das MSI und öffnet die Einrichtung |
-| `AppStart-<Version>.msi` | Stille Installation über Softwareverteilung (`msiexec`) |
-| `SHA256SUMS.txt` | Prüfsummen der Lieferung |
-| `AppStart-Handbuch-<Version>.pdf` | Dieses Handbuch, zum Lesen vor der Installation. Dieselbe Datei wird mit AppStart installiert und öffnet sich im Startmenü unter «AppStart – Handbuch». |
+| `AppStart-Setup.exe` | Interactive installation: installs the MSI and opens the setup |
+| `AppStart-<Version>.msi` | Silent installation through software distribution (`msiexec`) |
+| `SHA256SUMS.txt` | Checksums of the delivery |
+| `AppStart-Manual-<Version>.pdf` | This manual, for reading before the installation. The same file is installed with AppStart and opens from the Start menu under "AppStart – Manual". |
 
-Alle Programmdateien und das MSI sind mit dem Zertifikat des Herausgebers signiert. Vor der Installation in den Eigenschaften der Datei (Register «Digitale Signaturen») prüfen.
+All program files and the MSI are signed with the publisher's certificate. Check this before the installation in the file's properties ("Digital Signatures" tab).

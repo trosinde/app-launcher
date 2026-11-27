@@ -1,230 +1,230 @@
-# Meldungen und Fehlerbehebung
+# Messages and troubleshooting
 
-## Meldungen des Launchers
+## Launcher messages
 
-Der Launcher steht hinter jeder Verknüpfung einer freigegebenen Applikation. Bei Erfolg zeigt er nichts: Die Applikation erscheint nach kurzer Zeit. Sonst zeigt er genau eine Meldung mit «OK»-Knopf. Der Fenstertitel ist der Name der Verknüpfung, also der Name der Applikation (ohne Verknüpfung: «AppStart»).
+The launcher is behind every shortcut of an approved application. On success it shows nothing: the application appears after a short time. Otherwise it shows exactly one message with an "OK" button. The window title is the name of the shortcut, i.e. the name of the application (without a shortcut: "AppStart").
 
-![Meldung des Launchers: Start-Dienst nicht erreichbar](images/launcher-nicht-erreichbar.png)
+![Launcher message: Launch service not reachable](images/launcher-nicht-erreichbar.png)
 
-![Meldung des Launchers: Start verweigert mit Vorgangsnummer](images/launcher-verweigert.png)
+![Launcher message: Launch denied with incident number](images/launcher-verweigert.png)
 
-Bei «Start verweigert» steht unten eine Zeile wie «Ereignis-ID 4821930571 · 15.11.2026 10:51». Die Zahl ist die **Vorgangsnummer** dieser Ablehnung, nicht die ID des Ereignistyps. So finden Sie den passenden Eintrag: Ereignisanzeige → «Windows-Protokolle» → «Anwendung» → rechts «Suchen…» → Vorgangsnummer eingeben. Der Eintrag (Quelle AppStart, ID 1200 bis 1205) enthält «Vorgang: 4821930571» und den genauen Grund. Datum und Uhrzeit helfen, wenn der Bediener die Nummer nicht notiert hat.
+With "Launch denied", a line such as "Event ID 4821930571 · 15.11.2026 10:51" appears at the bottom. The number is the **incident number** of this denial, not the ID of the event type. To find the matching entry: Event Viewer → "Windows Logs" → "Application" → on the right "Find…" → enter the incident number. The entry (source AppStart, ID 1200 to 1205) contains "Incident: 4821930571" and the exact reason. Date and time help if the operator did not note the number.
 
-Exit-Codes des Launchers (für Skripte und Fehlersuche): 0 = gestartet, 1 = ungültige Verknüpfung, 2 = Dienst nicht erreichbar, 3 = Start verweigert oder läuft bereits, 4 = keine Berechtigung, 5 = unerwartete Antwort.
+Exit codes of the launcher (for scripts and troubleshooting): 0 = started, 1 = invalid shortcut, 2 = service not reachable, 3 = launch denied or already in progress, 4 = no permission, 5 = unexpected response.
 
-### Start-Dienst nicht erreichbar
+### Launch service not reachable
 
-> «Der Dienst AppStart läuft nicht. Bitte wenden Sie sich an Ihren Administrator oder den Service.»
+> "The AppStart service is not running. Please contact your administrator or service support."
 
-**Ursache:** Der Launcher erreicht die Pipe `\\.\pipe\AppStart` nicht innerhalb von 3 Sekunden. Der Dienst ist gestoppt, startet gerade (kurz nach dem Hochfahren), wartet noch auf die Einrichtung (Ereignis 1301) oder konnte nicht starten (Ereignis 1300 oder 1301). Ebenso, wenn alle vier Verbindungen des Dienstes gerade belegt sind.
+**Cause:** The launcher does not reach the pipe `\\.\pipe\AppStart` within 3 seconds. The service is stopped, is just starting (shortly after boot), is still waiting for the setup (event 1301) or could not start (event 1300 or 1301). The same happens if all four connections of the service are busy at the moment.
 
-**Massnahme:** Einen Moment warten und erneut versuchen. Bleibt es: Dienst prüfen (`sc query AppStart`), starten (`sc start AppStart`), Ereignisprotokoll prüfen. Danach `verify`. Exit-Code 2.
+**Action:** Wait a moment and try again. If it persists: check the service (`sc query AppStart`), start it (`sc start AppStart`), check the Event Log. Then run `verify`. Exit code 2.
 
-### Keine Berechtigung
+### No permission
 
-> «Ihr Benutzerkonto darf Applikationen nicht über AppStart starten. Bitte wenden Sie sich an Ihren Administrator.»
+> "Your user account may not start applications through AppStart. Please contact your administrator."
 
-**Ursache:** Der angemeldete Benutzer ist nicht Mitglied der Gruppe `AppStart Users`, oder er wurde erst aufgenommen und hat sich seither nicht neu angemeldet. Der Dienst lehnt die Verbindung schon auf der Pipe ab; im Ereignisprotokoll steht deshalb nichts.
+**Cause:** The signed-in user is not a member of the group `AppStart Users`, or was only just added and has not signed in again since. The service rejects the connection already at the pipe; therefore there is nothing in the Event Log.
 
-**Massnahme:** Benutzer in die Gruppe aufnehmen ([Konten und Gruppe](05-accounts-and-group.md)), abmelden und neu anmelden. Exit-Code 4.
+**Action:** Add the user to the group ([Accounts and group](05-accounts-and-group.md)), sign out and sign in again. Exit code 4.
 
-### Ungültige Verknüpfung
+### Invalid shortcut
 
-> «Diese Verknüpfung ist nicht korrekt eingerichtet. Bitte wenden Sie sich an den Service.»
+> "This shortcut is not set up correctly. Please contact service support."
 
-**Ursache:** Der Launcher wurde ohne `--app <AppId>`, mit zusätzlichen Argumenten oder mit einer AppId in ungültigem Format aufgerufen, z.B. über eine von Hand kopierte oder geänderte Verknüpfung oder durch direkten Start von `AppStart.Launcher.exe`.
+**Cause:** The launcher was called without `--app <AppId>`, with additional arguments or with an AppId in an invalid format, e.g. through a shortcut copied or changed by hand, or by starting `AppStart.Launcher.exe` directly.
 
-**Massnahme:** Verknüpfung löschen und die Einrichtung erneut ausführen («AppStart – Einrichtung», «Weiter», «Weiter»), damit das Setup sie neu anlegt. Exit-Code 1.
+**Action:** Delete the shortcut and run the setup again ("AppStart – Setup", "Next", "Next") so that the setup recreates it. Exit code 1.
 
-### Start verweigert – Applikation verändert
+### Launch denied – application modified
 
-> «Die Applikation wurde verändert und darf nicht gestartet werden. Der Vorfall wurde protokolliert. Bitte wenden Sie sich an den Service.»
+> "The application has been modified and may not be started. The incident has been logged. Please contact service support."
 
-**Ursache:** Signatur oder SHA-256 der EXE stimmen nicht mit der Freigabe überein (Ereignis 1201). Meist ein Update der Applikation, sonst eine Manipulation.
+**Cause:** The signature or SHA-256 of the EXE does not match the approval (event 1201). Usually an update of the application, otherwise tampering.
 
-**Massnahme:** Eintrag zur Vorgangsnummer im Ereignisprotokoll lesen. Bekanntes Update: `AppStart.Setup.exe rehash --app <AppId>` ([Applikationen verwalten](04-managing-applications.md)). Sonst als Sicherheitsvorfall behandeln: EXE nicht anders starten, Service informieren. Exit-Code 3.
+**Action:** Read the entry for the incident number in the Event Log. Known update: `AppStart.Setup.exe rehash --app <AppId>` ([Managing applications](04-managing-applications.md)). Otherwise treat as a security incident: do not start the EXE any other way, inform service support. Exit code 3.
 
-### Start verweigert – nicht freigegeben
+### Launch denied – not approved
 
-> «Diese Applikation ist für den Start über AppStart nicht freigegeben. Der Vorfall wurde protokolliert. Bitte wenden Sie sich an den Service.»
+> "This application is not approved for starting through AppStart. The incident has been logged. Please contact service support."
 
-**Ursache:** Die AppId der Verknüpfung steht nicht in `apps.json` (Ereignis 1200). Die Freigabe wurde entzogen, aber eine Verknüpfung blieb übrig, oder eine Verknüpfung wurde von Hand angelegt.
+**Cause:** The AppId of the shortcut is not in `apps.json` (event 1200). The approval was revoked but a shortcut was left behind, or a shortcut was created by hand.
 
-**Massnahme:** Applikation freigeben ([Applikationen verwalten](04-managing-applications.md)) oder die übrig gebliebene Verknüpfung löschen. Exit-Code 3.
+**Action:** Approve the application ([Managing applications](04-managing-applications.md)) or delete the leftover shortcut. Exit code 3.
 
-### Start verweigert – Einrichtung nicht in Ordnung
+### Launch denied – setup not in order
 
-> «Die Einrichtung von AppStart ist nicht in Ordnung. Der Start wurde verweigert und protokolliert. Bitte wenden Sie sich an den Service.»
+> "The AppStart setup is not in order. The start was denied and logged. Please contact service support."
 
-**Ursache:** `apps.json` fehlt, ist ungültig oder kann von Nicht-Administratoren verändert werden (Ereignis 1202). Der Dienst verweigert dann jeden Start.
+**Cause:** `apps.json` is missing, is invalid or can be changed by non-administrators (event 1202). The service then denies every start.
 
-**Massnahme:** `AppStart.Setup.exe verify` ausführen und den Prüfpunkt [apps.json](06-verification-after-a-service-visit.md) beheben. Exit-Code 3.
+**Action:** Run `AppStart.Setup.exe verify` and fix the check [apps.json](06-verification-after-a-service-visit.md#appsjson). Exit code 3.
 
-### Start verweigert – sonstiger Fehler
+### Launch denied – other error
 
-> «Die Applikation konnte nicht gestartet werden. Der Vorfall wurde protokolliert. Bitte wenden Sie sich an den Service.»
+> "The application could not be started. The incident has been logged. Please contact service support."
 
-**Ursache:** Prüfung bestanden, aber der Start ist technisch gescheitert (Ereignis 1205), z.B. weil `appstart-app` fehlt, deaktiviert ist oder sich nicht anmelden darf («Als Batchauftrag anmelden»), oder die EXE fehlt.
+**Cause:** Verification passed, but the start failed technically (event 1205), e.g. because `appstart-app` is missing, is disabled or may not sign in ("Log on as a batch job"), or the EXE is missing.
 
-**Massnahme:** Eintrag zur Vorgangsnummer lesen (Ereignis 1205 mit Grund), `verify` ausführen und Abweichungen beheben. Exit-Code 3.
+**Action:** Read the entry for the incident number (event 1205 with reason), run `verify` and fix the deviations. Exit code 3.
 
-### Start läuft bereits
+### Start already in progress
 
-> «Die Applikation wird gerade gestartet. Bitte warten Sie einen Moment und versuchen Sie es dann erneut.»
+> "The application is being started. Please wait a moment and then try again."
 
-**Ursache:** In dieser Sitzung läuft schon eine Startanfrage, oder die letzte Anfrage liegt weniger als 2 Sekunden zurück (Doppelklick, Ereignis 1203).
+**Cause:** A start request is already running in this session, or the last request was less than 2 seconds ago (double-click, event 1203).
 
-**Massnahme:** Kurz warten. Die Applikation erscheint meist von selbst. Exit-Code 3.
+**Action:** Wait briefly. The application usually appears on its own. Exit code 3.
 
-### Unerwartete Antwort
+### Unexpected response
 
-> «Der Dienst AppStart hat unerwartet geantwortet. Bitte wenden Sie sich an den Service.»
+> "The AppStart service responded unexpectedly. Please contact service support."
 
-**Ursache:** Die Antwort des Dienstes war nicht lesbar oder kam nicht innerhalb von 30 Sekunden, z.B. weil Launcher und Dienst aus verschiedenen Versionen stammen oder der Dienst während der Anfrage beendet wurde.
+**Cause:** The response of the service was not readable or did not arrive within 30 seconds, e.g. because the launcher and the service come from different versions or the service was stopped during the request.
 
-**Massnahme:** Ereignisprotokoll prüfen (1204, 1302). AppStart mit dem aktuellen MSI neu installieren, damit Launcher und Dienst dieselbe Version haben. Exit-Code 5.
+**Action:** Check the Event Log (1204, 1302). Reinstall AppStart with the current MSI so that the launcher and the service have the same version. Exit code 5.
 
 <a id="installationsprogramm"></a>
-## Meldungen des Installationsprogramms AppStart-Setup.exe
+## Messages of the installer AppStart-Setup.exe
 
-Fenstertitel «AppStart Setup». Jede Meldung zeigt Überschrift, Ursache, eine Zeile «Massnahme: …» und, wenn ein Protokoll entstanden ist, «Protokoll: C:\ProgramData\AppStart\Logs\install-20261115-104212.log». Mit `/quiet` erscheint keine Meldung; dann zählen Exit-Code und Protokolle unter `C:\ProgramData\AppStart\Logs`.
+Window title "AppStart Setup". Every message shows a heading, the cause, a line "Action: …" and, if a log was written, "Log: C:\ProgramData\AppStart\Logs\install-20261115-104212.log". With `/quiet` no message appears; then the exit code and the logs under `C:\ProgramData\AppStart\Logs` are what counts.
 
-Während der Installation: «AppStart wird installiert …» – «Bitte warten. Die Installation kann einige Minuten dauern. Danach startet die Einrichtung.»
+During the installation: "Installing AppStart …" – "Please wait. The installation can take a few minutes. Afterwards the setup starts."
 
-| Überschrift | Text | Massnahme (wie angezeigt) | Exit-Code | Assistent startet |
+| Heading | Text | Action (as shown) | Exit code | Wizard starts |
 |---|---|---|---|---|
-| «Neustart erforderlich» | «AppStart wurde installiert. Damit alle Änderungen wirksam werden, ist ein Neustart erforderlich.» | «Führen Sie zuerst die Einrichtung durch und starten Sie den Rechner danach neu.» | 3010 | ja |
-| «AppStart ist bereits installiert» | «Installiert ist Version 0.2.0, dieses Setup enthält Version 0.2.0. Die Installation wird übersprungen.» | «Keine. Die Einrichtung startet direkt.» | 0 | ja |
-| «Installation abgebrochen» | «Die Installation wurde abgebrochen (Code 1602). AppStart wurde nicht geändert.» | «Starten Sie AppStart-Setup.exe erneut, um die Installation zu wiederholen.» | 1602 | nein |
-| «Eine andere Installation läuft gerade» | «Eine andere Installation läuft gerade. Bitte warten und erneut versuchen. (Code 1618)» | «Warten Sie, bis die andere Installation (zum Beispiel Windows Update) abgeschlossen ist, und starten Sie AppStart-Setup.exe dann erneut.» | 1618 | nein |
-| «Installation fehlgeschlagen» | «Bei der Installation ist ein schwerwiegender Fehler aufgetreten (Code 1603). AppStart wurde nicht installiert.» | «Prüfen Sie das Protokoll. Wenden Sie sich mit dem Protokoll an den Service.» | 1603 | nein |
-| «Installation fehlgeschlagen» | «Das Installationsprogramm hat mit dem Fehler 1638 geendet. AppStart wurde nicht installiert.» (jeder andere Code von `msiexec`) | wie oben | Code von `msiexec` | nein |
-| «Kein Installationspaket enthalten» | «Diese AppStart-Setup.exe enthält kein Installationspaket (Entwicklungs-Build) und kann AppStart nicht installieren.» | «Verwenden Sie die AppStart-Setup.exe aus dem offiziellen Release.» | 1620 | nein |
-| «Administratorrechte erforderlich» | «AppStart-Setup.exe läuft ohne Administratorrechte und kann AppStart nicht installieren.» | «Starten Sie AppStart-Setup.exe mit einem Administratorkonto und bestätigen Sie die Abfrage der Benutzerkontensteuerung.» | 5 | nein |
-| «Ordner nicht geschützt» | «Der Ordner C:\ProgramData\AppStart kann von Benutzern ohne Administratorrechte verändert werden oder ist ein Verweis. Aus Sicherheitsgründen wird nicht installiert.» | «Lassen Sie den Ordner durch einen Administrator prüfen oder löschen und starten Sie AppStart-Setup.exe dann erneut.» | 1603 | nein |
-| «Installationspaket konnte nicht entpackt werden» | «Das Installationspaket konnte nicht nach C:\ProgramData\AppStart\Installer\… geschrieben werden: …» | «Prüfen Sie den freien Speicherplatz auf Laufwerk C: und starten Sie AppStart-Setup.exe erneut.» | 1603 | nein |
-| «Installationsprogramm nicht startbar» | «Windows Installer (msiexec.exe) konnte nicht gestartet werden: …» | «Starten Sie den Rechner neu und starten Sie AppStart-Setup.exe dann erneut. Hilft das nicht, wenden Sie sich an den Service.» | 1603 | nein |
-| «Einrichtung nicht gefunden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe fehlt. Die Einrichtung kann nicht starten.» | «Starten Sie AppStart-Setup.exe erneut. Hilft das nicht, wenden Sie sich an den Service.» | 2 | nein |
-| «Einrichtung nicht vertrauenswürdig» | «Die Signatur von C:\Program Files\AppStart\current\AppStart.Setup.exe ist ungültig oder stammt nicht vom Herausgeber dieses Setups. Die Einrichtung wird aus Sicherheitsgründen nicht gestartet.» | «Starten Sie die Einrichtung nicht von Hand. Wenden Sie sich an den Service.» | 577 | nein |
-| «Einrichtung konnte nicht gestartet werden» | «AppStart ist installiert, aber C:\Program Files\AppStart\current\AppStart.Setup.exe konnte nicht gestartet werden: …» | «Starten Sie die Einrichtung über das Startmenü (AppStart – Einrichtung).» | 1 | nein |
-| «Unbekannter Parameter» | «Der Parameter «/x» ist unbekannt.», danach die Hilfe | «Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet, mit /quiet /config \<Antwortdatei> (absoluter Pfad) oder mit /? für die Hilfe.» | 87 | nein |
-| «Unerwarteter Fehler» | «Bei der Installation ist ein unerwarteter Fehler aufgetreten: …» | «Wenden Sie sich mit dem Protokoll an den Service.» | 1603 | nein |
+| "Restart required" | "AppStart has been installed. A restart is required for all changes to take effect." | "Complete the setup first and then restart the computer." | 3010 | yes |
+| "AppStart is already installed" | "Version 0.2.0 is installed, this setup contains version 0.2.0. The installation is skipped." | "None. The setup starts directly." | 0 | yes |
+| "Installation canceled" | "The installation was canceled (code 1602). AppStart was not changed." | "Start AppStart-Setup.exe again to repeat the installation." | 1602 | no |
+| "Another installation is in progress" | "Another installation is in progress. Please wait and try again. (Code 1618)" | "Wait until the other installation (for example Windows Update) has finished, then start AppStart-Setup.exe again." | 1618 | no |
+| "Installation failed" | "A fatal error occurred during the installation (code 1603). AppStart was not installed." | "Check the log. Contact service support with the log." | 1603 | no |
+| "Installation failed" | "The installer ended with error 1638. AppStart was not installed." (any other code of `msiexec`) | as above | code of `msiexec` | no |
+| "No installation package included" | "This AppStart-Setup.exe contains no installation package (development build) and cannot install AppStart." | "Use the AppStart-Setup.exe from the official release." | 1620 | no |
+| "Administrator rights required" | "AppStart-Setup.exe is running without administrator rights and cannot install AppStart." | "Start AppStart-Setup.exe with an administrator account and confirm the User Account Control prompt." | 5 | no |
+| "Folder not protected" | "The folder C:\ProgramData\AppStart can be changed by users without administrator rights or is a reparse point. For security reasons nothing is installed." | "Have an administrator check or delete the folder, then start AppStart-Setup.exe again." | 1603 | no |
+| "Installation package could not be extracted" | "The installation package could not be written to C:\ProgramData\AppStart\Installer\…: …" | "Check the free disk space on drive C: and start AppStart-Setup.exe again." | 1603 | no |
+| "Installer cannot be started" | "Windows Installer (msiexec.exe) could not be started: …" | "Restart the computer, then start AppStart-Setup.exe again. If that does not help, contact service support." | 1603 | no |
+| "Setup not found" | "AppStart is installed, but C:\Program Files\AppStart\current\AppStart.Setup.exe is missing. The setup cannot start." | "Start AppStart-Setup.exe again. If that does not help, contact service support." | 2 | no |
+| "Setup not trustworthy" | "The signature of C:\Program Files\AppStart\current\AppStart.Setup.exe is invalid or does not come from the publisher of this setup. For security reasons the setup is not started." | "Do not start the setup by hand. Contact service support." | 577 | no |
+| "Setup could not be started" | "AppStart is installed, but C:\Program Files\AppStart\current\AppStart.Setup.exe could not be started: …" | "Start the setup from the Start menu (AppStart – Setup)." | 1 | no |
+| "Unknown parameter" | "The parameter "/x" is unknown.", followed by the help | "Start AppStart-Setup.exe without parameters, with /quiet, with /quiet /config \<answer file> (absolute path) or with /? for help." | 87 | no |
+| "Unexpected error" | "An unexpected error occurred during the installation: …" | "Contact service support with the log." | 1603 | no |
 
-Erläuterungen für den Service:
+Notes for service support:
 
-- **«Installation abgebrochen» (1602):** Die Installation wurde abgebrochen, z.B. weil ein Benutzer sich abgemeldet hat. Nichts wurde geändert.
-- **«Eine andere Installation läuft gerade» (1618):** Windows Installer ist durch eine andere Installation belegt (Windows Update, Softwareverteilung). Warten, dann wiederholen.
-- **«Installation fehlgeschlagen» (1603 und andere Codes):** Im Protokoll `install-….log` nach «Return value 3» suchen; die Zeilen davor nennen den Grund. Häufig: Dienst lässt sich nicht stoppen, Dateien gesperrt, zu wenig Platz.
-- **«Ordner nicht geschützt»:** Absichtliche Sperre. `C:\ProgramData\AppStart` existiert schon, aber Benutzer ohne Admin-Rechte dürfen darin schreiben, oder der Ordner ist ein Verweis (Junction, symbolischer Link). Typisch: Ein Bediener oder ein anderes Programm hat den Ordner vor der Installation angelegt. Würde das Installationsprogramm dort das MSI entpacken und mit Admin-Rechten ausführen, könnte ein Bediener es vorher austauschen. **Behebung:** Ordner prüfen. Ist AppStart noch nicht eingerichtet, Ordner als Administrator löschen (`rmdir /s /q C:\ProgramData\AppStart`) und `AppStart-Setup.exe` erneut starten. Enthält er eine bestehende Einrichtung (`apps.json`, `Reports`), als möglichen Sicherheitsvorfall behandeln: Inhalt prüfen, Rechte durch einen Administrator auf SYSTEM und Administratoren beschränken (`icacls C:\ProgramData\AppStart /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F /T`), dann erneut starten und `verify` ausführen.
-- **«Einrichtung nicht vertrauenswürdig» (577):** `AppStart.Setup.exe` im Programmordner ist nicht mit dem Zertifikat des Installationsprogramms signiert. Möglich sind ein Mischbestand verschiedener Builds oder eine Manipulation. AppStart mit dem offiziellen Release neu installieren. Bei unsignierten Entwicklungs-Builds wird die Prüfung übersprungen; das Protokoll `bootstrapper-….log` enthält dann eine Zeile «WARNUNG».
-- **«Kein Installationspaket enthalten» (1620):** Entwicklungs-Build ohne eingebettetes MSI. Offizielles Release verwenden.
+- **"Installation canceled" (1602):** The installation was canceled, e.g. because a user signed out. Nothing was changed.
+- **"Another installation is in progress" (1618):** Windows Installer is busy with another installation (Windows Update, software distribution). Wait, then repeat.
+- **"Installation failed" (1603 and other codes):** Search the log `install-….log` for "Return value 3"; the lines before it name the reason. Common: the service cannot be stopped, files are locked, not enough space.
+- **"Folder not protected":** Intentional block. `C:\ProgramData\AppStart` already exists, but users without admin rights may write to it, or the folder is a reparse point (junction, symbolic link). Typical: an operator or another program created the folder before the installation. If the installer extracted the MSI there and ran it with admin rights, an operator could replace it beforehand. **Fix:** Check the folder. If AppStart is not set up yet, delete the folder as administrator (`rmdir /s /q C:\ProgramData\AppStart`) and start `AppStart-Setup.exe` again. If it contains an existing setup (`apps.json`, `Reports`), treat as a possible security incident: check the content, have an administrator restrict the permissions to SYSTEM and Administrators (`icacls C:\ProgramData\AppStart /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F /T`), then start again and run `verify`.
+- **"Setup not trustworthy" (577):** `AppStart.Setup.exe` in the program folder is not signed with the certificate of the installer. Possible causes are a mix of different builds or tampering. Reinstall AppStart with the official release. For unsigned development builds the check is skipped; the log `bootstrapper-….log` then contains a line "WARNING".
+- **"No installation package included" (1620):** Development build without an embedded MSI. Use the official release.
 
-Hilfe (`AppStart-Setup.exe /?`), Fenster «AppStart-Setup.exe»:
+Help (`AppStart-Setup.exe /?`), window "AppStart-Setup.exe":
 
 ```text
 AppStart-Setup.exe
-    Installiert AppStart und startet danach die Einrichtung.
+    Installs AppStart and then starts the setup.
 
 AppStart-Setup.exe /quiet
-    Installiert nur, ohne Oberfläche und ohne Einrichtung. Der Exit-Code ist der von msiexec (0 oder 3010 = erfolgreich).
+    Installs only, without user interface and without setup. The exit code is that of msiexec (0 or 3010 = success).
 
-AppStart-Setup.exe /quiet /config <Antwortdatei>
-    Installiert und richtet danach ohne Oberfläche nach der Antwortdatei ein (AppStart.Setup.exe apply). Exit-Code 0 oder 3010 = erfolgreich, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig.
+AppStart-Setup.exe /quiet /config <answer file>
+    Installs and then sets up without user interface from the answer file (AppStart.Setup.exe apply). Exit code 0 or 3010 = success, 10 = setup with error or deviation, 11 = answer file invalid.
 
 AppStart-Setup.exe /?
-    Zeigt diese Hilfe.
+    Shows this help.
 ```
 
-Darunter: «Protokolle: C:\ProgramData\AppStart\Logs».
+Below it: "Logs: C:\ProgramData\AppStart\Logs".
 
-## Ereignisprotokoll
+## Event Log
 
-Der Dienst schreibt in das Protokoll **Anwendung** mit der Quelle **AppStart**. Ereignisanzeige: `eventvwr.msc` → «Windows-Protokolle» → «Anwendung» → «Aktuelles Protokoll filtern…» → Ereignisquelle «AppStart».
+The service writes to the **Application** log with the source **AppStart**. Event Viewer: `eventvwr.msc` → "Windows Logs" → "Application" → "Filter Current Log…" → event source "AppStart".
 
-![Ereignisanzeige mit einem Eintrag der Quelle AppStart](images/ereignisanzeige.png)
+![Event Viewer with an entry of the source AppStart](images/ereignisanzeige.png)
 
-Jede Startanfrage steht mit Zeit, Benutzer, Sitzung, AppId und Ergebnis im Protokoll. Abgelehnte Anfragen enthalten die Vorgangsnummer, die der Launcher anzeigt, und den genauen Grund; diese Details erfährt der Launcher nie.
+Every start request is logged with time, user, session, AppId and result. Denied requests contain the incident number that the launcher shows and the exact reason; the launcher never learns these details.
 
-| ID | Stufe | Bedeutung | Massnahme |
+| ID | Level | Meaning | Action |
 |---|---|---|---|
-| 1000 | Information | Dienst gestartet, Pipe bereit. Text: «Dienst AppStart gestartet, Pipe bereit. Rechte: \<SDDL>» | Keine. Die SDDL muss der [Referenz](09-reference.md) entsprechen. |
-| 1001 | Information | Dienst beendet. Text: «Dienst AppStart beendet.» | Keine, wenn gewollt (Update, Neustart). Sonst prüfen, wer den Dienst gestoppt hat. |
-| 1100 | Information | Applikation gestartet. Text: «Start ausgeführt. Benutzer: …, Session: …, AppId: …, EXE: …, Prozess: \<PID>, weitere Programme: …» mit Modus («gesperrt», «nur erlaubte Hilfsprogramme», «alle erlaubt»), gegebenenfalls «Lernmodus bis …», und Ergebnis der Prüfung | Keine |
-| 1101 | Information | Hilfsprogramm erlaubt: Die Applikation hat ein Programm von ihrer Liste der erlaubten Hilfsprogramme gestartet, oder das Konsolenfenster von Windows (conhost.exe). Text: «Hilfsprogramm erlaubt. Benutzer: …, Session: …, AppId: …, Pfad: …, Prozess: …» | Keine |
-| 1102 | Information | Lernmodus: Programm aufgezeichnet. Text mit Benutzer, AppId, Pfad, Elternprozess und Signatur | Keine. Am Ende des Lernmodus die Vorschläge prüfen und übernehmen. |
-| 1206 | Warnung | Programm beendet: Die Applikation hat ein Programm gestartet, das nicht erlaubt ist, oder dessen Prüfung fehlschlug (z.B. «Prüfsumme stimmt nicht»). Text: «Programm beendet. Benutzer: …, Session: …, AppId: …, Pfad: …, Prozess: …, beendet: ja. Grund: …» | Gehört das Programm zur Applikation, in die Liste der erlaubten Hilfsprogramme aufnehmen bzw. Prüfsumme aktualisieren. Sonst: Versuch, ein fremdes Programm mit Admin-Rechten zu starten, dem Service melden. «beendet: NEIN» sofort dem Service melden. |
-| 1207 | Fehler | Lernmodus ignoriert: `C:\ProgramData\AppStart\learn.json` ist für Bediener beschreibbar oder ungültig. Es gilt die Liste der erlaubten Hilfsprogramme. | `verify` ausführen, Rechte von `C:\ProgramData\AppStart` korrigieren, Lernmodus neu starten. |
-| 1208 | Fehler | Überwachung gestört: Ein neuer Prozess im Job war nicht prüfbar, eine Aufzeichnung im Lernmodus misslang, oder die Überwachung einer Applikation ist ausgefallen (dann werden alle ihre Prozesse beendet). | Grund im Text an den Service melden. |
-| 1200 | Warnung | Abgelehnt: AppId nicht freigegeben (`unknown-app`). Text: «Start verweigert (unknown-app). Vorgang: \<Nummer>, Benutzer: …, Session: …, AppId: …. AppId ist nicht in apps.json freigegeben.» | Applikation freigeben oder Verknüpfung entfernen |
-| 1201 | Warnung | Abgelehnt: Signatur oder SHA-256 falsch (`integrity`). Grund: «SHA-256 weicht ab: …», «Authenticode-Prüfung fehlgeschlagen (0x…)», «Signaturzertifikat nicht lesbar.» oder «Signatur gültig, aber fremdes Zertifikat: …» | Bekanntes Update: `rehash`. Sonst Sicherheitsvorfall. |
-| 1202 | Warnung | Abgelehnt: Konfiguration fehlt, ungültig oder unsicher (`config`). Grund wie beim Prüfpunkt [apps.json](06-verification-after-a-service-visit.md) | `verify`, Prüfpunkt «apps.json» beheben |
-| 1203 | Warnung | Abgelehnt: in dieser Sitzung läuft bereits eine Anfrage oder die Sperrzeit von 2 s läuft (`busy`). Grund: «Session hat bereits eine Anfrage in Arbeit oder ist in der Sperrzeit.» | Keine. Häufung: Bediener auf Einfachklick hinweisen. |
-| 1204 | Warnung | Ungültige Anfrage verworfen, ohne Antwort. Text: «Ungültige Anfrage verworfen. Benutzer: …, Session: …, Länge: … Byte.» oder «Keine Anfrage innerhalb von 2 s. Benutzer: …, Session: ….» | Einzeln: harmlos (z.B. abgebrochener Launcher). Gehäuft oder mit fremdem Benutzer: Versuch, den Dienst mit eigenen Programmen anzusprechen. Benutzer ermitteln, Sicherheitsvorfall prüfen. |
-| 1205 | Warnung | Start technisch gescheitert (`error`). Text mit EXE und Fehler, z.B. Anmeldung von `appstart-app` fehlgeschlagen | `verify`, besonders Prüfpunkt «Konten». Grund im Text an den Service melden. |
-| 1300 | Fehler | Pipe existiert bereits, der Dienst startet nicht. Text: «Dienst startet nicht: …». **Sicherheitsereignis:** ein anderes Programm hat `\\.\pipe\AppStart` vor dem Dienst angelegt, um Anfragen abzufangen. | Als Sicherheitsvorfall behandeln. PC neu starten; tritt es wieder auf, Programme im Autostart prüfen, Service informieren. |
-| 1301 | Warnung oder Fehler | Pipe kann nicht angelegt werden. Warnung «Gruppe «AppStart Users» fehlt: AppStart ist noch nicht eingerichtet. Der Dienst wartet und versucht es alle 10 s erneut.» oder Fehler «Dienst startet nicht: Pipe kann nicht angelegt werden. …» | Warnung vor der Einrichtung: normal, Einrichtung abschliessen. Danach: Gruppe fehlt, Einrichtung erneut ausführen und Dienst neu starten. Fehler: Grund lesen, PC neu starten. |
-| 1302 | Fehler oder Warnung | Fehler an der Pipe: «Pipe-Instanz kann nicht angelegt werden, neuer Versuch in 5 s: …» oder «Pipe-Verbindung abgebrochen: …» | Einzeln: harmlos, der Dienst läuft weiter. Gehäuft: Grund an den Service melden. |
-| 1400 | Information | Lernmodus gestartet für eine AppId, mit Ablaufzeit | Keine. Während des Lernmodus den PC nicht unbeaufsichtigt lassen. |
-| 1401 | Information | Lernmodus beendet (von Hand oder abgelaufen). Text: «Lernmodus abgelaufen (…), es gilt wieder der eingestellte Modus.» | Keine |
+| 1000 | Information | Service started, pipe ready. Text: "Service AppStart started, pipe ready. Permissions: \<SDDL>" | None. The SDDL must match the [Reference](09-reference.md). |
+| 1001 | Information | Service stopped. Text: "Service AppStart stopped." | None if intended (update, restart). Otherwise check who stopped the service. |
+| 1100 | Information | Application started. Text: "Launch succeeded. User: …, Session: …, AppId: …, EXE: …, Process: \<PID>, Other programs: …" with the mode ("blocked", "allowed helper programs only", "all allowed"), if applicable ", learning mode until …", and the result of the verification | None |
+| 1101 | Information | Helper program allowed: the application started a program from its list of allowed helper programs, or the Windows console window (conhost.exe). Text: "Helper program allowed. User: …, Session: …, AppId: …, Path: …, Process: …" | None |
+| 1102 | Information | Learning mode: program recorded. Text "Learning mode: program recorded. …" with user, AppId, path, parent process and signature | None. At the end of learning mode, check and apply the suggestions. |
+| 1206 | Warning | Program ended: the application started a program that is not allowed or whose verification failed (e.g. "Checksum does not match"). Text: "Program ended. User: …, Session: …, AppId: …, Path: …, Process: …, Ended: yes. Reason: …" | If the program belongs to the application, add it to the list of allowed helper programs or update its checksum. Otherwise: an attempt to start a foreign program with admin rights; report it to service support. Report "Ended: NO" to service support immediately. |
+| 1207 | Error | Learning mode ignored: `C:\ProgramData\AppStart\learn.json` is writable by operators or invalid. The list of allowed helper programs applies. Text: "Learning mode ignored, the allowlist applies. …" | Run `verify`, correct the permissions of `C:\ProgramData\AppStart`, restart learning mode. |
+| 1208 | Error | Monitoring disrupted: a new process in the job could not be verified, a recording in learning mode failed, or the monitoring of an application failed (then all its processes are ended). | Report the reason in the text to service support. |
+| 1200 | Warning | Denied: AppId not approved (`unknown-app`). Text: "Launch denied (unknown-app). Incident: \<Number>, User: …, Session: …, AppId: …. AppId is not approved in apps.json." | Approve the application or remove the shortcut |
+| 1201 | Warning | Denied: signature or SHA-256 wrong (`integrity`). Reason: "SHA-256 differs: …", "Authenticode check failed (0x…).", "Signing certificate not readable." or "Signature valid, but foreign certificate: …" | Known update: `rehash`. Otherwise security incident. |
+| 1202 | Warning | Denied: configuration missing, invalid or unsafe (`config`). Reason as for the check [apps.json](06-verification-after-a-service-visit.md#appsjson) | `verify`, fix the check "apps.json" |
+| 1203 | Warning | Denied: a request is already running in this session or the lockout period of 2 s is running (`busy`). Reason: "Session already has a request in progress or is in the lockout period." | None. If frequent: tell operators to single-click. |
+| 1204 | Warning | Invalid request discarded, without response. Text: "Invalid request discarded. User: …, Session: …, Length: … bytes." or "No request within 2 s. User: …, Session: …." | Single occurrence: harmless (e.g. an aborted launcher). Frequent or with a foreign user: an attempt to address the service with other programs. Identify the user, check for a security incident. |
+| 1205 | Warning | Start failed technically (`error`). Text with EXE and error, e.g. sign-in of `appstart-app` failed | `verify`, especially the check "Accounts". Report the reason in the text to service support. |
+| 1300 | Error | Pipe already exists, the service does not start. Text: "Service does not start: …". **Security event:** another program created `\\.\pipe\AppStart` before the service to intercept requests. | Treat as a security incident. Restart the PC; if it occurs again, check the programs in autostart and inform service support. |
+| 1301 | Warning or Error | Pipe cannot be created. Warning "Group "AppStart Users" is missing: AppStart is not set up yet. The service waits and tries again every 10 s." or error "Service does not start: pipe cannot be created. …" | Warning before the setup: normal, complete the setup. Afterwards: group missing, run the setup again and restart the service. Error: read the reason, restart the PC. |
+| 1302 | Error or Warning | Error at the pipe: "Pipe instance cannot be created, retrying in 5 s: …" or "Pipe connection aborted: …" | Single occurrence: harmless, the service keeps running. Frequent: report the reason to service support. |
+| 1400 | Information | Learning mode started for an AppId, with expiry time | None. Do not leave the PC unattended during learning mode. |
+| 1401 | Information | Learning mode ended (by hand or expired). Text: "Learning mode expired (…), the configured mode applies again." | None |
 
-Der Dienst startet nach einem Absturz automatisch neu (nach 5 s, 5 s und 30 s).
+The service restarts automatically after a crash (after 5 s, 5 s and 30 s).
 
-## Meldungen des Setups
+## Setup messages
 
-### Ergebnis der Einrichtung
+### Setup result
 
-Assistent (Schritt 3) und Kommandozeile zeigen je Schritt eine Zeile mit ✓ oder ✗. Bei ✗ folgt nach dem Doppelpunkt der Grund.
+The wizard (step 3) and the command line show one line per step with ✓ or ✗. With ✗, the reason follows after the colon.
 
-| Meldung | Bedeutung | Massnahme bei ✗ |
+| Message | Meaning | Action with ✗ |
 |---|---|---|
-| «Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt» / «Konto appstart-app und Gruppe AppStart Users angelegt» | Konten und Gruppe eingerichtet (vorhandene geprüft) | – |
-| «Konten und Gruppe konnten nicht eingerichtet werden» | Konto oder Gruppe konnten nicht angelegt werden; die weiteren Schritte entfallen. Gründe z.B. «Zugriff verweigert. Dafür sind Administratorrechte nötig.», «Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).», «Das Konto «…» wurde nicht gefunden.», «… ist kein Benutzerkonto.» | Grund beheben (Admin-Rechte, anderes Passwort, Konto prüfen), Einrichtung wiederholen |
-| «2 Applikationen freigegeben, Konfiguration geschützt» (bei einer: «1 Applikation freigegeben, Konfiguration geschützt») | `apps.json` geschrieben und geschützt | – |
-| «Konfiguration konnte nicht geschrieben werden» | `C:\ProgramData\AppStart` oder `apps.json` lässt sich nicht schützen oder schreiben, oder eine Angabe ist ungültig (Grund wie beim Prüfpunkt [apps.json](06-verification-after-a-service-visit.md)). Weitere Schritte entfallen. | Grund beheben. Ist `C:\ProgramData\AppStart` ein Verweis (Junction), Ordner als Administrator prüfen und löschen. |
-| «apps.json ist ungültig: …» | Die bestehende `apps.json` ist beschädigt; das Setup ändert nichts | Datei korrigieren oder aus Sicherung zurückholen |
-| «Applikation «app-x» ist nicht freigegeben» | `remove` oder `rehash` mit unbekannter AppId | AppId mit `list` prüfen |
-| «Datenordner und Registry-Keys gesperrt» | Rechte gesetzt | – |
-| «Datenordner oder Registry-Keys konnten nicht gesperrt werden» | Gründe z.B. «Datenordner «C:\» ist ein Laufwerk oder Systemordner und darf nicht gesperrt werden.», «Datenordner … ist ein Verweis (Junction oder symbolischer Link) und wird nicht geschützt.», «Datenordner … existiert nicht.», «Registry-Key … existiert nicht.» | Pfad korrigieren (`add --exe … --data-dir …`), Ordner bzw. Key anlegen lassen (Applikation einmal starten), Einrichtung wiederholen |
-| «Verknüpfungen mit App-Icon angelegt, 2 alte Verknüpfungen gesichert» | Verknüpfungen angelegt; die Zahl nennt die gesicherten direkten Verknüpfungen | – |
-| «Verknüpfungen konnten nicht angelegt werden» | Häufigster Grund: «Die Verknüpfung «…» existiert bereits und gehört nicht zu dieser Applikation. Sie wird nicht überschrieben. Bitte die Datei prüfen und von Hand sichern oder entfernen.» | Fremde Verknüpfung prüfen und entfernen oder anderen Namen wählen (`--name`), wiederholen |
-| «Dienst AppStart läuft, Start automatisch» | Dienst läuft und die Pipe ist bereit | – |
-| «Dienst AppStart läuft nicht» | Dienst fehlt oder startet nicht. Zusatz «Die Pipe des Dienstes ist nicht erreichbar. Ereignisprotokoll (Quelle AppStart) prüfen.», wenn der Dienst läuft, die Pipe aber auch nach einem Neustart des Dienstes fehlt | Ereignisprotokoll prüfen (1300, 1301). Fehlt der Dienst: MSI neu installieren. |
-| «Verknüpfungen zurückgestellt, Datenordner und Registry-Keys zurückgesetzt» | `uninstall`: ursprüngliche Verknüpfungen und Rechte wiederhergestellt | – |
-| «Konten und Gruppe entfernt» | `uninstall`: `appstart-app`, Gruppe und (falls vom Setup angelegt) `appstart-user` gelöscht | Bei ✗: Konten von Hand in «Computerverwaltung» löschen |
-| «Konfiguration entfernt (Prüfberichte bleiben erhalten)» | `uninstall`: `apps.json` gelöscht | Bei ✗: Datei als Administrator löschen |
+| "Accounts appstart-app and appstart-user, group AppStart Users created" / "Account appstart-app and group AppStart Users created" | Accounts and group set up (existing ones verified) | – |
+| "Accounts and group could not be set up" | Account or group could not be created; the further steps are skipped. Reasons e.g. "…: access denied. This requires administrator rights.", "The password does not meet the password policy of this computer (length, complexity or history).", "The account was not found.", ""…" is not a user account. Only users can be added to "AppStart Users"." | Fix the reason (admin rights, another password, check the account), repeat the setup |
+| "2 applications approved, configuration protected" (with one: "1 application approved, configuration protected") | `apps.json` written and protected | – |
+| "Configuration could not be written" | `C:\ProgramData\AppStart` or `apps.json` cannot be protected or written, or an entry is invalid (reason as for the check [apps.json](06-verification-after-a-service-visit.md#appsjson)). Further steps are skipped. | Fix the reason. If `C:\ProgramData\AppStart` is a reparse point (junction), check and delete the folder as administrator. |
+| "apps.json is invalid: …" | The existing `apps.json` is damaged; the setup changes nothing | Correct the file or restore it from a backup |
+| "Application "app-x" is not approved" | `remove` or `rehash` with an unknown AppId | Check the AppId with `list` |
+| "Data folders and registry keys locked" | Permissions set | – |
+| "Data folders or registry keys could not be locked" | Reasons e.g. "Data folder "C:\" is a drive or system folder and must not be locked.", "Data folder … is a reparse point (junction or symbolic link) and is not protected.", "Data folder … does not exist.", "Registry key … does not exist." | Correct the path (`add --exe … --data-dir …`), have the folder or key created (start the application once), repeat the setup |
+| "Shortcuts with app icon created, 2 old shortcuts backed up" | Shortcuts created; the number is the count of direct shortcuts backed up | – |
+| "Shortcuts could not be created" | Most common reason: "The shortcut "…" already exists and does not belong to this application. It is not overwritten. Please check the file and back it up or remove it by hand." | Check and remove the foreign shortcut or choose another name (`--name`), repeat |
+| "Service AppStart is running, starts automatically" | Service running and pipe ready | – |
+| "Service AppStart is not running" | Service missing or does not start. Additional text "The pipe of the service is not reachable. Check the Event Log (source AppStart)." if the service is running but the pipe is still missing after a restart of the service | Check the Event Log (1300, 1301). If the service is missing: reinstall the MSI. |
+| "Shortcuts restored, data folders and registry keys reset" | `uninstall`: original shortcuts and permissions restored | – |
+| "Accounts and group removed" | `uninstall`: `appstart-app`, the group and (if created by the setup) `appstart-user` deleted | With ✗: delete the accounts by hand in "Computer Management" |
+| "Configuration removed (verification reports are kept)" | `uninstall`: `apps.json` deleted | With ✗: delete the file as administrator |
 
-Weitere Gründe beim Zurückstellen: «Die Sicherung «…» der Verknüpfung «…» fehlt. Sie kann nicht zurückgestellt werden.» (Original von Hand neu anlegen) und «Am ursprünglichen Ort «…» liegt bereits eine Datei. Die gesicherte Verknüpfung wird nicht darüber geschrieben und bleibt in «…». Bitte von Hand prüfen.» (Sicherung unter `C:\ProgramData\AppStart\ShortcutBackup` von Hand zurückkopieren).
+Further reasons when restoring: "The backup "…" of the shortcut "…" is missing. It cannot be restored." (recreate the original by hand) and "A file already exists at the original location "…". The backed-up shortcut is not written over it and stays in "…". Please check by hand." (copy the backup from `C:\ProgramData\AppStart\ShortcutBackup` back by hand).
 
-### Kommandozeile
+### Command line
 
-| Meldung | Bedeutung | Exit-Code |
+| Message | Meaning | Exit code |
 |---|---|---|
-| «Automatische Prüfung nach der Änderung:» | Nach `add`, `add-user`, `remove` und `rehash` folgt die Ausgabe von `verify` | 0 oder 1 |
-| «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
-| «Prüfung nicht bestanden – 2 Abweichung(en). Einsatz nicht abschliessen.» | Abweichungen, siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) | 1 |
-| «Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Pfad des Berichts (mit `--report` der angegebene Pfad) | – |
-| «Bitte genau eine Angabe machen: --name appstart-user oder --member "DOMAIN\User".» | `add-user` ohne oder mit beiden Angaben | 2 |
-| «Mit --name kann nur das Konto appstart-user angelegt werden.» | Anderer Name bei `--name` | 2 |
-| «Passwort leer oder nicht identisch.» | Passwort für `appstart-user` leer oder Wiederholung verschieden | 2 |
-| Fehlermeldung der Befehlszeilen-Auswertung (Sprache je nach Windows), z.B. dass die Option `--exe` fehlt oder ein Befehl unbekannt ist, gefolgt von der Hilfe | Pflichtoption fehlt, Tippfehler | 1 |
+| "Automatic verification after the change:" | After `add`, `add-user`, `remove` and `rehash`, the output of `verify` follows | 0 or 1 |
+| "Verification passed – 10 of 10 checks passed." | No deviation | 0 |
+| "Verification failed – 2 deviation(s). Do not close the service visit." | Deviations, see [Verification after a service visit](06-verification-after-a-service-visit.md) | 1 |
+| "Verification report: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html" | Path of the report (with `--report`, the given path) | – |
+| "Specify exactly one option: --name appstart-user or --member "DOMAIN\User"." | `add-user` without or with both options | 2 |
+| "With --name only the account appstart-user can be created." | Another name with `--name` | 2 |
+| "Password empty or not identical." | Password for `appstart-user` empty or the repetition differs | 2 |
+| Error message of the command line parser (language depending on Windows), e.g. that the option `--exe` is missing or a command is unknown, followed by the help | Required option missing, typo | 1 |
 
-## Meldung der Testapplikation
+## Message of the test application
 
-Wird `AppStart.TestApp.exe` ohne AppStart gestartet (ohne Admin-Rechte), erscheint «AppStart TestApp» mit dem Text:
+If `AppStart.TestApp.exe` is started without AppStart (without admin rights), "AppStart TestApp" appears with the text:
 
-> «Die Testapplikation benötigt Administratorrechte und wird beendet.
+> "The test application needs administrator rights and will exit.
 >
-> Bitte über die Verknüpfung von AppStart starten.»
+> Please start it through the AppStart shortcut."
 
-Das ist das erwartete Verhalten (Abnahmeschritt 4 im Kapitel [Installation](03-installation.md)). Die übrigen Anzeigen der Testapplikation sind dort beschrieben.
+This is the expected behavior (acceptance step 4 in the chapter [Installation](03-installation.md)). The other displays of the test application are described there.
 
-## Häufige Probleme
+## Common problems
 
-| Problem | Ursache | Behebung |
+| Problem | Cause | Fix |
 |---|---|---|
-| Nach dem Klick passiert nichts, keine Meldung | Applikation startet, ist aber hinter anderen Fenstern oder braucht lange | Taskleiste prüfen; Ereignis 1100 bestätigt den Start |
-| Applikation startet, meldet aber fehlende Admin-Rechte | `appstart-app` ist nicht mehr Administrator | `verify`, Prüfpunkt «Konten» |
-| Applikation findet Netzlaufwerke oder Datenbank nicht | S4U-Anmeldung ohne Netzwerk-Anmeldedaten | Nicht behebbar über AppStart; Zugriff der Applikation anders lösen (z.B. SQL-Anmeldung) |
-| Drucken, Export oder Hilfe der Applikation funktioniert nicht | Die Funktion startet ein weiteres Programm; das Job-Objekt verhindert das | Abwägen und gegebenenfalls `allowChildProcesses` setzen ([Applikationen verwalten](04-managing-applications.md)) |
-| Bediener sieht die Verknüpfung nicht | Verknüpfung gelöscht | `verify`, Prüfpunkt «Verknüpfungen» |
-| Nach Update der Applikation «Start verweigert» | Neue EXE, Prüfsumme bzw. Zertifikat geändert | `rehash --app <AppId>` |
+| Nothing happens after the click, no message | The application starts but is behind other windows or takes a long time | Check the taskbar; event 1100 confirms the start |
+| The application starts but reports missing admin rights | `appstart-app` is no longer an administrator | `verify`, check "Accounts" |
+| The application does not find network drives or the database | S4U sign-in without network credentials | Cannot be fixed through AppStart; solve the application's access differently (e.g. SQL sign-in) |
+| Printing, export or help of the application does not work | The function starts another program; the job object prevents this | Weigh it up and, if appropriate, allow the program as a helper program ([Managing applications → Other programs](04-managing-applications.md)) |
+| The operator does not see the shortcut | Shortcut deleted | `verify`, check "Shortcuts" |
+| "Launch denied" after an update of the application | New EXE, checksum or certificate changed | `rehash --app <AppId>` |
