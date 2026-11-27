@@ -31,7 +31,7 @@ public static partial class TextCatalog
     /// <summary>Classes with visible texts that are not named *Texts.</summary>
     public static readonly string[] ExtraTextTypes =
     [
-        "AppStart.Setup.Cli.StartMenu", // Start menu folder and entries («AppStart – Einrichtung», ...)
+        "AppStart.Setup.Cli.StartMenu", // Start menu folder and entries ("AppStart – Setup", ...)
     ];
 
     /// <summary>
@@ -40,8 +40,8 @@ public static partial class TextCatalog
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> Exceptions = new Dictionary<string, string>
     {
-        ["AppStart.Setup.ViewModels.SetupTexts.NavDoneMark"] = "Häkchen « ✓» hinter erledigten Schritten der Navigation, kein Text.",
-        ["AppStart.Setup.ViewModels.SetupTexts.DateFormat"] = "Formatmuster dd.MM.yyyy HH:mm; das Handbuch zeigt das Ergebnis (z.B. 15.11.2026 10:42).",
+        ["AppStart.Setup.ViewModels.SetupTexts.NavDoneMark"] = "Check mark \" ✓\" after completed steps of the navigation, no text.",
+        ["AppStart.Setup.ViewModels.SetupTexts.DateFormat"] = "Format pattern dd.MM.yyyy HH:mm; the manual shows the result (e.g. 15.11.2026 10:42).",
     };
 
     public static IReadOnlyList<Type> TextTypes()
@@ -75,7 +75,7 @@ public static partial class TextCatalog
             .ToList();
 
     /// <summary>
-    /// What must appear in the manual for one text: the whole text, or for format strings («{0} von {1}») every
+    /// What must appear in the manual for one text: the whole text, or for format strings ("{0} of {1}") every
     /// literal fragment of at least <paramref name="minFragment"/> characters.
     /// </summary>
     public static IReadOnlyList<string> RequiredFragments(string value, int minFragment = 6)

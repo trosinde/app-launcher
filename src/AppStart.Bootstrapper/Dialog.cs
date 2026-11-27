@@ -41,7 +41,7 @@ internal static unsafe class Dialog
     }
 
     /// <summary>
-    /// Shows «AppStart wird installiert …» with a marquee bar until <paramref name="work"/> has finished.
+    /// Shows "Installing AppStart …" with a marquee bar until <paramref name="work"/> has finished.
     /// The dialog has a Cancel button only because TaskDialog needs one; it is disabled and clicks are
     /// ignored until the work is done (msiexec /qn is not interrupted halfway).
     /// </summary>

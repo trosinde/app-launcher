@@ -63,7 +63,7 @@ public class SystemProbeTests
 
         var findings = PipeRules.Evaluate(_probe.GetPipe(name).Descriptor!, group, "Users", s => s.Value);
 
-        Assert.Contains("Eintrag fehlt: Users Verbinden (Maske 0x0012018B, ohne FILE_CREATE_PIPE_INSTANCE)", findings);
+        Assert.Contains("Entry missing: Users connect (mask 0x0012018B, without FILE_CREATE_PIPE_INSTANCE)", findings);
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -93,7 +93,7 @@ public class SystemProbeTests
         var result = _probe.VerifyExecutable(Machine.AppA with { Exe = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".exe") });
 
         Assert.False(result.Success);
-        Assert.Equal("Datei fehlt", result.Detail);
+        Assert.Equal("File missing", result.Detail);
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]

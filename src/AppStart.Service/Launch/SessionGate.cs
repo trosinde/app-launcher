@@ -2,7 +2,7 @@ namespace AppStart.Service.Launch;
 
 /// <summary>
 /// One request per session at a time and a short cooldown after each request (spec pipe-security,
-/// concept "Eine Anfrage pro Session gleichzeitig, kurze Sperrzeit nach jedem Start").
+/// concept "One request per session at a time, short lockout after each start").
 /// </summary>
 public sealed class SessionGate(TimeProvider time, TimeSpan cooldown)
 {

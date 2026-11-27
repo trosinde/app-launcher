@@ -7,10 +7,10 @@ namespace AppStart.Setup.Cli;
 internal static class StartMenu
 {
     public const string FolderName = "AppStart";
-    public const string SetupEntry = "AppStart – Einrichtung";
-    public const string VerifyEntry = "AppStart – Einrichtung prüfen";
-    public const string ManualEntry = "AppStart – Handbuch";
-    public const string ManualFile = "AppStart-Handbuch.pdf";
+    public const string SetupEntry = "AppStart – Setup";
+    public const string VerifyEntry = "AppStart – Verify setup";
+    public const string ManualEntry = "AppStart – Manual";
+    public const string ManualFile = "AppStart-Manual.pdf";
 
     public static string Folder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), FolderName);
 
@@ -33,13 +33,13 @@ internal static class StartMenu
 
         var setup = Path.Combine(AppContext.BaseDirectory, "AppStart.Setup.exe");
         var shortcuts = Integration.SetupComposition.CreateShortcutWriter();
-        shortcuts(Path.Combine(Folder, SetupEntry + ".lnk"), setup, string.Empty, setup + ",0", AppContext.BaseDirectory, "AppStart einrichten: Applikationen, Konten und Gruppe");
-        shortcuts(Path.Combine(Folder, VerifyEntry + ".lnk"), setup, "verify --ui", setup + ",0", AppContext.BaseDirectory, "Einrichtung prüfen und Prüfbericht erstellen");
+        shortcuts(Path.Combine(Folder, SetupEntry + ".lnk"), setup, string.Empty, setup + ",0", AppContext.BaseDirectory, "Set up AppStart: applications, accounts and group");
+        shortcuts(Path.Combine(Folder, VerifyEntry + ".lnk"), setup, "verify --ui", setup + ",0", AppContext.BaseDirectory, "Verify the setup and create a verification report");
 
         var manual = Path.Combine(AppContext.BaseDirectory, ManualFile);
         if (File.Exists(manual))
         {
-            shortcuts(Path.Combine(Folder, ManualEntry + ".lnk"), manual, string.Empty, string.Empty, AppContext.BaseDirectory, "Benutzerhandbuch für Installateur und Servicetechniker");
+            shortcuts(Path.Combine(Folder, ManualEntry + ".lnk"), manual, string.Empty, string.Empty, AppContext.BaseDirectory, "Manual for installers and service technicians");
         }
         return 0;
     }

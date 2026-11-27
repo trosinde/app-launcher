@@ -50,7 +50,7 @@ internal static class AccountNameParser
         var text = input?.Trim() ?? string.Empty;
         if (text.Length == 0)
         {
-            error = "Kein Kontoname angegeben.";
+            error = "No account name given.";
             return false;
         }
 
@@ -63,7 +63,7 @@ internal static class AccountNameParser
             }
             catch (ArgumentException)
             {
-                error = $"«{text}» ist keine gültige SID.";
+                error = $"\"{text}\" is not a valid SID.";
                 return false;
             }
         }
@@ -71,14 +71,14 @@ internal static class AccountNameParser
         var parts = text.Split('\\');
         if (parts.Length > 2)
         {
-            error = $"Ungültiger Kontoname «{text}»: höchstens ein «\\» erlaubt (DOMAIN\\User).";
+            error = $"Invalid account name \"{text}\": at most one \"\\\" allowed (DOMAIN\\User).";
             return false;
         }
 
         var user = parts[^1];
         if (!IsValidPart(user, out var userError))
         {
-            error = $"Ungültiger Kontoname «{text}»: Benutzername {userError}";
+            error = $"Invalid account name \"{text}\": user name {userError}";
             return false;
         }
 
@@ -97,7 +97,7 @@ internal static class AccountNameParser
 
         if (!IsValidPart(domain, out var domainError))
         {
-            error = $"Ungültiger Kontoname «{text}»: Domäne {domainError}";
+            error = $"Invalid account name \"{text}\": domain {domainError}";
             return false;
         }
 
@@ -110,27 +110,27 @@ internal static class AccountNameParser
         error = string.Empty;
         if (part.Length == 0)
         {
-            error = "fehlt.";
+            error = "is missing.";
             return false;
         }
 
         if (part != part.Trim())
         {
-            error = "darf nicht mit Leerzeichen beginnen oder enden.";
+            error = "must not start or end with a space.";
             return false;
         }
 
         if (part.IndexOfAny(InvalidChars) >= 0 || part.Any(char.IsControl))
         {
             error = part.Contains('@')
-                ? "enthält «@». Bitte die Form DOMAIN\\User verwenden."
-                : "enthält unzulässige Zeichen.";
+                ? "contains \"@\". Please use the form DOMAIN\\User."
+                : "contains invalid characters.";
             return false;
         }
 
         if (part.All(c => c is '.' or ' '))
         {
-            error = "darf nicht nur aus Punkten und Leerzeichen bestehen.";
+            error = "must not consist only of dots and spaces.";
             return false;
         }
 

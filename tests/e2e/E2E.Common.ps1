@@ -35,7 +35,7 @@ function Skip([string] $name, [string] $detail = '') {
 }
 
 function Write-Summary {
-    Write-Host "`n================ Ergebnis ================"
+    Write-Host "`n================ Result ================"
     $results | ForEach-Object { Write-Host $_ }
     $skips = @($results | Where-Object { $_ -like 'SKIP*' }).Count
     $line = "{0} PASS, {1} FAIL" -f @($results | Where-Object { $_ -like 'PASS*' }).Count, @($results | Where-Object { $_ -like 'FAIL*' }).Count
@@ -89,7 +89,7 @@ function Start-OperatorProbe([pscredential] $Credential, [string] $Action, [stri
 function Complete-OperatorProbe($probe, [int] $timeoutSec = 150) {
     if (-not $probe.Process.WaitForExit($timeoutSec * 1000)) { try { $probe.Process.Kill() } catch { }; return '<timeout>' }
     if (Test-Path $probe.Out) { return (Get-Content $probe.Out -Raw -Encoding UTF8).Trim() }
-    return "<kein Ergebnis, exit $($probe.Process.ExitCode)>"
+    return "<no result, exit $($probe.Process.ExitCode)>"
 }
 
 function Invoke-AsOperator([pscredential] $Credential, [string] $Action, [string] $Argument = '') {
@@ -283,7 +283,7 @@ function Save-WindowShot($window, [string] $file) {
         $bmp = New-Object System.Drawing.Bitmap([int]$r.Width, [int]$r.Height)
         $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen([int]$r.X, [int]$r.Y, 0, 0, $bmp.Size)
         $bmp.Save($file); $g.Dispose(); $bmp.Dispose()
-    } catch { Write-Host "  (Bildschirmfoto $file nicht möglich: $($_.Exception.Message))" }
+    } catch { Write-Host "  (screenshot $file not possible: $($_.Exception.Message))" }
 }
 
 if (-not ('AppStartE2E.User32' -as [type])) {
@@ -338,10 +338,10 @@ function Resolve-LauncherExit($r) {
     # launcher showed (LauncherLogic exit codes; no dialog = success) and mark it in the log.
     if ($r.Exit -is [int] -and $r.Exit -ge 0) { return $r }
     $derived = switch -Wildcard ([string]$r.Texts) {
-        '*Keine Berechtigung*' { 4 } '*Start verweigert*' { 3 } '*Start läuft bereits*' { 3 }
-        '*nicht erreichbar*' { 2 } '*Ungültige Verknüpfung*' { 1 } '*Unerwartete Antwort*' { 5 } default { if ($r.Texts) { $null } else { 0 } }
+        '*No permission*' { 4 } '*Launch denied*' { 3 } '*Start already in progress*' { 3 }
+        '*not reachable*' { 2 } '*Invalid shortcut*' { 1 } '*Unexpected response*' { 5 } default { if ($r.Texts) { $null } else { 0 } }
     }
-    if ($null -ne $derived -and -not $r.TimedOut) { Write-Host "  (Exit-Code nicht lesbar: '$($r.Exit)', aus der Anzeige abgeleitet: $derived)"; $r.Exit = $derived }
+    if ($null -ne $derived -and -not $r.TimedOut) { Write-Host "  (exit code not readable: '$($r.Exit)', derived from the display: $derived)"; $r.Exit = $derived }
     return $r
 }
 
@@ -437,7 +437,7 @@ function Invoke-E2ECleanup([string[]] $extraUsers = @(), [string[]] $extraPaths 
     }
     if ([System.Diagnostics.EventLog]::SourceExists('AppStart')) { [System.Diagnostics.EventLog]::DeleteEventSource('AppStart') }
     $left = @(Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $names -contains $_.Name } | ForEach-Object Name)
-    Write-Host ("Rest: Dienst={0} Produkt={1} Konten={2} Gruppe={3} ProgramData={4} Programme={5} TestDaten={6}/{7}" -f
+    Write-Host ("Left over: Service={0} Product={1} Accounts={2} Group={3} ProgramData={4} Programs={5} TestData={6}/{7}" -f
         [bool](Get-Service AppStart -ErrorAction SilentlyContinue), [bool](Get-AppStartProduct), ($left -join ','),
         [bool](Get-LocalGroup 'AppStart Users' -ErrorAction SilentlyContinue), (Test-Path $AppStartData), (Test-Path $ProgDir),
         (Test-Path $TestDataDir), (Test-Path $TestRegKey))

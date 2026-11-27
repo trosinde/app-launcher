@@ -17,7 +17,7 @@ public class AccountServiceReadOnlyTests
         Assert.DoesNotContain(AccountService.AppAccountDeniedRights, r => r.Contains("Batch", StringComparison.Ordinal));
     }
 
-    // spec: fix-wizard-findings/verification «Admin ohne Passwort», «Alle Admins mit Passwort»
+    // spec: fix-wizard-findings/verification "Admin without password", "All admins with password"
     [Theory]
     [InlineData(0u, "Empty")]
     [InlineData(1327u, "Empty")] // blank password limited to console logon
@@ -97,7 +97,7 @@ public class AccountServiceReadOnlyTests
         // RID 500 of this computer: the built-in administrator (may be disabled, still a member).
         var service = new AccountService();
         var machineSid = FindMachineSid();
-        Assert.SkipWhen(machineSid is null, "Computer-SID nicht ermittelbar.");
+        Assert.SkipWhen(machineSid is null, "Computer SID cannot be determined.");
 
         var administrator = service.Resolve(new SecurityIdentifier(WellKnownSidType.AccountAdministratorSid, machineSid).Value);
 
@@ -119,8 +119,8 @@ public class AccountServiceReadOnlyTests
         }
         catch (UnauthorizedAccessException ex) when (!new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator))
         {
-            Assert.Contains("Zugriff verweigert", ex.Message, StringComparison.Ordinal);
-            Assert.Contains("Administratorrechte", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("access denied", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("administrator rights", ex.Message, StringComparison.Ordinal);
             return;
         }
 
@@ -131,14 +131,14 @@ public class AccountServiceReadOnlyTests
     [Fact]
     public void Access_denied_says_admin_rights_are_needed_in_German()
     {
-        var win32 = AccountErrors.FromWin32((uint)Windows.Win32.Foundation.WIN32_ERROR.ERROR_ACCESS_DENIED, "Konto lesen");
-        var ntStatus = AccountErrors.FromNtStatus(new Windows.Win32.Foundation.NTSTATUS(unchecked((int)0xC0000022)), "Lokale Sicherheitsrichtlinie öffnen");
+        var win32 = AccountErrors.FromWin32((uint)Windows.Win32.Foundation.WIN32_ERROR.ERROR_ACCESS_DENIED, "Read account");
+        var ntStatus = AccountErrors.FromNtStatus(new Windows.Win32.Foundation.NTSTATUS(unchecked((int)0xC0000022)), "Open local security policy");
 
         foreach (var ex in new[] { win32, ntStatus })
         {
             var denied = Assert.IsType<UnauthorizedAccessException>(ex);
-            Assert.Contains("Zugriff verweigert", denied.Message, StringComparison.Ordinal);
-            Assert.Contains("Administratorrechte", denied.Message, StringComparison.Ordinal);
+            Assert.Contains("access denied", denied.Message, StringComparison.Ordinal);
+            Assert.Contains("administrator rights", denied.Message, StringComparison.Ordinal);
         }
     }
 
@@ -155,7 +155,7 @@ public class AccountServiceReadOnlyTests
     public void Invalid_name_is_rejected_before_any_system_call()
     {
         var ex = Assert.Throws<ArgumentException>(() => new AccountService().GetFacts("a\\b\\c"));
-        Assert.Contains("Ungültiger Kontoname", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("Invalid account name", ex.Message, StringComparison.Ordinal);
     }
 
     // Domain SID of this computer, from a local member of the Administrators or Users group.

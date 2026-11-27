@@ -1,78 +1,78 @@
-# Sicherheitsmodell
+# Security model
 
-AppStart gibt Programmen Admin-Rechte, die ein Standard-Benutzer startet. Damit ist AppStart selbst ein lohnendes Angriffsziel. Diese Seite zeigt, was AppStart schützt, wie, und wo die Grenzen liegen.
+AppStart gives admin rights to programs that a standard user starts. This makes AppStart itself a worthwhile target. This page shows what AppStart protects, how, and where the limits are.
 
-## Schutzziele
+## Security goals
 
-1. Ein Bediener bekommt **keine** Admin-Rechte für beliebige Programme. Nur freigegebene Applikationen laufen mit Admin-Rechten. Was ihre eigenen Dialoge erlauben, steht unter [Restrisiken](#restrisiken-und-grenzen).
-2. Ein Bediener kann **nur** freigegebene, **unveränderte** Applikationen starten.
-3. Ein Bediener kann Daten und Registry-Werte der Applikationen **nicht lesen oder ändern**.
-4. Jeder Startversuch ist **nachvollziehbar**.
-5. Eine **Abweichung** vom Sollzustand fällt auf, statt still zu einem unsicheren Betrieb zu führen.
+1. An operator does **not** get admin rights for arbitrary programs. Only approved applications run with admin rights. What their own dialogs allow is described under [Residual risks](#residual-risks-and-limits).
+2. An operator can start **only** approved, **unmodified** applications.
+3. An operator **cannot read or change** the applications' data and registry values.
+4. Every start attempt is **traceable**.
+5. A **deviation** from the expected state is noticed instead of silently leading to unsafe operation.
 
-Grundsatz: Im Zweifel verweigert AppStart den Start und protokolliert den Grund.
+Principle: when in doubt, AppStart refuses the start and logs the reason.
 
-## Angriffe und Gegenmassnahmen
+## Attacks and countermeasures
 
-Massnahmen mit «geplant» setzt das Setup um, das noch in Arbeit ist.
+Measures marked "planned" are implemented by the setup, which is still in progress.
 
-| Angriff | Gegenmassnahme | Stand |
+| Attack | Countermeasure | Status |
 |---|---|---|
-| Bediener startet über den Launcher eine beliebige EXE | Der Launcher sendet nur eine AppId. Pfade, Argumente und Umgebung kommen ausschliesslich aus `apps.json`. | umgesetzt |
-| Bediener ändert `apps.json` und trägt eigene Programme ein | Datei nur für SYSTEM und Administratoren beschreibbar. Ist sie es nicht, verweigert der Dienst jeden Start. | Prüfung im Dienst umgesetzt, Rechte setzen geplant |
-| Bediener tauscht die EXE einer Applikation aus | Prüfung von Signatur (mit festem Zertifikat) oder SHA-256 vor jedem Start. | umgesetzt |
-| Bediener tauscht die EXE zwischen Prüfung und Start aus | Der Dienst hält die Datei vom Öffnen bis zum Prozessstart gesperrt und prüft über dasselbe Handle. | umgesetzt |
-| Bediener öffnet aus der Applikation heraus eine Eingabeaufforderung, etwa über «Datei öffnen» | Modus «gesperrt» (Standard): Job-Objekt mit Limit von einem Prozess, Kindprozesse scheitern. Modus «nur erlaubte Hilfsprogramme»: Der Dienst überwacht das Job-Objekt und beendet jeden Prozess, der nicht mit Pfad und Signatur bzw. SHA-256 auf der Liste steht, sofort (Ereignis 1206). Shells und Skript-Hosts kommen nur mit ausdrücklicher Bestätigung auf die Liste, der Lernmodus schlägt sie nie vor. | umgesetzt |
-| Bediener tauscht ein erlaubtes Hilfsprogramm aus | Prüfung wie bei der Haupt-EXE bei jedem Start; Hilfsprogramme nur aus Ordnern, die Bediener nicht beschreiben können (`allow-child` verweigert sonst, `verify` meldet es). | umgesetzt |
-| Bediener startet Programme über einen vergessenen Lernmodus | Lernmodus läuft höchstens 120 Minuten und gilt danach auch in laufenden Instanzen nicht mehr; `verify` meldet einen aktiven Lernmodus als Abweichung. `learn.json` ist geschützt wie `apps.json`; ist sie für Bediener beschreibbar, ignoriert der Dienst sie (Ereignis 1207). | umgesetzt |
-| Dienst wird beendet, damit nicht erlaubte Programme weiterlaufen | Job-Objekt mit `KILL_ON_JOB_CLOSE`: Endet der Dienst, beendet Windows alle Prozesse der überwachten Applikation. | umgesetzt |
-| Bediener tauscht Dienst- oder Launcher-EXE aus | Installation nur nach `C:\Program Files\AppStart`, dort nur SYSTEM und Administratoren schreibberechtigt. Per-user-Installation ist ausgeschlossen. | umgesetzt |
-| Ein Programm legt eine gefälschte Pipe `AppStart` an, um Anfragen abzufangen | Der Dienst legt die Pipe als erste Instanz an. Existiert sie schon, startet er nicht (Ereignis 1300). Die Gruppe hat kein Recht, weitere Pipe-Instanzen anzulegen. | umgesetzt |
-| Zugriff auf die Pipe über das Netzwerk | `PIPE_REJECT_REMOTE_CLIENTS` und ausdrückliches Verbot für Netzwerk-Anmeldungen. | umgesetzt |
-| Benutzer ohne Freigabe nutzt AppStart | Pipe nur für die Gruppe `AppStart Users` geöffnet. | umgesetzt |
-| Start einer Applikation in der Session eines anderen Benutzers | Der Dienst startet nur in der Session, aus der die Anfrage kommt. | umgesetzt |
-| Überflutung des Dienstes mit Anfragen | Feste Länge (64 Byte), Zeitlimit 2 s, eine Anfrage pro Session, Sperrzeit nach jeder Anfrage. | umgesetzt |
-| Anmeldung als `appstart-app` | Interaktive und Remote-Desktop-Anmeldung verweigert. Passwort zufällig, unbekannt, nirgends gespeichert. Der Dienst meldet das Konto ohne Passwort an (S4U). | S4U umgesetzt, Anmeldesperre geplant |
-| Bediener liest Passwörter der Applikation in der Registry | Registry-Key je Applikation nur für `appstart-app`, SYSTEM und Administratoren lesbar. | geplant |
-| Fehlkonfiguration nach einem Serviceeinsatz (z. B. Bediener wieder Admin) | `verify` prüft alle Punkte und meldet jede Abweichung mit Exit-Code ungleich 0. | geplant |
+| Operator starts an arbitrary EXE through the launcher | The launcher sends only an AppId. Paths, arguments and environment come exclusively from `apps.json`. | implemented |
+| Operator changes `apps.json` and adds their own programs | File writable only for SYSTEM and Administrators. If it is not, the service refuses every start. | check in the service implemented, setting the rights planned |
+| Operator replaces an application's EXE | Verification of the signature (with a pinned certificate) or SHA-256 before every start. | implemented |
+| Operator replaces the EXE between verification and start | The service keeps the file locked from opening until the process starts and verifies through the same handle. | implemented |
+| Operator opens a command prompt from within the application, e.g. via "Open file" | Mode "Blocked" (default): job object with a limit of one process, child processes fail. Mode "Allowed helper programs only": the service monitors the job object and immediately ends every process that is not on the list with path and signature or SHA-256 (event 1206). Shells and script hosts get on the list only with explicit confirmation; learning mode never suggests them. | implemented |
+| Operator replaces an allowed helper program | Verification as for the main EXE on every start; helper programs only from folders that operators cannot write to (`allow-child` refuses otherwise, `verify` reports it). | implemented |
+| Operator starts programs through a forgotten learning mode | Learning mode runs for at most 120 minutes and afterwards no longer applies, even in running instances; `verify` reports an active learning mode as a deviation. `learn.json` is protected like `apps.json`; if operators can write to it, the service ignores it (event 1207). | implemented |
+| Service is stopped so that disallowed programs keep running | Job object with `KILL_ON_JOB_CLOSE`: if the service ends, Windows ends all processes of the monitored application. | implemented |
+| Operator replaces the service or launcher EXE | Installation only to `C:\Program Files\AppStart`, where only SYSTEM and Administrators have write access. Per-user installation is ruled out. | implemented |
+| A program creates a fake pipe `AppStart` to intercept requests | The service creates the pipe as the first instance. If it already exists, the service does not start (event 1300). The group has no right to create further pipe instances. | implemented |
+| Access to the pipe over the network | `PIPE_REJECT_REMOTE_CLIENTS` and an explicit deny for network logons. | implemented |
+| User without approval uses AppStart | Pipe opened only for the group `AppStart Users`. | implemented |
+| Start of an application in another user's session | The service starts only in the session the request comes from. | implemented |
+| Flooding the service with requests | Fixed length (64 bytes), timeout 2 s, one request per session, lockout time after every request. | implemented |
+| Logon as `appstart-app` | Interactive and Remote Desktop logon denied. Password random, unknown, stored nowhere. The service logs the account on without a password (S4U). | S4U implemented, logon block planned |
+| Operator reads the application's passwords in the registry | Registry key per application readable only for `appstart-app`, SYSTEM and Administrators. | planned |
+| Misconfiguration after a service visit (e.g. operator is admin again) | `verify` checks all points and reports every deviation with an exit code other than 0. | planned |
 
 <p align="center">
-  <img src="images/testapp.png" width="480" alt="Testapplikation: Kindprozess cmd.exe durch Job-Objekt blockiert">
+  <img src="images/testapp.png" width="480" alt="Test application: child process cmd.exe blocked by the job object">
   <br>
-  <sub>Die Testapplikation prüft die wichtigsten Schutzmassnahmen sichtbar, hier: Kindprozess blockiert. (UI-Entwurf)</sub>
+  <sub>The test application visibly checks the most important protections, here: child process blocked. (UI design)</sub>
 </p>
 
-## Was die Applikation sieht
+## What the application sees
 
-Die Applikation läuft als `appstart-app`, nicht als Bediener und nicht als SYSTEM:
+The application runs as `appstart-app`, not as the operator and not as SYSTEM:
 
-- Sie hat volle Admin-Rechte auf dem lokalen Rechner.
-- Ihr `HKEY_CURRENT_USER` liegt im Profil von `appstart-app` (`C:\Users\appstart-app`), nicht im Profil des Bedieners.
-- Ihr Fenster erscheint auf dem Bildschirm des Bedieners und ist normal bedienbar.
-- Sie hat **keine Netzwerk-Anmeldedaten**. Netzlaufwerke oder Datenbanken mit Windows-Anmeldung erreicht sie nicht.
+- It has full admin rights on the local computer.
+- Its `HKEY_CURRENT_USER` is in the profile of `appstart-app` (`C:\Users\appstart-app`), not in the operator's profile.
+- Its window appears on the operator's screen and can be used normally.
+- It has **no network credentials**. It cannot reach network drives or databases that use Windows authentication.
 
-## Restrisiken und Grenzen
+## Residual risks and limits
 
-| Punkt | Bewertung |
+| Item | Assessment |
 |---|---|
-| Datei-Dialoge der Applikation | «Datei öffnen» und «Speichern unter» laufen im Prozess der Applikation, also mit Admin-Rechten. Ein Bediener kann darüber Dateien umbenennen, löschen oder ersetzen – auch ausserhalb der Applikation, im Extremfall die Konfiguration von AppStart. Je Applikation prüfen, welche Dialoge sie anbietet, und das Risiko bewerten. |
-| Nur die EXE wird geprüft | DLLs und andere Dateien im Programmordner der Applikation nicht. Dieser Ordner muss für Bediener schreibgeschützt sein. |
-| Administratoren können Passwörter der Applikationen weiterhin lesen | Bleibt bestehen. AppStart schützt nur vor Bedienern ohne Admin-Rechte. |
-| Die Applikation selbst hat Admin-Rechte | Eine Schwachstelle in der Applikation, die beliebigen Code ausführt, wirkt mit Admin-Rechten. Das Job-Objekt verhindert neue Prozesse, nicht aber Code im Prozess der Applikation. |
-| Modus «alle erlaubt» | Schwächt den Schutz deutlich: Die Applikation kann jedes Programm mit Admin-Rechten starten. Nur wählen, wenn «nur erlaubte Hilfsprogramme» nicht reicht, und je Applikation bewerten. `verify` nennt diese Applikationen als Hinweis. |
-| Modus «nur erlaubte Hilfsprogramme»: Lücke von Millisekunden | Windows bietet ohne Kernel-Treiber keinen Weg, einen Prozess vor dem Start zu verhindern. Der Dienst beendet einen nicht erlaubten Prozess nach dem Start. Gemessen (Spike 1.1): 0,7 bis 4,7 ms, einmal 16 ms unter Last; der startende Prozess erhielt jeweils «Zugriff verweigert». Für interaktive Arbeit reicht das nicht, ein vorbereitetes Programm könnte in dieser Zeit aber etwas ausführen. Gegenmassnahmen: Datenordner gesperrt, Hilfsprogramme nur aus geschützten Ordnern, Shells nie automatisch. Ist das Restrisiko nicht tragbar: Modus «gesperrt», oder AppLocker/WDAC (eigenes Vorhaben). |
-| Erlaubte Hilfsprogramme laufen mit Admin-Rechten | Ein erlaubter PDF-Viewer oder Editor kann Dateien öffnen und speichern wie die Applikation selbst. Der Lernmodus schlägt solche Programme vor, wählt sie aber nicht vor («kann Dateien öffnen – abwägen»). |
-| Übergabe an Prozesse ausserhalb des Job-Objekts | Ein Programm kann eine Aufgabe an eine schon laufende Instanz (z. B. Edge) oder an einen COM-Server übergeben, den Windows ausserhalb des Job-Objekts startet. Diese Prozesse überwacht AppStart in keinem Modus. Betroffen sind nur Prozesse von `appstart-app` in derselben Session. |
-| Hilfsprogramme mit SHA-256 | Nach einem Update der Applikation stimmt die Prüfsumme nicht mehr; der Dienst beendet das Hilfsprogramm. `verify` meldet es mit dem Befehl `rehash --app … --child …`. |
-| Keine Online-Sperrprüfung von Zertifikaten | Bewusst, weil viele Arbeitsplatzrechner offline sind. Das Pinning auf den Thumbprint ersetzt sie. Ein kompromittiertes Herstellerzertifikat bleibt gültig, bis die Freigabe angepasst wird. |
-| Windows 10 | Start in der Bediener-Session bisher nur unter Windows 11 getestet. |
+| The application's file dialogs | "Open file" and "Save as" run in the application's process, i.e. with admin rights. An operator can use them to rename, delete or replace files – also outside the application, in the extreme case AppStart's configuration. Check for each application which dialogs it offers and assess the risk. |
+| Only the EXE is verified | DLLs and other files in the application's program folder are not. This folder must be read-only for operators. |
+| Administrators can still read the applications' passwords | Remains. AppStart only protects against operators without admin rights. |
+| The application itself has admin rights | A vulnerability in the application that executes arbitrary code runs with admin rights. The job object prevents new processes, but not code in the application's process. |
+| Mode "All allowed" | Weakens the protection considerably: the application can start any program with admin rights. Choose it only if "Allowed helper programs only" is not enough, and assess it per application. `verify` lists these applications as a notice. |
+| Mode "Allowed helper programs only": gap of milliseconds | Without a kernel driver, Windows offers no way to prevent a process before it starts. The service ends a disallowed process after it has started. Measured (spike 1.1): 0.7 to 4.7 ms, once 16 ms under load; the starting process received "Access denied" each time. That is not enough for interactive work, but a prepared program could execute something in this time. Countermeasures: data folder locked, helper programs only from protected folders, shells never automatic. If the residual risk is not acceptable: mode "Blocked", or AppLocker/WDAC (separate project). |
+| Allowed helper programs run with admin rights | An allowed PDF viewer or editor can open and save files just like the application itself. Learning mode suggests such programs but does not preselect them ("can open files – weigh up"). |
+| Handover to processes outside the job object | A program can hand a task to an instance that is already running (e.g. Edge) or to a COM server that Windows starts outside the job object. AppStart does not monitor these processes in any mode. Only processes of `appstart-app` in the same session are affected. |
+| Helper programs with SHA-256 | After an update of the application the checksum no longer matches; the service ends the helper program. `verify` reports it with the command `rehash --app … --child …`. |
+| No online revocation check of certificates | Deliberate, because many workstations are offline. Pinning to the thumbprint replaces it. A compromised vendor certificate remains valid until the approval is adjusted. |
+| Windows 10 | Start in the operator session so far tested only on Windows 11. |
 
-## Schwachstellen melden
+## Reporting vulnerabilities
 
-Bitte vertraulich über [GitHub Security Advisories](https://github.com/trosinde/app-launcher/security/advisories/new), nicht als öffentliches Issue. Siehe [SECURITY.md](../SECURITY.md).
+Please report confidentially through [GitHub Security Advisories](https://github.com/trosinde/app-launcher/security/advisories/new), not as a public issue. See [SECURITY.md](../SECURITY.md).
 
-## Weiterführend
+## Further reading
 
-- Technische Entscheide mit Begründung: [design.md](../openspec/changes/add-appstart-service/design.md)
-- Nachweise aus den Spikes: [spike-results.md](../openspec/changes/add-appstart-service/spike-results.md)
-- Anforderungen als Szenarien: [specs](../openspec/changes/add-appstart-service/specs/)
+- Technical decisions with rationale: [design.md](../openspec/changes/add-appstart-service/design.md)
+- Evidence from the spikes: [spike-results.md](../openspec/changes/add-appstart-service/spike-results.md)
+- Requirements as scenarios: [specs](../openspec/changes/add-appstart-service/specs/)

@@ -42,8 +42,8 @@ public sealed partial class LearnProposal : ObservableObject
 }
 
 /// <summary>
-/// Dialog «Vorschläge übernehmen» (docs/ui-designs/LearnResult, spec installation «Shell im Lernergebnis»).
-/// Both buttons delete the recording; «übernehmen» hands the chosen entries to the helpers dialog.
+/// Dialog "Apply suggestions" (docs/ui-designs/LearnResult, spec installation "Shell in the learning result").
+/// Both buttons delete the recording; "Apply" hands the chosen entries to the helpers dialog.
 /// </summary>
 public sealed partial class LearnResultViewModel : ObservableObject
 {
@@ -85,7 +85,7 @@ public sealed partial class LearnResultViewModel : ObservableObject
         ? SetupTexts.ButtonTakeOverOne
         : SetupTexts.Format(SetupTexts.ButtonTakeOverFormat, n);
 
-    /// <summary>The chosen entries after «übernehmen»; null after «Verwerfen».</summary>
+    /// <summary>The chosen entries after "Apply"; null after "Discard".</summary>
     public IReadOnlyList<AllowedChild>? Selected { get; private set; }
 
     [RelayCommand]

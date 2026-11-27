@@ -9,7 +9,7 @@ using Markdig.Syntax.Inlines;
 
 // ManualBuilder --input <docs/manual> --output <file.html> [--version <x.y.z>] [--date <dd.MM.yyyy>]
 //
-// Joins index.md (title page, everything before "## Inhalt") and the chapters NN-*.md into one standalone HTML
+// Joins index.md (title page, everything before "## Contents") and the chapters NN-*.md into one standalone HTML
 // for A4 printing: generated table of contents, page break per chapter, images embedded as data URIs, missing
 // screenshots as visible placeholders, links between chapters rewritten to anchors inside the document.
 // Exit code 0 = written, 1 = error, 2 = wrong usage.
@@ -24,7 +24,7 @@ public static partial class Program
         var options = ParseArgs(args);
         if (options is null)
         {
-            Console.Error.WriteLine("Aufruf: ManualBuilder --input <ordner> --output <datei.html> [--version <x.y.z>] [--date <dd.MM.yyyy>]");
+            Console.Error.WriteLine("Usage: ManualBuilder --input <folder> --output <file.html> [--version <x.y.z>] [--date <dd.MM.yyyy>]");
             return 2;
         }
 
@@ -34,17 +34,17 @@ public static partial class Program
             var output = Path.GetFullPath(options.Value.Output);
             Directory.CreateDirectory(Path.GetDirectoryName(output)!);
             File.WriteAllText(output, result.Html, new UTF8Encoding(false));
-            Console.WriteLine($"Handbuch: {output} ({result.Chapters} Kapitel, {result.Images} Bilder, {result.Placeholders} Platzhalter)");
+            Console.WriteLine($"Manual: {output} ({result.Chapters} chapters, {result.Images} images, {result.Placeholders} placeholders)");
             foreach (var missing in result.MissingImages)
             {
-                Console.WriteLine($"  Platzhalter: {missing}");
+                Console.WriteLine($"  Placeholder: {missing}");
             }
 
             return 0;
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            Console.Error.WriteLine($"Fehler: {ex.Message}");
+            Console.Error.WriteLine($"Error: {ex.Message}");
             return 1;
         }
     }
@@ -56,7 +56,7 @@ public static partial class Program
         var index = Path.Combine(inputDir, "index.md");
         if (!File.Exists(index))
         {
-            throw new FileNotFoundException($"{index} fehlt.");
+            throw new FileNotFoundException($"{index} is missing.");
         }
 
         var chapters = Directory.EnumerateFiles(inputDir, "*.md")
@@ -65,17 +65,17 @@ public static partial class Program
             .ToList();
         if (chapters.Count == 0)
         {
-            throw new InvalidDataException($"Keine Kapitel (NN-name.md) in {inputDir}.");
+            throw new InvalidDataException($"No chapters (NN-name.md) in {inputDir}.");
         }
 
         var images = new ImageEmbedder(inputDir);
 
-        // Title page: index.md up to "## Inhalt" (the Markdown table of contents is for reading on GitHub).
+        // Title page: index.md up to "## Contents" (German manual: "## Inhalt") (the Markdown table of contents is for reading on GitHub).
         var indexText = File.ReadAllText(index);
-        var cut = Regex.Match(indexText, @"^##\s+Inhalt\s*$", RegexOptions.Multiline);
+        var cut = Regex.Match(indexText, @"^##\s+(?:Contents|Inhalt)\s*$", RegexOptions.Multiline);
         var titleMarkdown = cut.Success ? indexText[..cut.Index] : indexText;
         var titleHtml = images.Embed(Markdown.ToHtml(titleMarkdown, Pipeline));
-        var title = Regex.Match(titleMarkdown, @"^#\s+(.+)$", RegexOptions.Multiline) is { Success: true } t ? t.Groups[1].Value.Trim() : "Handbuch";
+        var title = Regex.Match(titleMarkdown, @"^#\s+(.+)$", RegexOptions.Multiline) is { Success: true } t ? t.Groups[1].Value.Trim() : "Manual";
 
         var toc = new StringBuilder();
         var body = new StringBuilder();
@@ -193,7 +193,7 @@ public static partial class Program
 
     private const string Template = """
         <!doctype html>
-        <html lang="de-CH">
+        <html lang="en-US">
         <head>
         <meta charset="utf-8">
         <title>{{title}}</title>
@@ -204,10 +204,10 @@ public static partial class Program
         <body>
         <section class="titlepage">
         {{titlepage}}
-        <p class="edition">Version {{version}} · Stand {{date}}</p>
+        <p class="edition">Version {{version}} · As of {{date}}</p>
         </section>
         <nav class="toc">
-        <h1>Inhalt</h1>
+        <h1>Contents</h1>
         <ol>
         {{toc}}</ol>
         </nav>
@@ -220,8 +220,8 @@ public static partial class Program
         @page {
           size: A4;
           margin: 20mm 18mm 22mm 20mm;
-          @bottom-left { content: "AppStart – Benutzerhandbuch"; font: 8pt "Segoe UI", Arial, sans-serif; color: #666; }
-          @bottom-right { content: "Seite " counter(page) " von " counter(pages); font: 8pt "Segoe UI", Arial, sans-serif; color: #666; }
+          @bottom-left { content: "AppStart – User manual"; font: 8pt "Segoe UI", Arial, sans-serif; color: #666; }
+          @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Segoe UI", Arial, sans-serif; color: #666; }
         }
         @page :first { @bottom-left { content: none; } @bottom-right { content: none; } }
         html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -285,7 +285,7 @@ public sealed partial class ImageEmbedder(string baseDir)
                 _missing.Add(src);
             }
 
-            return $"<span class=\"placeholder\"><strong>{WebUtility.HtmlEncode(alt)}</strong>Bildschirmfoto folgt: {WebUtility.HtmlEncode(Path.GetFileName(src))}</span>";
+            return $"<span class=\"placeholder\"><strong>{WebUtility.HtmlEncode(alt)}</strong>Screenshot to follow: {WebUtility.HtmlEncode(Path.GetFileName(src))}</span>";
         }
 
         var mime = Path.GetExtension(path).ToLowerInvariant() switch
@@ -295,7 +295,7 @@ public sealed partial class ImageEmbedder(string baseDir)
             ".gif" => "image/gif",
             ".svg" => "image/svg+xml",
             ".webp" => "image/webp",
-            _ => throw new InvalidDataException($"Bildformat nicht unterstützt: {src}"),
+            _ => throw new InvalidDataException($"Image format not supported: {src}"),
         };
         Embedded++;
         var data = Convert.ToBase64String(File.ReadAllBytes(path));

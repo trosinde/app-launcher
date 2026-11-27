@@ -1,7 +1,7 @@
 namespace AppStart.Bootstrapper;
 
 /// <summary>
-/// All texts AppStart-Setup.exe shows (German, Swiss spelling). The manual completeness test (task 10.4)
+/// All texts AppStart-Setup.exe shows (US English). The manual completeness test (task 10.4)
 /// reads this class and checks that every message is described in the user manual.
 /// Placeholders: {0}, {1} are filled by <see cref="BootstrapperLogic"/>.
 /// </summary>
@@ -10,90 +10,90 @@ public static class BootstrapperTexts
     public const string Title = "AppStart Setup";
 
     /// <summary>Prefix of the measure line under the cause.</summary>
-    public const string MeasureLabel = "Massnahme: ";
+    public const string MeasureLabel = "Action: ";
 
-    /// <summary>Footer with the msiexec log («Protokoll: C:\ProgramData\AppStart\Logs\install-….log»).</summary>
-    public const string LogFooter = "Protokoll: {0}";
+    /// <summary>Footer with the msiexec log ("Log: C:\ProgramData\AppStart\Logs\install-….log").</summary>
+    public const string LogFooter = "Log: {0}";
 
     // ---------------------------------------------------------------- progress
-    public const string ProgressHeading = "AppStart wird installiert …";
-    public const string ProgressText = "Bitte warten. Die Installation kann einige Minuten dauern. Danach startet die Einrichtung.";
+    public const string ProgressHeading = "Installing AppStart …";
+    public const string ProgressText = "Please wait. The installation can take a few minutes. Afterwards the setup starts.";
 
     // ---------------------------------------------------------------- success / information
-    public const string RestartHeading = "Neustart erforderlich";
-    public const string RestartText = "AppStart wurde installiert. Damit alle Änderungen wirksam werden, ist ein Neustart erforderlich.";
-    public const string RestartMeasure = "Führen Sie zuerst die Einrichtung durch und starten Sie den Rechner danach neu.";
+    public const string RestartHeading = "Restart required";
+    public const string RestartText = "AppStart has been installed. A restart is required for all changes to take effect.";
+    public const string RestartMeasure = "Complete the setup first and then restart the computer.";
 
-    public const string AlreadyInstalledHeading = "AppStart ist bereits installiert";
-    public const string AlreadyInstalledText = "Installiert ist Version {0}, dieses Setup enthält Version {1}. Die Installation wird übersprungen.";
-    public const string AlreadyInstalledMeasure = "Keine. Die Einrichtung startet direkt.";
+    public const string AlreadyInstalledHeading = "AppStart is already installed";
+    public const string AlreadyInstalledText = "Version {0} is installed, this setup contains version {1}. The installation is skipped.";
+    public const string AlreadyInstalledMeasure = "None. The setup starts directly.";
 
     // ---------------------------------------------------------------- msiexec exit codes
-    public const string CancelledHeading = "Installation abgebrochen";
-    public const string CancelledText = "Die Installation wurde abgebrochen (Code 1602). AppStart wurde nicht geändert.";
-    public const string CancelledMeasure = "Starten Sie AppStart-Setup.exe erneut, um die Installation zu wiederholen.";
+    public const string CancelledHeading = "Installation canceled";
+    public const string CancelledText = "The installation was canceled (code 1602). AppStart was not changed.";
+    public const string CancelledMeasure = "Start AppStart-Setup.exe again to repeat the installation.";
 
-    public const string BusyHeading = "Eine andere Installation läuft gerade";
-    public const string BusyText = "Eine andere Installation läuft gerade. Bitte warten und erneut versuchen. (Code 1618)";
-    public const string BusyMeasure = "Warten Sie, bis die andere Installation (zum Beispiel Windows Update) abgeschlossen ist, und starten Sie AppStart-Setup.exe dann erneut.";
+    public const string BusyHeading = "Another installation is in progress";
+    public const string BusyText = "Another installation is in progress. Please wait and try again. (Code 1618)";
+    public const string BusyMeasure = "Wait until the other installation (for example Windows Update) has finished, then start AppStart-Setup.exe again.";
 
-    public const string FailedHeading = "Installation fehlgeschlagen";
-    public const string FailedFatalText = "Bei der Installation ist ein schwerwiegender Fehler aufgetreten (Code 1603). AppStart wurde nicht installiert.";
-    public const string FailedOtherText = "Das Installationsprogramm hat mit dem Fehler {0} geendet. AppStart wurde nicht installiert.";
-    public const string FailedMeasure = "Prüfen Sie das Protokoll. Wenden Sie sich mit dem Protokoll an den Service.";
+    public const string FailedHeading = "Installation failed";
+    public const string FailedFatalText = "A fatal error occurred during the installation (code 1603). AppStart was not installed.";
+    public const string FailedOtherText = "The installer ended with error {0}. AppStart was not installed.";
+    public const string FailedMeasure = "Check the log. Contact service support with the log.";
 
     // ---------------------------------------------------------------- before msiexec
-    public const string NoPackageHeading = "Kein Installationspaket enthalten";
-    public const string NoPackageText = "Diese AppStart-Setup.exe enthält kein Installationspaket (Entwicklungs-Build) und kann AppStart nicht installieren.";
-    public const string NoPackageMeasure = "Verwenden Sie die AppStart-Setup.exe aus dem offiziellen Release.";
+    public const string NoPackageHeading = "No installation package included";
+    public const string NoPackageText = "This AppStart-Setup.exe contains no installation package (development build) and cannot install AppStart.";
+    public const string NoPackageMeasure = "Use the AppStart-Setup.exe from the official release.";
 
-    public const string NotAdminHeading = "Administratorrechte erforderlich";
-    public const string NotAdminText = "AppStart-Setup.exe läuft ohne Administratorrechte und kann AppStart nicht installieren.";
-    public const string NotAdminMeasure = "Starten Sie AppStart-Setup.exe mit einem Administratorkonto und bestätigen Sie die Abfrage der Benutzerkontensteuerung.";
+    public const string NotAdminHeading = "Administrator rights required";
+    public const string NotAdminText = "AppStart-Setup.exe is running without administrator rights and cannot install AppStart.";
+    public const string NotAdminMeasure = "Start AppStart-Setup.exe with an administrator account and confirm the User Account Control prompt.";
 
-    public const string UnsafeFolderHeading = "Ordner nicht geschützt";
-    public const string UnsafeFolderText = "Der Ordner {0} kann von Benutzern ohne Administratorrechte verändert werden oder ist ein Verweis. Aus Sicherheitsgründen wird nicht installiert.";
-    public const string UnsafeFolderMeasure = "Lassen Sie den Ordner durch einen Administrator prüfen oder löschen und starten Sie AppStart-Setup.exe dann erneut.";
+    public const string UnsafeFolderHeading = "Folder not protected";
+    public const string UnsafeFolderText = "The folder {0} can be changed by users without administrator rights or is a reparse point. For security reasons nothing is installed.";
+    public const string UnsafeFolderMeasure = "Have an administrator check or delete the folder, then start AppStart-Setup.exe again.";
 
-    public const string ExtractFailedHeading = "Installationspaket konnte nicht entpackt werden";
-    public const string ExtractFailedText = "Das Installationspaket konnte nicht nach {0} geschrieben werden: {1}";
-    public const string ExtractFailedMeasure = "Prüfen Sie den freien Speicherplatz auf Laufwerk C: und starten Sie AppStart-Setup.exe erneut.";
+    public const string ExtractFailedHeading = "Installation package could not be extracted";
+    public const string ExtractFailedText = "The installation package could not be written to {0}: {1}";
+    public const string ExtractFailedMeasure = "Check the free disk space on drive C: and start AppStart-Setup.exe again.";
 
-    public const string MsiexecFailedHeading = "Installationsprogramm nicht startbar";
-    public const string MsiexecFailedText = "Windows Installer (msiexec.exe) konnte nicht gestartet werden: {0}";
-    public const string MsiexecFailedMeasure = "Starten Sie den Rechner neu und starten Sie AppStart-Setup.exe dann erneut. Hilft das nicht, wenden Sie sich an den Service.";
+    public const string MsiexecFailedHeading = "Installer cannot be started";
+    public const string MsiexecFailedText = "Windows Installer (msiexec.exe) could not be started: {0}";
+    public const string MsiexecFailedMeasure = "Restart the computer, then start AppStart-Setup.exe again. If that does not help, contact service support.";
 
     // ---------------------------------------------------------------- starting the wizard
-    public const string SetupMissingHeading = "Einrichtung nicht gefunden";
-    public const string SetupMissingText = "AppStart ist installiert, aber {0} fehlt. Die Einrichtung kann nicht starten.";
-    public const string SetupMissingMeasure = "Starten Sie AppStart-Setup.exe erneut. Hilft das nicht, wenden Sie sich an den Service.";
+    public const string SetupMissingHeading = "Setup not found";
+    public const string SetupMissingText = "AppStart is installed, but {0} is missing. The setup cannot start.";
+    public const string SetupMissingMeasure = "Start AppStart-Setup.exe again. If that does not help, contact service support.";
 
-    public const string SetupUntrustedHeading = "Einrichtung nicht vertrauenswürdig";
-    public const string SetupUntrustedText = "Die Signatur von {0} ist ungültig oder stammt nicht vom Herausgeber dieses Setups. Die Einrichtung wird aus Sicherheitsgründen nicht gestartet.";
-    public const string SetupUntrustedMeasure = "Starten Sie die Einrichtung nicht von Hand. Wenden Sie sich an den Service.";
+    public const string SetupUntrustedHeading = "Setup not trustworthy";
+    public const string SetupUntrustedText = "The signature of {0} is invalid or does not come from the publisher of this setup. For security reasons the setup is not started.";
+    public const string SetupUntrustedMeasure = "Do not start the setup by hand. Contact service support.";
 
-    public const string SetupStartFailedHeading = "Einrichtung konnte nicht gestartet werden";
-    public const string SetupStartFailedText = "AppStart ist installiert, aber {0} konnte nicht gestartet werden: {1}";
-    public const string SetupStartFailedMeasure = "Starten Sie die Einrichtung über das Startmenü (AppStart – Einrichtung).";
+    public const string SetupStartFailedHeading = "Setup could not be started";
+    public const string SetupStartFailedText = "AppStart is installed, but {0} could not be started: {1}";
+    public const string SetupStartFailedMeasure = "Start the setup from the Start menu (AppStart – Setup).";
 
     // ---------------------------------------------------------------- command line
     public const string HelpHeading = "AppStart-Setup.exe";
     public const string HelpText =
         "AppStart-Setup.exe\n" +
-        "    Installiert AppStart und startet danach die Einrichtung.\n\n" +
+        "    Installs AppStart and then starts the setup.\n\n" +
         "AppStart-Setup.exe /quiet\n" +
-        "    Installiert nur, ohne Oberfläche und ohne Einrichtung. Der Exit-Code ist der von msiexec (0 oder 3010 = erfolgreich).\n\n" +
-        "AppStart-Setup.exe /quiet /config <Antwortdatei>\n" +
-        "    Installiert und richtet danach ohne Oberfläche nach der Antwortdatei ein (AppStart.Setup.exe apply). Exit-Code 0 oder 3010 = erfolgreich, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig.\n\n" +
+        "    Installs only, without user interface and without setup. The exit code is that of msiexec (0 or 3010 = success).\n\n" +
+        "AppStart-Setup.exe /quiet /config <answer file>\n" +
+        "    Installs and then sets up without user interface from the answer file (AppStart.Setup.exe apply). Exit code 0 or 3010 = success, 10 = setup with error or deviation, 11 = answer file invalid.\n\n" +
         "AppStart-Setup.exe /?\n" +
-        "    Zeigt diese Hilfe.";
-    public const string HelpFooter = "Protokolle: C:\\ProgramData\\AppStart\\Logs";
+        "    Shows this help.";
+    public const string HelpFooter = "Logs: C:\\ProgramData\\AppStart\\Logs";
 
-    public const string InvalidArgumentHeading = "Unbekannter Parameter";
-    public const string InvalidArgumentText = "Der Parameter «{0}» ist unbekannt.";
-    public const string InvalidArgumentMeasure = "Starten Sie AppStart-Setup.exe ohne Parameter, mit /quiet, mit /quiet /config <Antwortdatei> (absoluter Pfad) oder mit /? für die Hilfe.";
+    public const string InvalidArgumentHeading = "Unknown parameter";
+    public const string InvalidArgumentText = "The parameter \"{0}\" is unknown.";
+    public const string InvalidArgumentMeasure = "Start AppStart-Setup.exe without parameters, with /quiet, with /quiet /config <answer file> (absolute path) or with /? for help.";
 
-    public const string UnexpectedHeading = "Unerwarteter Fehler";
-    public const string UnexpectedText = "Bei der Installation ist ein unerwarteter Fehler aufgetreten: {0}";
-    public const string UnexpectedMeasure = "Wenden Sie sich mit dem Protokoll an den Service.";
+    public const string UnexpectedHeading = "Unexpected error";
+    public const string UnexpectedText = "An unexpected error occurred during the installation: {0}";
+    public const string UnexpectedMeasure = "Contact service support with the log.";
 }

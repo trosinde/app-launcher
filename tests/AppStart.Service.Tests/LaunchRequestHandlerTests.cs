@@ -13,7 +13,7 @@ public class LaunchRequestHandlerTests
     private static readonly AppEntry App = new()
     {
         Id = "app-a",
-        Name = "Applikation A",
+        Name = "Application A",
         Exe = @"C:\Program Files\Hersteller\AppA\AppA.exe",
         WorkingDir = @"C:\Program Files\Hersteller\AppA",
         Check = IntegrityCheck.Sha256,
@@ -60,7 +60,7 @@ public class LaunchRequestHandlerTests
     [Fact]
     public void Changed_exe_is_denied_without_details_to_the_client()
     {
-        _starter.Next = new StartResult(StartOutcome.IntegrityFailed, "SHA-256 weicht ab: erwartet AAAA, gefunden BBBB.");
+        _starter.Next = new StartResult(StartOutcome.IntegrityFailed, "SHA-256 differs: expected AAAA, found BBBB.");
 
         var answer = Send("START app-a");
 
@@ -76,7 +76,7 @@ public class LaunchRequestHandlerTests
     [Fact]
     public void Unprotected_or_invalid_config_blocks_every_start()
     {
-        _config.Result = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart ist nicht geschützt: Benutzer hat Schreibrechte.");
+        _config.Result = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart is not protected: Users has write permissions.");
 
         Assert.Equal("DENIED config 4711", Send("START app-a"));
         Assert.Empty(_starter.Calls);
@@ -103,7 +103,7 @@ public class LaunchRequestHandlerTests
     [Fact]
     public void Launch_error_is_denied_as_error()
     {
-        _starter.Next = new StartResult(StartOutcome.Failed, "CreateProcessAsUser: Zugriff verweigert");
+        _starter.Next = new StartResult(StartOutcome.Failed, "CreateProcessAsUser: access denied");
         Assert.Equal("DENIED error 4711", Send("START app-a"));
         Assert.Equal(EventIds.LaunchFailed, Assert.Single(_log.Entries).Id);
     }
@@ -151,7 +151,7 @@ public class LaunchRequestHandlerTests
         Assert.NotNull(WithLearn(learn).Handle("START app-a"u8, _ctx));
 
         Assert.NotNull(Assert.Single(_starter.Calls).Context.Learn);
-        Assert.Contains("Lernmodus bis", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
+        Assert.Contains("learning mode until", Assert.Single(_log.Entries).Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -163,11 +163,11 @@ public class LaunchRequestHandlerTests
         Assert.Null(Assert.Single(_starter.Calls).Context.Learn);
     }
 
-    // Spec app-launch, scenario «Manipulierte Steuerdatei».
+    // Spec app-launch, scenario "Tampered control file".
     [Fact]
     public void Unprotected_learn_file_is_ignored_with_error_event_and_the_app_still_starts()
     {
-        var learn = new FakeLearn(new LearnStateLoadResult(LearnStateSerializer.Empty, @"C:\ProgramData\AppStart\learn.json ist nicht geschützt.", true));
+        var learn = new FakeLearn(new LearnStateLoadResult(LearnStateSerializer.Empty, @"C:\ProgramData\AppStart\learn.json is not protected.", true));
 
         Assert.Equal("OK", Encoding.ASCII.GetString(WithLearn(learn).Handle("START app-a"u8, _ctx)!));
 

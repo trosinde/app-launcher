@@ -1,10 +1,10 @@
-## Was ändert sich?
+## What changes?
 
-<!-- Kurze Beschreibung und Motivation. Zugehörige Issues verlinken: Fixes #123 -->
+<!-- Short description and motivation. Link related issues: Fixes #123 -->
 
-## Checkliste
+## Checklist
 
-- [ ] Tests ergänzt oder angepasst
-- [ ] `dotnet test --solution AppStart.slnx -c Release` läuft lokal grün
-- [ ] `openspec validate --all --strict` ist grün (bei Änderungen unter `openspec/`)
-- [ ] CI ist grün (der Maintainer prüft nur grüne Pull Requests)
+- [ ] Tests added or updated
+- [ ] `dotnet test --solution AppStart.slnx -c Release` passes locally
+- [ ] `openspec validate --all --strict` passes (for changes under `openspec/`)
+- [ ] CI is green (the maintainer only reviews green pull requests)

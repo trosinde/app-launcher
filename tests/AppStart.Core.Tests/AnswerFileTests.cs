@@ -11,7 +11,7 @@ public class AnswerFileTests
           "version": 1,
           "apps": [{
             "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
-            "id": "appa", "name": "Applikation A",
+            "id": "appa", "name": "Application A",
             "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
             "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA",
             "childProcesses": "allowlist",
@@ -51,7 +51,7 @@ public class AnswerFileTests
     [InlineData("\"version\": 1", "\"version\": 2", "version")]
     [InlineData("\"exe\": \"C:\\\\Program Files\\\\Hersteller\\\\AppA\\\\AppA.exe\"", "\"exe\": \"AppA.exe\"", "apps[0].exe")]
     [InlineData("\"id\": \"appa\"", "\"id\": \"App A\"", "apps[0].id")]
-    [InlineData("\"name\": \"Applikation A\"", "\"name\": \" \"", "apps[0].name")]
+    [InlineData("\"name\": \"Application A\"", "\"name\": \" \"", "apps[0].name")]
     [InlineData("\"dataDir\": \"C:\\\\ProgramData\\\\Hersteller\\\\AppA\"", "\"dataDir\": \"\\\\\\\\server\\\\share\"", "apps[0].dataDir")]
     [InlineData("\"registryKey\": \"HKLM\\\\SOFTWARE\\\\Hersteller\\\\AppA\"", "\"registryKey\": \"HKCU\\\\Software\"", "apps[0].registryKey")]
     [InlineData("{ \"exe\": \"C:\\\\Program Files\\\\Hersteller\\\\AppA\\\\Export.exe\" }", "{ \"exe\": \"%ProgramFiles%\\\\Export.exe\" }", "apps[0].allowedChildren[0].exe")]

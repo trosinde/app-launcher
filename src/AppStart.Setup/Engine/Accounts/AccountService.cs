@@ -10,7 +10,7 @@ using Windows.Win32.Security;
 namespace AppStart.Setup.Engine.Accounts;
 
 /// <summary>
-/// Local accounts, group and logon rights (concept "Konten, die die Installation anlegt", task 6.2).
+/// Local accounts, group and logon rights (concept "Accounts the installation creates", task 6.2).
 /// Built-in groups are addressed by SID only (German Windows: "Administratoren", "Benutzer").
 /// Account names without domain ("user", ".\user") always mean an account of this computer.
 /// Needs admin rights for everything except <see cref="GetFacts"/> and <see cref="GetOperators"/>.
@@ -23,9 +23,9 @@ public sealed class AccountService : IAccountService
     internal static readonly SecurityIdentifier AdministratorsSid = new(WellKnownSidType.BuiltinAdministratorsSid, null);
     internal static readonly SecurityIdentifier UsersSid = new(WellKnownSidType.BuiltinUsersSid, null);
 
-    private const string AppAccountDescription = "AppStart: Konto für freigegebene Applikationen (keine interaktive Anmeldung)";
-    private const string OperatorAccountDescription = "AppStart: Bedienerkonto";
-    private const string OperatorGroupDescription = "AppStart: Mitglieder dürfen freigegebene Applikationen über den Launcher starten";
+    private const string AppAccountDescription = "AppStart: account for approved applications (no interactive sign-in)";
+    private const string OperatorAccountDescription = "AppStart: operator account";
+    private const string OperatorGroupDescription = "AppStart: members may start approved applications through the launcher";
 
     private readonly string machineName;
 
@@ -55,7 +55,7 @@ public sealed class AccountService : IAccountService
         }
 
         var sid = ResolveLocal(AppStartConstants.AppAccountName)
-            ?? throw new InvalidOperationException($"Das Konto «{AppStartConstants.AppAccountName}» wurde angelegt, ist aber nicht auffindbar.");
+            ?? throw new InvalidOperationException($"The account \"{AppStartConstants.AppAccountName}\" was created but cannot be found.");
         LocalAccountsNative.AddMember(BuiltinGroupName(AdministratorsSid), sid);
         using (var policy = LsaPolicy.OpenForWrite())
         {
@@ -91,7 +91,7 @@ public sealed class AccountService : IAccountService
         {
             if (password.Length == 0)
             {
-                throw new ArgumentException("Für das Konto «appstart-user» ist ein Passwort nötig.", nameof(password));
+                throw new ArgumentException("The account \"appstart-user\" needs a password.", nameof(password));
             }
 
             // The password exists only in this unmanaged buffer, zeroed and freed right after NetUserAdd.
@@ -109,7 +109,7 @@ public sealed class AccountService : IAccountService
         }
 
         var sid = ResolveLocal(AppStartConstants.OperatorAccountName)
-            ?? throw new InvalidOperationException($"Das Konto «{AppStartConstants.OperatorAccountName}» wurde angelegt, ist aber nicht auffindbar.");
+            ?? throw new InvalidOperationException($"The account \"{AppStartConstants.OperatorAccountName}\" was created but cannot be found.");
         LocalAccountsNative.AddMember(BuiltinGroupName(UsersSid), sid);
         LocalAccountsNative.AddMember(AppStartConstants.OperatorGroupName, sid);
         return created;
@@ -118,12 +118,12 @@ public sealed class AccountService : IAccountService
     public bool AddOperator(string account)
     {
         var resolved = Resolve(account)
-            ?? throw new ArgumentException($"Das Konto «{AccountNameParser.Parse(account, machineName).Qualified}» wurde nicht gefunden.", nameof(account));
+            ?? throw new ArgumentException($"The account \"{AccountNameParser.Parse(account, machineName).Qualified}\" was not found.", nameof(account));
 
-        // Only user accounts: a group such as "Jeder" or "Benutzer" would open the launcher to everybody.
+        // Only user accounts: a group such as "Everyone" or "Users" ("Jeder", "Benutzer" on German Windows) would open the launcher to everybody.
         if (resolved.Use != SID_NAME_USE.SidTypeUser)
         {
-            throw new ArgumentException($"«{resolved.Qualified}» ist kein Benutzerkonto. Nur Benutzer können in «{AppStartConstants.OperatorGroupName}» aufgenommen werden.", nameof(account));
+            throw new ArgumentException($"\"{resolved.Qualified}\" is not a user account. Only users can be added to \"{AppStartConstants.OperatorGroupName}\".", nameof(account));
         }
 
         EnsureOperatorGroup();

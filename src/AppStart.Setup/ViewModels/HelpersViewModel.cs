@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AppStart.Setup.ViewModels;
 
-/// <summary>One allowed helper in the dialog «Erlaubte Hilfsprogramme».</summary>
+/// <summary>One allowed helper in the dialog "Allowed helper programs".</summary>
 public sealed partial class HelperItem(AllowedChild entry, string state, bool stateOk) : ObservableObject
 {
     public AllowedChild Entry { get; } = entry;
@@ -30,8 +30,8 @@ public sealed partial class HelperItem(AllowedChild entry, string state, bool st
 }
 
 /// <summary>
-/// Dialog «Erlaubte Hilfsprogramme» (docs/ui-designs/Helpers, spec installation «Weitere Programme im Assistenten»):
-/// add, remove, renew checksum, learn mode. Changes go back to the application row only with «Übernehmen».
+/// Dialog "Allowed helper programs" (docs/ui-designs/Helpers, spec installation "Other programs in the wizard"):
+/// add, remove, renew checksum, learn mode. Changes go back to the application row only with "Apply".
 /// </summary>
 public sealed partial class HelpersViewModel : ObservableObject
 {
@@ -69,7 +69,7 @@ public sealed partial class HelpersViewModel : ObservableObject
     [ObservableProperty]
     private string? _errorMessage;
 
-    /// <summary>The list after «Übernehmen» (null when cancelled).</summary>
+    /// <summary>The list after "Apply" (null when cancelled).</summary>
     public IReadOnlyList<AllowedChild>? Result { get; private set; }
 
     [RelayCommand]
@@ -114,7 +114,7 @@ public sealed partial class HelpersViewModel : ObservableObject
         }
     }
 
-    /// <summary>«Prüfsumme aktualisieren» for the checked SHA-256 entries (all SHA-256 entries when none is checked).</summary>
+    /// <summary>"Update checksum" for the checked SHA-256 entries (all SHA-256 entries when none is checked).</summary>
     [RelayCommand]
     private void Rehash()
     {
@@ -140,7 +140,7 @@ public sealed partial class HelpersViewModel : ObservableObject
 
     public bool CanLearn => _app.IsReleased;
 
-    /// <summary>«Lernmodus starten…»: learn dialog, then the proposals dialog; taken programs land in the list.</summary>
+    /// <summary>"Start learning mode…": learn dialog, then the proposals dialog; taken programs land in the list.</summary>
     [RelayCommand]
     private void StartLearning()
     {

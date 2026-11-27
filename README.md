@@ -1,152 +1,164 @@
-<img src="assets/icon/appstart-256.png" width="96" height="96" alt="AppStart-Icon" align="right">
+<img src="assets/icon/appstart-256.png" width="96" height="96" alt="AppStart icon" align="right">
 
 # AppStart
 
-**Applikationen mit Admin-Rechten starten – ohne dass der Benutzer Admin ist.**
+**Start applications with admin rights – without the user being an admin.**
 
-> **Stand: in Entwicklung (0.1.0-dev).** Dienst, Launcher und Testapplikation laufen und sind auf Windows 11 getestet. Das Einrichtungsprogramm (Setup) fehlt noch, für den produktiven Einsatz ist AppStart nicht bereit. Details: [Stand der Umsetzung](#stand-der-umsetzung).
+> **Current version: [v0.4.1](https://github.com/trosinde/app-launcher/releases/latest)** – `AppStart-Setup.exe` and the manual `AppStart-Manual-<Version>.pdf` are attached to the release. Details: [Implementation status](#implementation-status).
 
-AppStart ist ein Windows-Dienst mit Launcher. Er startet ausgewählte Desktop-Applikationen mit Administratorrechten für Standard-Benutzer: ohne Passwort, ohne UAC-Abfrage und ohne dass der Benutzer selbst Administrator wird. Die Applikationen und ihre Installer bleiben unverändert.
+AppStart is a Windows service with a launcher. It starts selected desktop applications with administrator rights for standard users: without a password, without a UAC prompt and without the user becoming an administrator. The applications and their installers stay unchanged.
 
-Gedacht für IT-Verantwortliche und Servicetechnikerinnen und -techniker, die PCs mit älteren Desktop-Applikationen betreuen, die nur mit Admin-Rechten laufen.
+Intended for IT administrators and service technicians who look after PCs with older desktop applications that only run with admin rights.
 
 [![CI](https://github.com/trosinde/app-launcher/actions/workflows/ci.yml/badge.svg)](https://github.com/trosinde/app-launcher/actions/workflows/ci.yml)
-![Plattform](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4)
+![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4)
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4)
-[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-green)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 <p align="center">
-  <img src="docs/images/testapp.png" width="560" alt="Testapplikation, gestartet über AppStart: Konto appstart-app, Admin-Rechte ja, Registry und Dateien OK, Start der Eingabeaufforderung blockiert">
+  <img src="docs/images/testapp.png" width="560" alt="Test application started through AppStart: account appstart-app, admin rights yes, registry and files OK, start of the command prompt blocked">
   <br>
-  <sub>So soll es aussehen: Ein Standard-Benutzer startet die Testapplikation. Sie läuft als <code>appstart-app</code> mit Admin-Rechten, eine Eingabeaufforderung daraus zu öffnen, scheitert. (UI-Entwurf)</sub>
+  <sub>This is how it should look: a standard user starts the test application. It runs as <code>appstart-app</code> with admin rights; opening a command prompt from it fails. (UI design)</sub>
 </p>
 
 ---
 
-## Das Problem
+## The problem
 
-Manche Desktop-Applikationen laufen nur mit Administratorrechten. Typisch sind ältere Fachanwendungen, die in `HKLM` oder `C:\Program Files` schreiben. Deshalb arbeiten die Bediener solcher PCs oft dauerhaft als Administrator. Die Folgen:
+Some desktop applications only run with administrator rights. Typical examples are older line-of-business applications that write to `HKLM` or `C:\Program Files`. That is why the operators of such PCs often work as administrators all the time. The consequences:
 
-- Bediener können Austausch- und Konfigurationsdateien der Applikation ändern.
-- Bediener können Passwörter lesen, die die Applikation im Klartext in der Registry ablegt.
-- Jedes andere Programm, das der Bediener startet, läuft ebenfalls mit vollen Rechten.
+- Operators can change the application's exchange and configuration files.
+- Operators can read passwords that the application stores in plain text in the registry.
+- Every other program the operator starts also runs with full rights.
 
-Das fällt in Audits regelmässig auf und widerspricht dem Prinzip der minimalen Rechte.
+Audits regularly flag this, and it contradicts the principle of least privilege.
 
-## Die Lösung
+## The solution
 
-Der Bediener arbeitet als Standard-Benutzer. Nur die freigegebenen Applikationen laufen mit Admin-Rechten, und zwar unter einem eigenen Konto, mit dem sich niemand anmelden kann. Ihre Daten sind für den Bediener gesperrt.
+The operator works as a standard user. Only the approved applications run with admin rights, under a dedicated account that nobody can log on with. Their data is locked for the operator.
 
-| | Bediener ist Admin (heute) | Mit AppStart |
+| | Operator is admin (today) | With AppStart |
 |---|---|---|
-| Konto des Bedieners | Administrator | Standard-Benutzer |
-| Freigegebene Applikation | läuft als Bediener, mit Admin-Rechten | läuft als `appstart-app`, mit Admin-Rechten |
-| Datenordner und Registry-Key der Applikation | für den Bediener les- und schreibbar | für den Bediener gesperrt |
-| Andere Programme | laufen mit Admin-Rechten | laufen ohne Admin-Rechte |
-| Abfrage beim Start | UAC-Bestätigung, sofern UAC aktiv | keine |
+| Operator's account | Administrator | Standard user |
+| Approved application | runs as the operator, with admin rights | runs as `appstart-app`, with admin rights |
+| Application's data folder and registry key | readable and writable for the operator | locked for the operator |
+| Other programs | run with admin rights | run without admin rights |
+| Prompt at start | UAC confirmation, if UAC is on | none |
 
-## So funktioniert es
+## How it works
 
 ```mermaid
 flowchart LR
-    U["Bediener<br/>(Standard-Benutzer)"] -->|klickt Verknüpfung| L["AppStart.Launcher<br/>Benutzerrechte"]
-    L -->|"START AppId<br/>(lokaler Kanal)"| S["AppStart.Service<br/>Windows-Dienst"]
-    C[("apps.json<br/>Freigabeliste")] -.->|liest| S
-    S -->|"prüft EXE,<br/>startet als appstart-app"| A["Applikation<br/>Admin-Rechte,<br/>Kindprozesse gesperrt"]
-    A -->|erscheint auf| D["Bildschirm des Bedieners"]
-    S -->|jede Anfrage| E[("Windows-<br/>Ereignisprotokoll")]
+    U["Operator<br/>(standard user)"] -->|clicks shortcut| L["AppStart.Launcher<br/>user rights"]
+    L -->|"START AppId<br/>(local channel)"| S["AppStart.Service<br/>Windows service"]
+    C[("apps.json<br/>approval list")] -.->|reads| S
+    S -->|"verifies EXE,<br/>starts as appstart-app"| A["Application<br/>admin rights,<br/>child processes blocked"]
+    A -->|appears on| D["Operator's screen"]
+    S -->|every request| E[("Windows<br/>Event Log")]
 ```
 
-1. Der Bediener klickt die Verknüpfung der Applikation. Sie sieht aus wie bisher, zeigt aber auf den Launcher.
-2. Der Launcher sendet nur die Kennung der Applikation an den Dienst, keinen Pfad und keine Parameter.
-3. Der Dienst prüft, ob die Applikation freigegeben ist und ob ihre EXE unverändert ist (Signatur oder Prüfsumme).
-4. Der Dienst startet die Applikation als Konto `appstart-app` auf dem Bildschirm des Bedieners. Standardmässig kann sie keine weiteren Programme starten, etwa eine Eingabeaufforderung.
-5. Jede Anfrage landet mit Benutzer, Applikation und Ergebnis im Windows-Ereignisprotokoll.
+1. The operator clicks the application's shortcut. It looks the same as before but points to the launcher.
+2. The launcher sends only the application's identifier to the service, no path and no parameters.
+3. The service checks whether the application is approved and whether its EXE is unchanged (signature or checksum).
+4. The service starts the application as the account `appstart-app` on the operator's screen. By default it cannot start other programs, such as a command prompt.
+5. Every request is written to the Windows Event Log with user, application and result.
 
-Mehr dazu: [Funktionsweise](docs/funktionsweise.md) und [Sicherheitsmodell](docs/sicherheitsmodell.md).
+More: [How it works](docs/funktionsweise.md) and [Security model](docs/sicherheitsmodell.md).
 
-## Bestandteile
+## Components
 
-| Komponente | Aufgabe | Läuft als |
+| Component | Purpose | Runs as |
 |---|---|---|
-| `AppStart.Service` | Windows-Dienst: nimmt Startanfragen an, prüft sie, startet die Applikation | LocalSystem (Systemkonto von Windows) |
-| `AppStart.Launcher` | Kleine EXE ohne Fenster hinter jeder Verknüpfung, zeigt bei Problemen eine Meldung | Bediener |
-| `AppStart.Setup` | Einrichtung mit Oberfläche und Kommandozeile: Applikationen freigeben, Konten und Rechte setzen, Einrichtung prüfen | Administrator |
-| `AppStart.Core` | Gemeinsame Bibliothek: Konfiguration, Prüfung der EXE, Protokoll zwischen Launcher und Dienst | – |
-| `AppStart.TestApp` | Testapplikation, die sich wie eine betroffene Applikation verhält | – |
-| Installationspaket | MSI für den ganzen Rechner, installiert nach `C:\Program Files\AppStart` | Administrator |
+| `AppStart.Service` | Windows service: accepts start requests, verifies them, starts the application | LocalSystem (Windows system account) |
+| `AppStart.Launcher` | Small windowless EXE behind every shortcut, shows a message if there is a problem | Operator |
+| `AppStart.Setup` | Setup with user interface and command line: approve applications, set up accounts and rights, verify the setup | Administrator |
+| `AppStart.Core` | Shared library: configuration, verification of the EXE, protocol between launcher and service | – |
+| `AppStart.TestApp` | Test application that behaves like an affected application | – |
+| Installation package | Per-machine MSI, installs to `C:\Program Files\AppStart` | Administrator |
 
-## Wo AppStart passt – und wo nicht
+## Where AppStart fits – and where it does not
 
-**Passt**, wenn
+**Fits** if
 
-- eine Desktop-Applikation zwingend Admin-Rechte braucht und sich nicht anpassen lässt,
-- Bediener an festen Arbeitsplätzen mit eigenem oder gemeinsamem Konto arbeiten,
-- Sie nachweisen müssen, dass Bediener keine Admin-Rechte haben und geschützte Daten nicht lesen können.
+- a desktop application strictly requires admin rights and cannot be changed,
+- operators work at fixed workstations with their own or a shared account,
+- you have to prove that operators have no admin rights and cannot read protected data.
 
-**Passt nicht**, wenn
+**Does not fit** if
 
-- die Applikation weitere Programme starten muss (lässt sich je Applikation freischalten, schwächt aber den Schutz),
-- die Applikation mit der Windows-Anmeldung auf Netzlaufwerke oder Datenbanken zugreift (das Konto `appstart-app` hat keine Netzwerk-Anmeldedaten),
-- auch Administratoren die Passwörter der Applikation nicht lesen dürfen.
+- the application has to start other programs (can be allowed per application, but weakens the protection),
+- the application accesses network drives or databases with the Windows logon (the account `appstart-app` has no network credentials),
+- administrators must not be able to read the application's passwords either.
 
-Wichtig: Eine freigegebene Applikation läuft mit Admin-Rechten, auch ihre Dialoge wie «Datei öffnen». Was das bedeutet, steht im [Sicherheitsmodell](docs/sicherheitsmodell.md#restrisiken-und-grenzen).
+Important: an approved application runs with admin rights, and so do its dialogs such as "Open file". What that means is described in the [Security model](docs/sicherheitsmodell.md#residual-risks-and-limits).
 
-## Stand der Umsetzung
+## Implementation status
 
-| Bereich | Stand |
+| Area | Status |
 |---|---|
-| Dienst: Annahme, Prüfung, Start in der Bediener-Session, Sperre von Kindprozessen, Ereignisprotokoll | ✅ umgesetzt, End-to-End-Test auf Windows 11 grün (23/23, Launcher ohne Native AOT) |
-| Launcher mit Meldungen | ✅ umgesetzt |
-| Testapplikation | ✅ umgesetzt |
-| MSI-Paket, Dienst-Registrierung bei Installation | ✅ umgesetzt |
-| Setup (Oberfläche und Kommandozeile), Konten, Rechte, Verknüpfungen | ✅ umgesetzt, End-to-End-Test grün (19/19) |
-| Prüfbefehl `verify`, Prüfansicht und Prüfbericht, automatische Prüfung nach Änderungen | ✅ umgesetzt |
-| Installationsprogramm `AppStart-Setup.exe` (MSI eingebettet), signierte Releases | ✅ umgesetzt |
-| Benutzerhandbuch (PDF im Paket, Startmenü «AppStart – Handbuch») | ✅ umgesetzt; 7 von 13 Bildschirmfotos |
-| Abnahmetest als echter Bediener (30/30), Installationstests inkl. Update (29/29), Betriebstests | ✅ auf Windows 11 |
-| Tests unter Windows 10, Remote Desktop, Sperrbildschirm, Neustart, echte zweite Sitzung | 🔲 manuell, siehe [MANUAL-TESTS.md](tests/e2e/MANUAL-TESTS.md) |
-| Prüfung der realen Ziel-Applikationen (Kindprozesse, Daten, Registry, Netzwerk) | 🔲 offen (Spike 1.4) |
+| Service: acceptance, verification, start in the operator's session, blocking of child processes, Event Log | ✅ implemented, end-to-end test on Windows 11 green (23/23, launcher without Native AOT) |
+| Launcher with messages | ✅ implemented |
+| Test application | ✅ implemented |
+| MSI package, service registration during installation | ✅ implemented |
+| Setup (user interface and command line), accounts, rights, shortcuts | ✅ implemented, end-to-end test green (19/19) |
+| `verify` command, verification view and verification report, automatic verification after changes | ✅ implemented |
+| Installation program `AppStart-Setup.exe` (MSI embedded), signed releases | ✅ implemented |
+| User manual (PDF in the package, Start menu "AppStart – Manual") | ✅ implemented; 7 of 13 screenshots |
+| Acceptance test as a real operator (30/30), installation tests incl. update (29/29), operations tests | ✅ on Windows 11 |
+| Tests on Windows 10, Remote Desktop, lock screen, restart, real second session | 🔲 manual, see [MANUAL-TESTS.md](tests/e2e/MANUAL-TESTS.md) |
+| Verification of the real target applications (child processes, data, registry, network) | 🔲 open (spike 1.4) |
 
-Der vollständige Plan steht in [`tasks.md`](openspec/changes/add-appstart-service/tasks.md).
+The complete plan is in [`tasks.md`](openspec/changes/add-appstart-service/tasks.md).
 
-## Installation (Vorschau)
+## Installation
 
-> Noch nicht nutzbar, solange das Setup fehlt. So wird es aussehen:
-
-1. `AppStart-Setup.exe` als Administrator ausführen. Es installiert das MSI und öffnet die Einrichtung.
-2. Applikationen auswählen, je Applikation optional Datenordner und Registry-Key angeben.
-3. Bedienerkonto anlegen oder bestehende Benutzer der Gruppe `AppStart Users` zuordnen.
-4. Die Einrichtung legt Verknüpfungen an, sperrt die Daten und prüft am Ende alles selbst.
+1. Run `AppStart-Setup.exe` from the [latest release](https://github.com/trosinde/app-launcher/releases/latest) as administrator. It installs the MSI and opens the setup.
+2. Select applications, optionally specify a data folder and registry key for each application.
+3. Create the operator account or assign existing users to the group `AppStart Users`.
+4. The setup creates shortcuts, locks the data and verifies everything itself at the end.
 
 <p align="center">
-  <img src="docs/images/setup-1-applikationen.png" width="640" alt="Setup Schritt 1: Applikationen auswählen, mit Datenordner und Registry-Key je Applikation">
+  <img src="docs/images/setup-1-applikationen.png" width="640" alt="Setup step 1: select applications, with data folder and registry key per application">
   <br>
-  <sub>Setup, Schritt 1 von 3 (UI-Entwurf). Alle Schritte: <a href="docs/funktionsweise.md#einrichtung">Funktionsweise → Einrichtung</a></sub>
+  <sub>Setup, step 1 of 3 (UI design). All steps: <a href="docs/funktionsweise.md#setup">How it works → Setup</a></sub>
 </p>
 
-Für die Softwareverteilung gibt es das MSI und eine Kommandozeile:
+For software distribution there is the MSI and a command line:
 
 ```text
-AppStart.Setup.exe add --exe "C:\Program Files\Hersteller\AppA\AppA.exe" --data-dir "C:\ProgramData\Hersteller\AppA" --reg-key "HKLM\SOFTWARE\Hersteller\AppA"
-AppStart.Setup.exe add-user --member "DOMAIN\bediener1"
-AppStart.Setup.exe verify --report "C:\Temp\appstart-pruefung.html"
+AppStart.Setup.exe add --exe "C:\Program Files\Vendor\AppA\AppA.exe" --data-dir "C:\ProgramData\Vendor\AppA" --reg-key "HKLM\SOFTWARE\Vendor\AppA"
+AppStart.Setup.exe add-user --member "DOMAIN\operator1"
+AppStart.Setup.exe verify --report "C:\Temp\appstart-verification.html"
 ```
 
-## Entwicklung
+Step by step, including silent installation: [manual, chapter Installation](docs/manual/03-installation.md).
 
-Windows 11 x64 und .NET 10 SDK. Bauen, Testen, Release und Projektstruktur: [Entwicklung](docs/entwicklung.md).
+## Development
 
-> ⚠️ Setup und Dienst legen Konten an und ändern Rechte. **Nur auf einer separaten Test-VM installieren, nie auf dem eigenen Arbeitsrechner.**
+Windows 11 x64 and .NET 10 SDK. Building, testing, releasing and project structure: [Development](docs/entwicklung.md).
 
-## Dokumentation
+> ⚠️ Setup and service create accounts and change rights. **Install only on a separate test VM, never on your own work computer.**
 
-Übersicht aller Dokumente: [docs/](docs/README.md)
+## Documentation
 
-## Mitmachen und Sicherheit
+Overview of all documents: [docs/](docs/README.md)
 
-Beiträge per Pull Request sind willkommen, siehe [CONTRIBUTING.md](CONTRIBUTING.md). Schwachstellen bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md).
+User manual for installers and service technicians (also as PDF `AppStart-Manual-<Version>.pdf` in the [release](https://github.com/trosinde/app-launcher/releases/latest)):
 
-## Lizenz
+1. [Overview](docs/manual/01-overview.md)
+2. [Requirements](docs/manual/02-requirements.md)
+3. [Installation](docs/manual/03-installation.md)
+4. [Managing applications](docs/manual/04-managing-applications.md)
+5. [Accounts and group](docs/manual/05-accounts-and-group.md)
+6. [Verification after a service visit](docs/manual/06-verification-after-a-service-visit.md)
+7. [Messages and troubleshooting](docs/manual/07-messages-and-troubleshooting.md)
+8. [Update and uninstallation](docs/manual/08-update-and-uninstall.md)
+9. [Reference](docs/manual/09-reference.md)
+
+## Contributing and security
+
+Contributions via pull request are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Please report vulnerabilities confidentially, see [SECURITY.md](SECURITY.md).
+
+## License
 
 [MIT](LICENSE)

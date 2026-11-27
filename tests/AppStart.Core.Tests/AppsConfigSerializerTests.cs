@@ -11,7 +11,7 @@ public class AppsConfigSerializerTests
           "apps": [
             {
               "id": "app-a",
-              "name": "Applikation A",
+              "name": "Application A",
               "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
               "workingDir": "C:\\Program Files\\Hersteller\\AppA",
               "check": "signature",
@@ -62,7 +62,7 @@ public class AppsConfigSerializerTests
     [InlineData("\"version\": 1", "\"version\": 0", "version")]
     [InlineData("\"version\": 1", "\"version\": 2", "apps[0].allowChildProcesses")]
     [InlineData("\"allowChildProcesses\": false", "\"childProcesses\": \"blocked\"", "apps[0].childProcesses")]
-    [InlineData("\"name\": \"Applikation A\"", "\"name\": \" \"", "apps[0].name")]
+    [InlineData("\"name\": \"Application A\"", "\"name\": \" \"", "apps[0].name")]
     public void Invalid_field_is_reported(string from, string to, string expectedField)
     {
         var json = ConceptExample.Replace(from, to, StringComparison.Ordinal);
@@ -82,7 +82,7 @@ public class AppsConfigSerializerTests
 
         var error = AppsConfigSerializer.Validate(doubled);
 
-        Assert.Equal("apps[1].id: «app-a» kommt mehrfach vor.", error);
+        Assert.Equal("apps[1].id: \"app-a\" occurs more than once.", error);
         Assert.Throws<ArgumentException>(() => AppsConfigSerializer.Serialize(doubled));
     }
 
@@ -116,7 +116,7 @@ public class AppsConfigSerializerTests
         {
           "version": 2,
           "apps": [{
-            "id": "appa", "name": "Applikation A",
+            "id": "appa", "name": "Application A",
             "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
             "workingDir": "C:\\Program Files\\Hersteller\\AppA",
             "check": "signature", "signerThumbprint": "0123456789ABCDEF0123456789ABCDEF01234567",
@@ -134,7 +134,7 @@ public class AppsConfigSerializerTests
     private static AppEntry V2App(ChildProcessMode? mode, params AllowedChild[]? children) => new()
     {
         Id = "appa",
-        Name = "Applikation A",
+        Name = "Application A",
         Exe = @"C:\Program Files\Hersteller\AppA\AppA.exe",
         WorkingDir = @"C:\Program Files\Hersteller\AppA",
         Check = IntegrityCheck.Signature,
@@ -211,13 +211,13 @@ public class AppsConfigSerializerTests
     [InlineData(ChildProcessMode.Blocked)]
     [InlineData(ChildProcessMode.All)]
     public void Children_only_with_allowlist(ChildProcessMode mode) =>
-        Assert.StartsWith("apps[0].allowedChildren: nur bei", Validate(V2App(mode, Child(@"C:\Program Files\A\Export.exe"))));
+        Assert.StartsWith("apps[0].allowedChildren: only allowed with", Validate(V2App(mode, Child(@"C:\Program Files\A\Export.exe"))));
 
     [Fact]
     public void Allowlist_needs_at_least_one_entry()
     {
-        Assert.StartsWith("apps[0].allowedChildren: bei childProcesses «allowlist» ist mindestens", Validate(V2App(ChildProcessMode.Allowlist)));
-        Assert.StartsWith("apps[0].allowedChildren: bei childProcesses «allowlist» ist mindestens", Validate(V2App(ChildProcessMode.Allowlist, [])));
+        Assert.StartsWith("apps[0].allowedChildren: childProcesses \"allowlist\" needs at least", Validate(V2App(ChildProcessMode.Allowlist)));
+        Assert.StartsWith("apps[0].allowedChildren: childProcesses \"allowlist\" needs at least", Validate(V2App(ChildProcessMode.Allowlist, [])));
     }
 
     [Theory]

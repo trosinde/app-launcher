@@ -46,7 +46,7 @@ public sealed record ShortcutBackup(string OriginalPath, string BackupPath, stri
 
 // ------------------------------------------------------------------ Accounts (task 6.2)
 
-/// <summary>Local accounts, group and logon rights (concept "Konten, die die Installation anlegt").</summary>
+/// <summary>Local accounts, group and logon rights (concept "Accounts the installation creates").</summary>
 public interface IAccountService
 {
     /// <summary>
@@ -83,7 +83,7 @@ public interface IAccountService
     /// <summary>
     /// Enabled local user accounts that are members of the Administrators (also through nested groups) and have an
     /// empty password, or whose password could not be checked (fail closed). Spec fix-wizard-findings
-    /// «Administratoren mit Passwort». Each check is one network logon with an empty password; for an account with
+    /// "Administrators with password". Each check is one network logon with an empty password; for an account with
     /// a password it counts as one failed logon.
     /// </summary>
     IReadOnlyList<AdminPasswordFinding> FindAdministratorsWithoutPassword();
@@ -115,7 +115,7 @@ public interface IProtectionService
     /// </summary>
     AclBackup ProtectDataDirectory(string path, SecurityIdentifier appAccount, string appId);
 
-    /// <summary>Same for a registry key under HKLM (created if missing), concept "Registry-Key mit Passwörtern sperren".</summary>
+    /// <summary>Same for a registry key under HKLM (created if missing), concept "Lock the registry key with passwords".</summary>
     AclBackup ProtectRegistryKey(string key, SecurityIdentifier appAccount, string appId);
 
     /// <summary>Puts the original descriptor back (uninstall, or app removed).</summary>
@@ -166,7 +166,7 @@ public enum CheckOutcome
     Deviation,
 }
 
-/// <summary>One verify check point (spec verification, table "Prüfbefehl").</summary>
+/// <summary>One verify check point (spec verification, table "Verify command").</summary>
 public sealed record CheckResult(string Id, string Title, string Expected, CheckOutcome Outcome, IReadOnlyList<string> Findings);
 
 /// <summary>Complete verify result. Exit code 0 only when every check passed.</summary>

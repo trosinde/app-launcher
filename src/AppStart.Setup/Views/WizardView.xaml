@@ -18,7 +18,7 @@
 
     <!-- Navigation: active step highlighted, done steps with ✓ -->
     <Border Background="{StaticResource NavBackground}" Padding="16,24">
-      <ItemsControl ItemsSource="{Binding Steps}" Focusable="False" AutomationProperties.Name="Schritte">
+      <ItemsControl ItemsSource="{Binding Steps}" Focusable="False" AutomationProperties.Name="Steps">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type vm:StepItem}">
             <Border x:Name="Bd" Padding="12,10" Margin="0,0,0,6" CornerRadius="4" Background="Transparent">
@@ -203,7 +203,7 @@
                          Text="{x:Static vm:SetupTexts.RegistryKeyNote}" />
               <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource ErrorText}" Margin="0,4,0,0"
                          Text="{Binding RegistryKeyError}" Visibility="{Binding RegistryKeyError, Converter={StaticResource NullToVisibility}}" />
-              <!-- add-allowed-child-processes: «Weitere Programme» (docs/ui-designs/Main.dc.html) -->
+              <!-- add-allowed-child-processes: "Other programs" (docs/ui-designs/Main.dc.html) -->
               <Label Grid.Row="4" Content="{x:Static vm:SetupTexts.ChildrenLabel}" Target="{Binding ElementName=ChildModeBox}" Padding="0" FontSize="13"
                      VerticalAlignment="Center" Margin="0,8,0,0" />
               <ComboBox x:Name="ChildModeBox" Grid.Row="4" Grid.Column="1" Height="30" FontSize="13" Margin="0,8,0,0" VerticalContentAlignment="Center"

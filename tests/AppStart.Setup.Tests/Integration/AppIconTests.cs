@@ -1,7 +1,7 @@
 namespace AppStart.Setup.Tests.Integration;
 
 /// <summary>
-/// spec: fix-wizard-findings/installation «Startmenü zeigt das AppStart-Icon», «Applikationen behalten ihr Icon».
+/// spec: fix-wizard-findings/installation "Start menu shows the AppStart icon", "Applications keep their icon".
 /// The Start menu entries point to AppStart.Setup.exe,0 (Cli/StartMenu.cs), so the EXEs must carry the AppStart
 /// icon; app shortcuts use the icon of the app EXE (ShortcutService), never the launcher's.
 /// Checks the repository sources; skipped when the tests run outside the repository (published test EXE).
@@ -18,7 +18,7 @@ public class AppIconTests
             }
         }
 
-        Assert.Skip("Nur im Repository (AppStart.slnx nicht gefunden).");
+        Assert.Skip("Only in the repository (AppStart.slnx not found).");
         return string.Empty;
     }
 

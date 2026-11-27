@@ -50,64 +50,64 @@ try {
     $regSddlBefore = Get-Sddl $regKey
 
     $p = Start-Process msiexec.exe -ArgumentList "/i `"$MsiPath`" /qn" -Wait -PassThru
-    Check 'MSI installiert' ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
+    Check 'MSI installed' ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
     Start-Sleep -Seconds 3
-    Check 'Startmenü: «AppStart – Einrichtung» und «… prüfen» angelegt' ((Test-Path "$startMenu\AppStart – Einrichtung.lnk") -and (Test-Path "$startMenu\AppStart – Einrichtung prüfen.lnk")) ''
+    Check 'Start menu: "AppStart – Setup" and "AppStart – Verify setup" created' ((Test-Path "$startMenu\AppStart – Setup.lnk") -and (Test-Path "$startMenu\AppStart – Verify setup.lnk")) ''
     $velopackShortcut = @(Get-ChildItem ([Environment]::GetFolderPath('CommonDesktopDirectory')), ([Environment]::GetFolderPath('Desktop')) -Filter 'AppStart.lnk' -ErrorAction SilentlyContinue)
-    Check 'Keine Velopack-Verknüpfung auf den Dienst' ($velopackShortcut.Count -eq 0) ($velopackShortcut.FullName -join ', ')
+    Check 'No Velopack shortcut to the service' ($velopackShortcut.Count -eq 0) ($velopackShortcut.FullName -join ', ')
 
     # A pre-existing direct shortcut to the app must be backed up and replaced
     $direct = Join-Path ([Environment]::GetFolderPath('CommonDesktopDirectory')) 'TestApp direkt.lnk'
     $sh = (New-Object -ComObject WScript.Shell).CreateShortcut($direct); $sh.TargetPath = $testExe; $sh.Save()
 
     $r = Invoke-Setup @('add', '--exe', $testExe, '--data-dir', $dataDir, '--reg-key', 'HKLM\SOFTWARE\AppStartTest', '--name', 'AppStart TestApp')
-    Check 'add: TestApp freigegeben' ($r.Exit -eq 0) ''
-    $r = Invoke-Setup @('add-user', '--name', 'appstart-user', '--password-stdin') 'Bediener-Test-2026!'
-    Check 'add-user: appstart-user angelegt' ($r.Exit -eq 0 -and (Get-LocalUser appstart-user -ErrorAction SilentlyContinue)) ''
+    Check 'add: TestApp approved' ($r.Exit -eq 0) ''
+    $r = Invoke-Setup @('add-user', '--name', 'appstart-user', '--password-stdin') 'Operator-Test-2026!'
+    Check 'add-user: appstart-user created' ($r.Exit -eq 0 -and (Get-LocalUser appstart-user -ErrorAction SilentlyContinue)) ''
 
     $publicLnk = Join-Path ([Environment]::GetFolderPath('CommonDesktopDirectory')) 'AppStart TestApp.lnk'
     $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($publicLnk)
-    Check 'Verknüpfung auf Launcher mit --app' ($lnk.TargetPath -like '*AppStart.Launcher.exe' -and $lnk.Arguments -like '--app *') "$($lnk.TargetPath) $($lnk.Arguments) icon=$($lnk.IconLocation)"
-    Check 'Direkte Verknüpfung gesichert und entfernt' (-not (Test-Path $direct)) ''
+    Check 'Shortcut to the launcher with --app' ($lnk.TargetPath -like '*AppStart.Launcher.exe' -and $lnk.Arguments -like '--app *') "$($lnk.TargetPath) $($lnk.Arguments) icon=$($lnk.IconLocation)"
+    Check 'Direct shortcut backed up and removed' (-not (Test-Path $direct)) ''
     $foreign = (Get-Acl $dataDir).GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]) | Where-Object {
         $_.IdentityReference.Value -notin 'S-1-5-18', 'S-1-5-32-544' -and $_.IdentityReference.Translate([System.Security.Principal.NTAccount]).Value -notlike '*\appstart-app' }
-    Check 'Datenordner nur appstart-app, SYSTEM, Administratoren' (-not $foreign) (($foreign | ForEach-Object { $_.IdentityReference }) -join ', ')
+    Check 'Data folder only appstart-app, SYSTEM, Administrators' (-not $foreign) (($foreign | ForEach-Object { $_.IdentityReference }) -join ', ')
 
     $r = Invoke-Setup @('list')
-    Check 'list zeigt TestApp' ($r.Exit -eq 0 -and $r.Text -like '*AppStart TestApp*') ''
+    Check 'list shows TestApp' ($r.Exit -eq 0 -and $r.Text -like '*AppStart TestApp*') ''
 
     $report = Join-Path $StageDir 'setup-verify.html'
     $r = Invoke-Setup @('verify', '--report', $report)
-    Check 'verify: Exit-Code 0, 10 von 10' ($r.Exit -eq 0 -and $r.Text -like '*10 von 10*') ''
-    Check 'Prüfbericht abgelegt' ((Test-Path $report) -and @(Get-ChildItem "$env:ProgramData\AppStart\Reports" -Filter 'verify-*.html').Count -ge 1) ''
+    Check 'verify: exit code 0, 10 of 10' ($r.Exit -eq 0 -and $r.Text -like '*10 of 10*') ''
+    Check 'Verification report saved' ((Test-Path $report) -and @(Get-ChildItem "$env:ProgramData\AppStart\Reports" -Filter 'verify-*.html').Count -ge 1) ''
 
     # Start through the shortcut created by setup
     Start-Process $publicLnk; Start-Sleep -Seconds 6
     $proc = Get-CimInstance Win32_Process -Filter "Name='AppStart.TestApp.exe'" | Select-Object -First 1
     $owner = if ($proc) { (Invoke-CimMethod -InputObject $proc -MethodName GetOwner).User } else { '' }
-    Check 'Start über Setup-Verknüpfung: TestApp als appstart-app' ($owner -eq 'appstart-app') "owner=$owner"
+    Check 'Start through setup shortcut: TestApp as appstart-app' ($owner -eq 'appstart-app') "owner=$owner"
     Get-Process AppStart.TestApp -ErrorAction SilentlyContinue | Stop-Process -Force
 
     # Deliberate misconfiguration -> verify must fail
     Add-LocalGroupMember -SID 'S-1-5-32-544' -Member 'appstart-user'
     $r = Invoke-Setup @('verify')
-    Check 'verify nach Fehlkonfiguration: Exit-Code ungleich 0' ($r.Exit -ne 0 -and $r.Text -like '*appstart-user*') ''
+    Check 'verify after misconfiguration: exit code not 0' ($r.Exit -ne 0 -and $r.Text -like '*appstart-user*') ''
     Remove-LocalGroupMember -SID 'S-1-5-32-544' -Member 'appstart-user'
 
     $r = Invoke-Setup @('uninstall')
     Check 'uninstall' ($r.Exit -eq 0) ''
-    Check 'uninstall: Konten und Gruppe entfernt' (-not (Get-LocalUser appstart-app -ErrorAction SilentlyContinue) -and -not (Get-LocalUser appstart-user -ErrorAction SilentlyContinue) -and -not (Get-LocalGroup 'AppStart Users' -ErrorAction SilentlyContinue)) ''
-    Check 'uninstall: direkte Verknüpfung zurück, Setup-Verknüpfung weg' ((Test-Path $direct) -and -not (Test-Path $publicLnk)) ''
-    Check 'uninstall: Rechte Datenordner zurückgesetzt' ((Get-Sddl $dataDir) -replace 'AI', '' -eq ($dataSddlBefore -replace 'AI', '')) ''
-    Check 'uninstall: Rechte Registry-Key zurückgesetzt' ((Get-Sddl $regKey) -replace 'AI', '' -eq ($regSddlBefore -replace 'AI', '')) ''
+    Check 'uninstall: accounts and group removed' (-not (Get-LocalUser appstart-app -ErrorAction SilentlyContinue) -and -not (Get-LocalUser appstart-user -ErrorAction SilentlyContinue) -and -not (Get-LocalGroup 'AppStart Users' -ErrorAction SilentlyContinue)) ''
+    Check 'uninstall: direct shortcut back, setup shortcut gone' ((Test-Path $direct) -and -not (Test-Path $publicLnk)) ''
+    Check 'uninstall: data folder permissions reset' ((Get-Sddl $dataDir) -replace 'AI', '' -eq ($dataSddlBefore -replace 'AI', '')) ''
+    Check 'uninstall: registry key permissions reset' ((Get-Sddl $regKey) -replace 'AI', '' -eq ($regSddlBefore -replace 'AI', '')) ''
 
     $product = Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' | Get-ItemProperty | Where-Object { $_.DisplayName -eq 'AppStart' -and $_.PSChildName -match '^\{' } | Select-Object -First 1
     $p = Start-Process msiexec.exe -ArgumentList "/x $($product.PSChildName) /qn" -Wait -PassThru
     Start-Sleep -Seconds 2
-    Check 'MSI deinstalliert, Dienst und Startmenü-Ordner weg' ($p.ExitCode -eq 0 -and -not (Get-Service AppStart -ErrorAction SilentlyContinue) -and -not (Test-Path $startMenu)) ''
+    Check 'MSI uninstalled, service and Start menu folder gone' ($p.ExitCode -eq 0 -and -not (Get-Service AppStart -ErrorAction SilentlyContinue) -and -not (Test-Path $startMenu)) ''
 }
 catch {
-    Check 'Testlauf ohne Ausnahme' $false $_.Exception.Message
+    Check 'Test run without exception' $false $_.Exception.Message
 }
 finally {
     Write-Host "`n================ Cleanup ================"
@@ -122,8 +122,8 @@ finally {
     Remove-Item $regKey -Recurse -ErrorAction SilentlyContinue
     Remove-Item $dataDir, "$env:ProgramData\AppStart", 'C:\Program Files\AppStart', $startMenu -Recurse -Force -ErrorAction SilentlyContinue
     if ([System.Diagnostics.EventLog]::SourceExists('AppStart')) { [System.Diagnostics.EventLog]::DeleteEventSource('AppStart') }
-    Write-Host "Rest: Dienst=$([bool](Get-Service AppStart -ErrorAction SilentlyContinue)) Konten=$([bool](Get-LocalUser appstart-app -ErrorAction SilentlyContinue)) ProgramData=$(Test-Path "$env:ProgramData\AppStart") Programme=$(Test-Path 'C:\Program Files\AppStart')"
-    Write-Host "`n================ Ergebnis ================"
+    Write-Host "Left over: Service=$([bool](Get-Service AppStart -ErrorAction SilentlyContinue)) Accounts=$([bool](Get-LocalUser appstart-app -ErrorAction SilentlyContinue)) ProgramData=$(Test-Path "$env:ProgramData\AppStart") Programs=$(Test-Path 'C:\Program Files\AppStart')"
+    Write-Host "`n================ Result ================"
     $results | ForEach-Object { Write-Host $_ }
     Write-Host ("{0} PASS, {1} FAIL" -f @($results | Where-Object { $_ -like 'PASS*' }).Count, @($results | Where-Object { $_ -like 'FAIL*' }).Count)
     Stop-Transcript | Out-Null

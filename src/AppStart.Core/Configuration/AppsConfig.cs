@@ -52,7 +52,7 @@ public sealed record AppsConfig
 
     /// <summary>
     /// The same configuration in the current version: allowChildProcesses false becomes childProcesses
-    /// blocked, true becomes all (spec installation, requirement "Migration der Konfiguration").
+    /// blocked, true becomes all (spec installation, requirement "Migration of the configuration").
     /// </summary>
     public AppsConfig ToCurrentVersion() => Version == CurrentVersion
         ? this

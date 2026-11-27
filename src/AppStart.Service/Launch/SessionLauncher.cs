@@ -33,7 +33,7 @@ public sealed class VerifyingAppStarter(
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new StartResult(StartOutcome.Failed, $"EXE kann nicht gesperrt geöffnet werden: {ex.Message}");
+            return new StartResult(StartOutcome.Failed, $"EXE cannot be opened locked: {ex.Message}");
         }
 
         using (exe)
@@ -155,7 +155,7 @@ internal static unsafe class SessionLauncher
                 {
                     var monitor = monitorFor((int)info.dwProcessId);
                     job.Watch(monitor, cleanup.Dispose, ex => log.LogError(EventIds.JobMonitorFailed,
-                        "Überwachung der Applikation {AppId} ausgefallen, alle ihre Prozesse werden beendet: {Error}", app.Id, ex.Message));
+                        "Monitoring of application {AppId} failed, all its processes are ended: {Error}", app.Id, ex.Message));
                 }
 
                 if (PInvoke.ResumeThread(info.hThread) == uint.MaxValue)

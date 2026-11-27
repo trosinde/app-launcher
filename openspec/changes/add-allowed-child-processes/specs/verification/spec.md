@@ -1,16 +1,16 @@
 ## ADDED Requirements
 
-### Requirement: Prüfung der Hilfsprogramme
-verify SHALL je Applikation mit childProcesses allowlist für jeden Eintrag in allowedChildren prüfen: Datei vorhanden, Signatur oder SHA-256 gültig, Ordner für Bediener nicht beschreibbar. Applikationen mit childProcesses all SHALL im Prüfpunkt mit dem Hinweis «Alle weiteren Programme erlaubt» erscheinen, ohne Abweichung, weil der Modus bewusst gewählt ist. Ein aktiver Lernmodus SHALL als Abweichung erscheinen.
+### Requirement: Verification of helper programs
+verify SHALL check, for each application with childProcesses allowlist and for every entry in allowedChildren: file present, signature or SHA-256 valid, folder not writable by operators. Applications with childProcesses all SHALL appear in the check with the note "All other programs allowed", without deviation, because the mode was chosen deliberately. An active learning mode SHALL appear as a deviation.
 
-#### Scenario: Hilfsprogramm verändert
-- **WHEN** die SHA-256 von Updater.exe nicht mehr zum Eintrag passt
-- **THEN** meldet verify eine Abweichung mit Pfad und dem Hinweis rehash --app appa --child <Pfad>
+#### Scenario: Helper program modified
+- **WHEN** the SHA-256 of Updater.exe no longer matches the entry
+- **THEN** verify reports a deviation with path and the hint rehash --app appa --child <path>
 
-#### Scenario: Alle weiteren Programme erlaubt
-- **WHEN** eine Applikation childProcesses all hat
-- **THEN** ist der Prüfpunkt erfüllt und nennt den Hinweis «Alle weiteren Programme erlaubt» mit der AppId
+#### Scenario: All other programs allowed
+- **WHEN** an application has childProcesses all
+- **THEN** the check is passed and shows the note "All other programs allowed" with the AppId
 
-#### Scenario: Lernmodus vergessen
-- **WHEN** beim Prüfen der Lernmodus für eine Applikation noch aktiv ist
-- **THEN** meldet verify eine Abweichung mit Ablaufzeit und dem Hinweis learn stop --app <AppId>
+#### Scenario: Learning mode forgotten
+- **WHEN** learning mode is still active for an application during verification
+- **THEN** verify reports a deviation with expiry time and the hint learn stop --app <AppId>

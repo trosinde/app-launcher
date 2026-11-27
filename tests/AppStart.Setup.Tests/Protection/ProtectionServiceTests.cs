@@ -120,8 +120,8 @@ public sealed class ProtectionServiceTests : IDisposable
         var finding = Assert.Single(scope.Service.FindForeignAccess(AclTarget.Directory, data, scope.Me));
 
         Assert.Contains("(S-1-5-32-545)", finding, StringComparison.Ordinal);
-        Assert.Contains("Lesen", finding, StringComparison.Ordinal);
-        Assert.DoesNotContain("Schreiben", finding, StringComparison.Ordinal);
+        Assert.Contains("Read", finding, StringComparison.Ordinal);
+        Assert.DoesNotContain("Write", finding, StringComparison.Ordinal);
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -139,7 +139,7 @@ public sealed class ProtectionServiceTests : IDisposable
         var findings = scope.Service.FindForeignAccess(new RawSecurityDescriptor("O:BUD:NO_ACCESS_CONTROL"), scope.Me, isRegistry: false);
 
         Assert.Equal(2, findings.Count);
-        Assert.Contains(findings, f => f.Contains("Besitzer", StringComparison.Ordinal));
+        Assert.Contains(findings, f => f.Contains("owner", StringComparison.Ordinal));
         Assert.Contains(findings, f => f.Contains("NULL DACL", StringComparison.Ordinal));
     }
 
@@ -289,7 +289,7 @@ public sealed class ProtectionServiceTests : IDisposable
         }
 
         var finding = Assert.Single(scope.Service.FindForeignAccess(Registry.CurrentUser, subKey, subKey, scope.Me));
-        Assert.Contains("(S-1-5-32-545): Lesen", finding, StringComparison.Ordinal);
+        Assert.Contains("(S-1-5-32-545): Read", finding, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -318,9 +318,9 @@ public sealed class ProtectionServiceTests : IDisposable
     [Fact]
     public void Rights_are_described_readably()
     {
-        Assert.StartsWith("Vollzugriff", ProtectionService.DescribeRights((int)FileSystemRights.FullControl, isRegistry: false), StringComparison.Ordinal);
-        Assert.StartsWith("Lesen (", ProtectionService.DescribeRights((int)FileSystemRights.ReadAndExecute, isRegistry: false), StringComparison.Ordinal);
-        Assert.StartsWith("Lesen, Schreiben, Löschen", ProtectionService.DescribeRights((int)FileSystemRights.Modify, isRegistry: false), StringComparison.Ordinal);
-        Assert.StartsWith("Lesen (", ProtectionService.DescribeRights((int)RegistryRights.ReadKey, isRegistry: true), StringComparison.Ordinal);
+        Assert.StartsWith("Full access", ProtectionService.DescribeRights((int)FileSystemRights.FullControl, isRegistry: false), StringComparison.Ordinal);
+        Assert.StartsWith("Read (", ProtectionService.DescribeRights((int)FileSystemRights.ReadAndExecute, isRegistry: false), StringComparison.Ordinal);
+        Assert.StartsWith("Read, Write, Delete", ProtectionService.DescribeRights((int)FileSystemRights.Modify, isRegistry: false), StringComparison.Ordinal);
+        Assert.StartsWith("Read (", ProtectionService.DescribeRights((int)RegistryRights.ReadKey, isRegistry: true), StringComparison.Ordinal);
     }
 }

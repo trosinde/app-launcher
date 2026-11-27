@@ -3,7 +3,7 @@ using AppStart.Setup.ViewModels;
 
 namespace AppStart.Setup.Views;
 
-/// <summary>Dialog «Vorschläge übernehmen»; DialogResult true after «… Programme übernehmen».</summary>
+/// <summary>Dialog "Apply suggestions"; DialogResult true after "Apply … programs".</summary>
 public partial class LearnResultWindow : Window
 {
     public LearnResultWindow(LearnResultViewModel viewModel)

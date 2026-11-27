@@ -12,7 +12,7 @@ public sealed record ConfigLoadResult(AppsConfig? Config, string? Error)
     public static ConfigLoadResult Fail(string error) => new(null, error);
 }
 
-/// <summary>Parses and validates apps.json (spec app-launch, requirement "Geschützte und gültige Konfiguration").</summary>
+/// <summary>Parses and validates apps.json (spec app-launch, requirement "Protected and valid configuration").</summary>
 public static class AppsConfigSerializer
 {
     public static ConfigLoadResult Parse(string json)
@@ -24,13 +24,13 @@ public static class AppsConfigSerializer
         }
         catch (JsonException ex)
         {
-            var where = ex.LineNumber is { } line ? $"Zeile {line + 1}, {ex.Path}" : ex.Path;
-            return ConfigLoadResult.Fail($"apps.json ist kein gültiges JSON ({where}): {ex.Message}");
+            var where = ex.LineNumber is { } line ? $"line {line + 1}, {ex.Path}" : ex.Path;
+            return ConfigLoadResult.Fail($"apps.json is not valid JSON ({where}): {ex.Message}");
         }
 
         if (config is null)
         {
-            return ConfigLoadResult.Fail("apps.json ist leer.");
+            return ConfigLoadResult.Fail("apps.json is empty.");
         }
 
         var error = Validate(config);
@@ -53,7 +53,7 @@ public static class AppsConfigSerializer
     {
         if (config.Version is < AppsConfig.OldestReadableVersion or > AppsConfig.CurrentVersion)
         {
-            return $"version: {config.Version} wird nicht unterstützt, erwartet {AppsConfig.OldestReadableVersion} bis {AppsConfig.CurrentVersion}.";
+            return $"version: {config.Version} is not supported, expected {AppsConfig.OldestReadableVersion} to {AppsConfig.CurrentVersion}.";
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -64,45 +64,45 @@ public static class AppsConfigSerializer
 
             if (!AppId.IsValid(app.Id))
             {
-                return $"{at}.id: «{app.Id}» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis {AppId.MaxLength} Zeichen.";
+                return $"{at}.id: \"{app.Id}\" is invalid. Allowed are a-z, 0-9 and -, 1 to {AppId.MaxLength} characters.";
             }
 
             if (!seen.Add(app.Id))
             {
-                return $"{at}.id: «{app.Id}» kommt mehrfach vor.";
+                return $"{at}.id: \"{app.Id}\" occurs more than once.";
             }
 
             if (string.IsNullOrWhiteSpace(app.Name))
             {
-                return $"{at}.name: fehlt.";
+                return $"{at}.name: is missing.";
             }
 
             if (!IsAbsoluteWindowsPath(app.Exe) || !app.Exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
-                return $"{at}.exe: «{app.Exe}» ist kein absoluter Pfad auf eine EXE.";
+                return $"{at}.exe: \"{app.Exe}\" is not an absolute path to an EXE.";
             }
 
             if (!IsAbsoluteWindowsPath(app.WorkingDir))
             {
-                return $"{at}.workingDir: «{app.WorkingDir}» ist kein absoluter Pfad.";
+                return $"{at}.workingDir: \"{app.WorkingDir}\" is not an absolute path.";
             }
 
             if (app.DataDir is not null && !IsAbsoluteWindowsPath(app.DataDir))
             {
-                return $"{at}.dataDir: «{app.DataDir}» ist kein absoluter Pfad.";
+                return $"{at}.dataDir: \"{app.DataDir}\" is not an absolute path.";
             }
 
             if (app.RegistryKey is not null && !app.RegistryKey.StartsWith(@"HKLM\", StringComparison.OrdinalIgnoreCase))
             {
-                return $"{at}.registryKey: «{app.RegistryKey}» muss unter HKLM\\ liegen.";
+                return $"{at}.registryKey: \"{app.RegistryKey}\" must lie under HKLM\\.";
             }
 
             switch (app.Check)
             {
                 case IntegrityCheck.Signature when !IsHex(app.SignerThumbprint, 40):
-                    return $"{at}.signerThumbprint: bei check «signature» sind 40 Hex-Zeichen nötig.";
+                    return $"{at}.signerThumbprint: check \"signature\" needs 40 hex characters.";
                 case IntegrityCheck.Sha256 when !IsHex(app.Sha256, 64):
-                    return $"{at}.sha256: bei check «sha256» sind 64 Hex-Zeichen nötig.";
+                    return $"{at}.sha256: check \"sha256\" needs 64 hex characters.";
             }
 
             var childError = ValidateChildProcesses(app, at, config.Version);
@@ -122,27 +122,27 @@ public static class AppsConfigSerializer
         {
             if (app.ChildProcesses is not null)
             {
-                return $"{at}.childProcesses: gibt es erst ab Version 2.";
+                return $"{at}.childProcesses: exists only from version 2.";
             }
 
-            return app.AllowedChildren is not null ? $"{at}.allowedChildren: gibt es erst ab Version 2." : null;
+            return app.AllowedChildren is not null ? $"{at}.allowedChildren: exists only from version 2." : null;
         }
 
         if (app.AllowChildProcesses is not null)
         {
-            return $"{at}.allowChildProcesses: gibt es ab Version 2 nicht mehr, «childProcesses» verwenden.";
+            return $"{at}.allowChildProcesses: no longer exists from version 2, use \"childProcesses\".";
         }
 
         if (app.ChildProcessMode != ChildProcessMode.Allowlist)
         {
             return app.AllowedChildren is not null
-                ? $"{at}.allowedChildren: nur bei childProcesses «allowlist» erlaubt."
+                ? $"{at}.allowedChildren: only allowed with childProcesses \"allowlist\"."
                 : null;
         }
 
         if (app.AllowedChildren is not { Count: > 0 })
         {
-            return $"{at}.allowedChildren: bei childProcesses «allowlist» ist mindestens ein Eintrag nötig.";
+            return $"{at}.allowedChildren: childProcesses \"allowlist\" needs at least one entry.";
         }
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -154,25 +154,25 @@ public static class AppsConfigSerializer
             if (!IsAbsoluteWindowsPath(child.Exe) || child.Exe.Contains('%', StringComparison.Ordinal)
                 || !child.Exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
-                return $"{cat}.exe: «{child.Exe}» ist kein absoluter Pfad auf eine EXE (ohne Platzhalter).";
+                return $"{cat}.exe: \"{child.Exe}\" is not an absolute path to an EXE (without placeholders).";
             }
 
             if (!seen.Add(child.Exe))
             {
-                return $"{cat}.exe: «{child.Exe}» kommt mehrfach vor.";
+                return $"{cat}.exe: \"{child.Exe}\" occurs more than once.";
             }
 
             switch (child.Check)
             {
                 case IntegrityCheck.Signature when !IsHex(child.SignerThumbprint, 40):
-                    return $"{cat}.signerThumbprint: bei check «signature» sind 40 Hex-Zeichen nötig.";
+                    return $"{cat}.signerThumbprint: check \"signature\" needs 40 hex characters.";
                 case IntegrityCheck.Sha256 when !IsHex(child.Sha256, 64):
-                    return $"{cat}.sha256: bei check «sha256» sind 64 Hex-Zeichen nötig.";
+                    return $"{cat}.sha256: check \"sha256\" needs 64 hex characters.";
             }
 
             if (ChildProcessRules.IsShellOrScriptHost(child.Exe) && !child.AllowShell)
             {
-                return $"{cat}.allowShell: «{Path.GetFileName(child.Exe)}» ist eine Shell oder ein Skript-Host und nur mit «allowShell»: true erlaubt.";
+                return $"{cat}.allowShell: \"{Path.GetFileName(child.Exe)}\" is a shell or a script host and only allowed with \"allowShell\": true.";
             }
         }
 

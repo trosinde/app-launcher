@@ -111,7 +111,7 @@ internal sealed class FakeProbe : ISystemProbe
 
     public Dictionary<string, List<string>> WriteViolations { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public ConfigLoadResult Config { get; set; } = ConfigLoadResult.Fail("nicht gesetzt");
+    public ConfigLoadResult Config { get; set; } = ConfigLoadResult.Fail("not set");
 
     public ConfigLoadResult? UncheckedConfig { get; set; }
 

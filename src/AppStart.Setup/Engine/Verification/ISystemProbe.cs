@@ -11,10 +11,10 @@ namespace AppStart.Setup.Engine.Verification;
 /// </summary>
 public interface ISystemProbe
 {
-    /// <summary>Name of this computer (report "Rechner").</summary>
+    /// <summary>Name of this computer (report "Computer").</summary>
     string MachineName { get; }
 
-    /// <summary>Windows user running verify, DOMAIN\User (report "Servicetechniker").</summary>
+    /// <summary>Windows user running verify, DOMAIN\User (report "Service technician").</summary>
     string CurrentUser { get; }
 
     /// <summary>Public Start menu, Programs folder (C:\ProgramData\Microsoft\Windows\Start Menu\Programs).</summary>

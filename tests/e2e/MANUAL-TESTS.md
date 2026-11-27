@@ -1,115 +1,115 @@
-# Manuelle Tests
+# Manual tests
 
-Diese Tests lassen sich nicht oder nicht zuverlässig automatisieren (echte Anmeldungen, Remote Desktop,
-Sperrbildschirm, Neustart, zweites Betriebssystem). Durchführung auf der **Test-VM**, vor jedem Block
-auf den Snapshot zurücksetzen. Vorbereitung, wenn nicht anders angegeben:
+These tests cannot be automated, or not reliably (real logons, Remote Desktop,
+lock screen, restart, second operating system). Run them on the **test VM** and revert to the snapshot before each block.
+Preparation, unless stated otherwise:
 
-1. `AppStart-<Version>.msi` installieren (`msiexec /i AppStart-<Version>.msi /qn`).
-2. Als Admin: `AppStart.Setup.exe add --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe" --data-dir C:\ProgramData\AppStartTest --reg-key HKLM\SOFTWARE\AppStartTest --name "AppStart TestApp"`
-3. Als Admin: `AppStart.Setup.exe add-user --name appstart-user` (Passwort eingeben und notieren).
-4. `AppStart.Setup.exe verify` liefert Exit-Code 0.
+1. Install `AppStart-<Version>.msi` (`msiexec /i AppStart-<Version>.msi /qn`).
+2. As admin: `AppStart.Setup.exe add --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestApp.exe" --data-dir C:\ProgramData\AppStartTest --reg-key HKLM\SOFTWARE\AppStartTest --name "AppStart TestApp"`
+3. As admin: `AppStart.Setup.exe add-user --name appstart-user` (enter the password at "Password for appstart-user:" and note it).
+4. `AppStart.Setup.exe verify` returns exit code 0.
 
-Ergebnis je Test in die Tabelle am Ende eintragen (Datum, Windows-Version, AppStart-Version, OK/Abweichung).
+Enter the result of each test in the table at the end (date, Windows version, AppStart version, OK/deviation).
 
 ## M1 Remote Desktop
 
-Spec: app-launch «Start durch Bediener», installation «Keine Anmeldung als App-Konto», pipe-security «Fremde Session».
+Spec: app-launch "Launch by operator", installation "No logon as app account", pipe-security "Foreign session".
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| appstart-user in die Gruppe «Remotedesktopbenutzer» aufnehmen, per RDP als appstart-user anmelden | Anmeldung klappt |
-| Verknüpfung «AppStart TestApp» auf dem Desktop starten | TestApp erscheint **in der RDP-Sitzung**, ohne Passwort- oder UAC-Abfrage; alle Anzeigen grün, Konto appstart-app |
-| Gleichzeitig an der Konsole als Admin: Task-Manager, Details, Spalte «Sitzungs-ID» | AppStart.TestApp.exe läuft in der Sitzung des RDP-Benutzers, nicht in Sitzung 0 und nicht an der Konsole |
-| Per RDP als `appstart-app` anmelden (Passwort per `net user appstart-app <neu>` als Admin setzen, danach `verify`) | Anmeldung verweigert («Anmeldung über Remotedesktop verweigern») |
-| RDP-Sitzung trennen (nicht abmelden), neu verbinden | TestApp läuft weiter und ist bedienbar |
+| Add appstart-user to the group "Remote Desktop Users", log on as appstart-user via RDP | Logon works |
+| Start the shortcut "AppStart TestApp" on the desktop | TestApp appears **in the RDP session**, without a password or UAC prompt; all indicators green, account appstart-app |
+| At the same time at the console as admin: Task Manager, Details, column "Session ID" | AppStart.TestApp.exe runs in the RDP user's session, not in session 0 and not at the console |
+| Log on via RDP as `appstart-app` (set the password as admin with `net user appstart-app <new>`, then `verify`) | Logon denied ("Deny log on through Remote Desktop Services") |
+| Disconnect the RDP session (do not sign out), reconnect | TestApp keeps running and can be operated |
 
-## M2 Sperrbildschirm
+## M2 Lock screen
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Als appstart-user anmelden, TestApp über die Verknüpfung starten | TestApp läuft |
-| Win+L, 1 Minute warten, entsperren | TestApp läuft weiter, Anzeigen unverändert grün, «Erneut prüfen» weiterhin OK |
-| Bei gesperrtem Bildschirm «Benutzer wechseln», als Admin anmelden, `Get-Process AppStart.TestApp` | TestApp gehört weiterhin zur Session des Bedieners |
-| Interaktive Anmeldung an der Konsole als `appstart-app` versuchen | Anmeldung verweigert («lokale Anmeldung verweigern») |
+| Log on as appstart-user, start TestApp via the shortcut | TestApp runs |
+| Win+L, wait 1 minute, unlock | TestApp keeps running, indicators still green, "Check again" still OK |
+| With the screen locked, "Switch user", log on as admin, `Get-Process AppStart.TestApp` | TestApp still belongs to the operator's session |
+| Try an interactive logon at the console as `appstart-app` | Logon denied ("Deny log on locally") |
 
-## M3 Echte zweite Session (schneller Benutzerwechsel)
+## M3 Real second session (fast user switching)
 
-Automatisch (`Invoke-OperationsTests.ps1`) laufen beide Bediener in derselben Session; die Sperre je Session
-lässt dort bei gleichzeitigem Start nur einen durch. Hier mit zwei echten Sessions:
+Automatically (`Invoke-OperationsTests.ps1`) both operators run in the same session; there the per-session lock
+lets only one through on a simultaneous start. Here with two real sessions:
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Zweiten lokalen Benutzer anlegen, `AppStart.Setup.exe add-user --member "<PC>\<Benutzer>"` | verify Exit-Code 0 |
-| appstart-user anmelden, Benutzer wechseln, zweiten Benutzer anmelden | zwei aktive Sessions (`query user`) |
-| In beiden Sessions die Verknüpfung möglichst gleichzeitig starten | **beide** TestApps starten, jede in ihrer eigenen Session (Task-Manager, Sitzungs-ID); keine Meldung «Start läuft bereits» |
-| In Session 1 zweimal schnell hintereinander doppelklicken | zweiter Klick zeigt «Start läuft bereits» (Sperrzeit 2 s je Session), Ereignis 1203 |
-| Fenster der TestApp aus Session 1 ist in Session 2 nicht sichtbar | richtig |
+| Create a second local user, `AppStart.Setup.exe add-user --member "<PC>\<User>"` | verify exit code 0 |
+| Log on appstart-user, switch user, log on the second user | two active sessions (`query user`) |
+| Start the shortcut in both sessions as simultaneously as possible | **both** TestApps start, each in its own session (Task Manager, Session ID); no message "Start already in progress" |
+| In session 1 double-click twice in quick succession | second click shows "Start already in progress" (lockout time 2 s per session), event 1203 |
+| TestApp window from session 1 is not visible in session 2 | correct |
 
-## M4 Neustart
+## M4 Restart
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Rechner neu starten, **ohne** Admin-Anmeldung direkt als appstart-user anmelden | Dienst AppStart läuft (Starttyp automatisch) |
-| TestApp über die Verknüpfung starten | startet, alle Anzeigen grün |
-| Als Admin: Ereignisanzeige, Anwendung, Quelle AppStart | Ereignis 1000 (Dienst gestartet) nach dem Neustart, keine 1300/1301 |
-| `AppStart.Setup.exe verify` | Exit-Code 0 |
+| Restart the computer, log on directly as appstart-user **without** an admin logon | Service AppStart is running (startup type automatic) |
+| Start TestApp via the shortcut | starts, all indicators green |
+| As admin: Event Viewer, Application, source AppStart | Event 1000 (service started) after the restart, no 1300/1301 |
+| `AppStart.Setup.exe verify` | Exit code 0 |
 
 ## M5 Windows 10
 
-Spec: Windows 10 und 11 x64 (Konzept, Testumgebung). Desktop-DACL-Hilfsprozess (Design D2) ist nur dort nötig.
+Spec: Windows 10 and 11 x64 (concept, test environment). The desktop DACL helper process (design D2) is only needed there.
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Test-VM mit Windows 10 22H2 x64 | – |
-| `Invoke-ServiceE2E.ps1`, `Invoke-SetupE2E.ps1`, `Invoke-AcceptanceTest.ps1`, `Invoke-InstallTests.ps1`, `Invoke-OperationsTests.ps1` ausführen | jeweils 0 FAIL |
-| M1 bis M4 auf Windows 10 wiederholen | wie Windows 11 |
-| TestApp als appstart-user starten: Fenster erscheint und ist bedienbar | kein leeres/unsichtbares Fenster (Zugriff auf WinSta0/Default) |
+| Test VM with Windows 10 22H2 x64 | – |
+| Run `Invoke-ServiceE2E.ps1`, `Invoke-SetupE2E.ps1`, `Invoke-AcceptanceTest.ps1`, `Invoke-InstallTests.ps1`, `Invoke-OperationsTests.ps1` | 0 FAIL each |
+| Repeat M1 to M4 on Windows 10 | same as Windows 11 |
+| Start TestApp as appstart-user: window appears and can be operated | no empty/invisible window (access to WinSta0/Default) |
 
-## M6 Bootstrapper interaktiv
+## M6 Bootstrapper interactive
 
-Spec: installation «Erstinstallation», «Start aus beschreibbarem Ordner», «Fehler bei der MSI-Installation»,
-«Abbruch im Wizard», «Update über bestehende Installation».
+Spec: installation "First installation", "Start from a writable folder", "Error during MSI installation",
+"Cancel in the wizard", "Update over an existing installation".
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Als Standardbenutzer `AppStart-Setup.exe` nach `Downloads` kopieren, Doppelklick | **eine** UAC-Abfrage (Admin-Zugangsdaten) |
-| Bestätigen | MSI wird installiert, danach Wizard Schritt 1 aus `C:\Program Files\AppStart\current` ohne zweite UAC-Abfrage (Task-Manager: Pfad von AppStart.Setup.exe) |
-| Process Monitor (Filter: Prozess AppStart-Setup.exe, Pfad enthält `Downloads` oder `\Temp\`) | keine geladenen DLLs oder gestarteten Programme aus Downloads oder %TEMP% außer der Bootstrapper-EXE selbst |
-| Wizard mit «Abbrechen» beenden | AppStart bleibt installiert; Startmenü «AppStart – Einrichtung» startet den Wizard erneut; `verify` meldet Abweichung (Exit-Code ≠ 0) |
-| Während eine andere Installation läuft (z. B. ein anderes MSI mit UI offen lassen) Bootstrapper starten | Meldung mit Ursache (andere Installation läuft, 1618) und Massnahme; MSI-Log in `C:\ProgramData\AppStart\Logs`; kein Wizard |
-| Eingerichteten Rechner: Bootstrapper einer neueren Version starten | MSI aktualisiert, Wizard zeigt die bestehende Konfiguration, am Ende läuft verify |
+| As a standard user copy `AppStart-Setup.exe` to `Downloads`, double-click | **one** UAC prompt (admin credentials) |
+| Confirm | MSI is installed, then wizard step 1 from `C:\Program Files\AppStart\current` without a second UAC prompt (Task Manager: path of AppStart.Setup.exe) |
+| Process Monitor (filter: process AppStart-Setup.exe, path contains `Downloads` or `\Temp\`) | no DLLs loaded or programs started from Downloads or %TEMP% except the bootstrapper EXE itself |
+| Close the wizard with "Cancel" | AppStart stays installed; Start menu "AppStart – Setup" starts the wizard again; `verify` reports a deviation (exit code ≠ 0) |
+| Start the bootstrapper while another installation is running (e.g. leave another MSI with UI open) | Message "Another installation is in progress" with cause (code 1618) and "Action:" line; MSI log in `C:\ProgramData\AppStart\Logs`; no wizard |
+| On a set-up computer: start the bootstrapper of a newer version | MSI updated, wizard shows the existing configuration, verify runs at the end |
 
-## M7 Prüfung über das Startmenü
+## M7 Verification via the Start menu
 
-Spec: verification «Servicetechniker nach dem Einsatz», «Bediener startet die Prüfung».
+Spec: verification "Service technician after the service visit", "Operator starts the verification".
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Als Admin «AppStart – Einrichtung prüfen» im Startmenü | UAC-Abfrage, Prüfansicht mit Ergebnis je Prüfpunkt, Bericht in `C:\ProgramData\AppStart\Reports` |
-| Als appstart-user denselben Eintrag | UAC verlangt Admin-Zugangsdaten; ohne diese startet keine Prüfung |
+| As admin "AppStart – Verify setup" in the Start menu | UAC prompt, verification view with result per check, report in `C:\ProgramData\AppStart\Reports` |
+| The same entry as appstart-user | UAC asks for admin credentials; without them no verification starts |
 
-## M8 Sicht des Bedieners in der Oberfläche
+## M8 Operator's view in the user interface
 
-Spec: installation «Bediener liest Registry», test-app «Daten für Bediener gesperrt», installation «Icon übernommen».
-Automatisch per API geprüft (`Invoke-AcceptanceTest.ps1`, Schritte 2 und 3); hier mit den echten Werkzeugen:
+Spec: installation "Operator reads registry", test-app "Data blocked for operators", installation "Icon applied".
+Checked automatically via API (`Invoke-AcceptanceTest.ps1`, steps 2 and 3); here with the real tools:
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Als appstart-user `regedit` (ohne Admin) → `HKLM\SOFTWARE\AppStartTest` | «Zugriff verweigert» |
-| Als appstart-user im Explorer `C:\ProgramData\AppStartTest` öffnen | «Zugriff verweigert»; die angebotene Schaltfläche «Fortsetzen» verlangt Admin-Zugangsdaten |
-| Verknüpfung «AppStart TestApp» auf dem Desktop ansehen | zeigt das Icon der TestApp, nicht das des Launchers |
+| As appstart-user `regedit` (without admin) → `HKLM\SOFTWARE\AppStartTest` | "Access is denied" |
+| As appstart-user open `C:\ProgramData\AppStartTest` in Explorer | access denied; the offered button "Continue" asks for admin credentials |
+| Look at the shortcut "AppStart TestApp" on the desktop | shows the TestApp's icon, not the launcher's |
 
-## M9 Zugriff über das Netzwerk
+## M9 Access over the network
 
-Spec: pipe-security «Zugriff über das Netzwerk».
+Spec: pipe-security "Access over the network".
 
-| Schritt | Erwartet |
+| Step | Expected |
 |---|---|
-| Von einem zweiten Rechner im selben Netz mit einem Konto, das auf der Test-VM Mitglied von AppStart Users ist: `[System.IO.Pipes.NamedPipeClientStream]::new('<Test-VM>', 'AppStart').Connect(3000)` | Zugriff verweigert bzw. Verbindung abgewiesen (PIPE_REJECT_REMOTE_CLIENTS, NU verweigert) |
+| From a second computer in the same network with an account that is a member of AppStart Users on the test VM: `[System.IO.Pipes.NamedPipeClientStream]::new('<Test-VM>', 'AppStart').Connect(3000)` | Access denied or connection rejected (PIPE_REJECT_REMOTE_CLIENTS, NU denied) |
 
-## Protokoll
+## Log
 
-| Test | Datum | Windows | AppStart | Ergebnis | Bemerkung |
+| Test | Date | Windows | AppStart | Result | Remarks |
 |---|---|---|---|---|---|
 | M1 | | | | | |
 | M2 | | | | | |

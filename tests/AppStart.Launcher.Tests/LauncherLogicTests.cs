@@ -44,8 +44,8 @@ public class LauncherLogicTests
     public void Unreachable_service_matches_ui_design()
     {
         var (message, code) = LauncherLogic.Evaluate(new ClientResult(ClientStatus.Unreachable), Now);
-        Assert.Equal(new LauncherMessage(MessageIcon.Warning, "Start-Dienst nicht erreichbar",
-            "Der Dienst AppStart läuft nicht. Bitte wenden Sie sich an Ihren Administrator oder den Service."), message);
+        Assert.Equal(new LauncherMessage(MessageIcon.Warning, "Launch service not reachable",
+            "The AppStart service is not running. Please contact your administrator or service support."), message);
         Assert.Equal(LauncherLogic.ExitUnreachable, code);
     }
 
@@ -57,9 +57,9 @@ public class LauncherLogicTests
 
         Assert.NotNull(message);
         Assert.Equal(MessageIcon.Error, message.Icon);
-        Assert.Equal("Start verweigert", message.Heading);
-        Assert.StartsWith("Die Applikation wurde verändert und darf nicht gestartet werden.", message.Text);
-        Assert.Equal($"Ereignis-ID 4711 · {Now.LocalDateTime:dd.MM.yyyy HH:mm}", message.Footer);
+        Assert.Equal("Launch denied", message.Heading);
+        Assert.StartsWith("The application has been modified and may not be started.", message.Text);
+        Assert.Equal($"Event ID 4711 · {Now.LocalDateTime:dd.MM.yyyy HH:mm}", message.Footer);
         Assert.Equal(LauncherLogic.ExitDenied, code);
     }
 
@@ -71,7 +71,7 @@ public class LauncherLogicTests
     {
         var (message, _) = LauncherLogic.Evaluate(new ClientResult(ClientStatus.Answered, LaunchResponse.Denied(reason, 12)), Now);
         Assert.Equal(text, message!.Text);
-        Assert.StartsWith("Ereignis-ID 12 · ", message.Footer);
+        Assert.StartsWith("Event ID 12 · ", message.Footer);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class LauncherLogicTests
     }
 
     [Theory]
-    [InlineData(@"C:\Users\Public\Desktop\Applikation A.lnk", "Applikation A")]
+    [InlineData(@"C:\Users\Public\Desktop\Application A.lnk", "Application A")]
     [InlineData(@"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\AppStart TestApp.lnk", "AppStart TestApp")]
     [InlineData(null, "AppStart")]
     [InlineData("", "AppStart")]

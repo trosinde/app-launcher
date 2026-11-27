@@ -18,7 +18,7 @@ public sealed record AnswerFile
     [JsonRequired]
     public IReadOnlyList<AnswerApp> Apps { get; init; } = [];
 
-    /// <summary>Accounts or groups added to «AppStart Users» (e.g. DOMAIN\Bediener-Gruppe).</summary>
+    /// <summary>Accounts or groups added to "AppStart Users" (e.g. DOMAIN\Operator-Group).</summary>
     public IReadOnlyList<string>? Operators { get; init; }
 }
 
@@ -73,13 +73,13 @@ public static class AnswerFileSerializer
         }
         catch (JsonException ex)
         {
-            var where = ex.LineNumber is { } line ? $"Zeile {line + 1}, {ex.Path}" : ex.Path;
-            return (null, [$"Antwortdatei ist kein gültiges JSON ({where}): {ex.Message}"]);
+            var where = ex.LineNumber is { } line ? $"line {line + 1}, {ex.Path}" : ex.Path;
+            return (null, [$"Answer file is not valid JSON ({where}): {ex.Message}"]);
         }
 
         if (file is null)
         {
-            return (null, ["Antwortdatei ist leer."]);
+            return (null, ["Answer file is empty."]);
         }
 
         var errors = Validate(file);
@@ -91,7 +91,7 @@ public static class AnswerFileSerializer
         var errors = new List<string>();
         if (file.Version != AnswerFile.CurrentVersion)
         {
-            errors.Add($"version: {file.Version} wird nicht unterstützt, erwartet {AnswerFile.CurrentVersion}.");
+            errors.Add($"version: {file.Version} is not supported, expected {AnswerFile.CurrentVersion}.");
         }
 
         var exes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -109,11 +109,11 @@ public static class AnswerFileSerializer
                 var op = file.Operators[i];
                 if (string.IsNullOrWhiteSpace(op) || op != op.Trim() || op.Count(c => c == '\\') > 1)
                 {
-                    errors.Add($"operators[{i}]: «{op}» ist kein Konto- oder Gruppenname (NAME oder DOMAIN\\NAME).");
+                    errors.Add($"operators[{i}]: \"{op}\" is not an account or group name (NAME or DOMAIN\\NAME).");
                 }
                 else if (!seen.Add(op))
                 {
-                    errors.Add($"operators[{i}]: «{op}» kommt mehrfach vor.");
+                    errors.Add($"operators[{i}]: \"{op}\" occurs more than once.");
                 }
             }
         }
@@ -125,22 +125,22 @@ public static class AnswerFileSerializer
     {
         if (!IsExePath(app.Exe))
         {
-            errors.Add($"{at}.exe: «{app.Exe}» ist kein absoluter Pfad auf eine EXE.");
+            errors.Add($"{at}.exe: \"{app.Exe}\" is not an absolute path to an EXE.");
         }
         else if (!exes.Add(app.Exe))
         {
-            errors.Add($"{at}.exe: «{app.Exe}» kommt mehrfach vor.");
+            errors.Add($"{at}.exe: \"{app.Exe}\" occurs more than once.");
         }
 
         if (app.Id is not null)
         {
             if (!AppId.IsValid(app.Id))
             {
-                errors.Add($"{at}.id: «{app.Id}» ist ungültig. Erlaubt sind a-z, 0-9 und -, 1 bis {AppId.MaxLength} Zeichen.");
+                errors.Add($"{at}.id: \"{app.Id}\" is invalid. Allowed are a-z, 0-9 and -, 1 to {AppId.MaxLength} characters.");
             }
             else if (!ids.Add(app.Id))
             {
-                errors.Add($"{at}.id: «{app.Id}» kommt mehrfach vor.");
+                errors.Add($"{at}.id: \"{app.Id}\" occurs more than once.");
             }
         }
 
@@ -151,12 +151,12 @@ public static class AnswerFileSerializer
 
         if (app.DataDir is not null && !AppsConfigSerializer.IsAbsoluteWindowsPath(app.DataDir))
         {
-            errors.Add($"{at}.dataDir: «{app.DataDir}» ist kein absoluter Pfad.");
+            errors.Add($"{at}.dataDir: \"{app.DataDir}\" is not an absolute path.");
         }
 
         if (app.RegistryKey is not null && !app.RegistryKey.StartsWith(@"HKLM\", StringComparison.OrdinalIgnoreCase))
         {
-            errors.Add($"{at}.registryKey: «{app.RegistryKey}» muss unter HKLM\\ liegen.");
+            errors.Add($"{at}.registryKey: \"{app.RegistryKey}\" must lie under HKLM\\.");
         }
 
         var mode = app.ChildProcesses ?? ChildProcessMode.Blocked;
@@ -164,7 +164,7 @@ public static class AnswerFileSerializer
         {
             if (app.AllowedChildren is not null)
             {
-                errors.Add($"{at}.allowedChildren: nur bei childProcesses «allowlist» erlaubt.");
+                errors.Add($"{at}.allowedChildren: only allowed with childProcesses \"allowlist\".");
             }
 
             return;
@@ -172,7 +172,7 @@ public static class AnswerFileSerializer
 
         if (app.AllowedChildren is not { Count: > 0 })
         {
-            errors.Add($"{at}.allowedChildren: bei childProcesses «allowlist» ist mindestens ein Eintrag nötig.");
+            errors.Add($"{at}.allowedChildren: childProcesses \"allowlist\" needs at least one entry.");
             return;
         }
 
@@ -183,18 +183,18 @@ public static class AnswerFileSerializer
             var cat = $"{at}.allowedChildren[{j}]";
             if (!IsExePath(child.Exe))
             {
-                errors.Add($"{cat}.exe: «{child.Exe}» ist kein absoluter Pfad auf eine EXE (ohne Platzhalter).");
+                errors.Add($"{cat}.exe: \"{child.Exe}\" is not an absolute path to an EXE (without placeholders).");
                 continue;
             }
 
             if (!children.Add(child.Exe))
             {
-                errors.Add($"{cat}.exe: «{child.Exe}» kommt mehrfach vor.");
+                errors.Add($"{cat}.exe: \"{child.Exe}\" occurs more than once.");
             }
 
             if (ChildProcessRules.IsShellOrScriptHost(child.Exe) && !child.AllowShell)
             {
-                errors.Add($"{cat}.allowShell: «{Path.GetFileName(child.Exe)}» ist eine Shell oder ein Skript-Host und nur mit «allowShell»: true erlaubt.");
+                errors.Add($"{cat}.allowShell: \"{Path.GetFileName(child.Exe)}\" is a shell or a script host and only allowed with \"allowShell\": true.");
             }
         }
     }

@@ -1,77 +1,77 @@
 ## ADDED Requirements
 
-### Requirement: Auswahl der Applikationen
-Das Setup SHALL die Auswahl einer oder mehrerer Applikations-EXE ermöglichen, per Dialog und per Kommandozeile.
+### Requirement: Selection of applications
+The setup SHALL allow selecting one or more application EXEs, via dialog and via command line.
 
-#### Scenario: Mehrfachauswahl
-- **WHEN** der Installateur zwei Applikationen auswählt
-- **THEN** stehen beide in apps.json und jede hat eine eigene Verknüpfung
+#### Scenario: Multiple selection
+- **WHEN** the installer selects two applications
+- **THEN** both are in apps.json and each has its own shortcut
 
-### Requirement: Verknüpfung je Applikation
-Das Setup SHALL je Applikation eine Verknüpfung auf den Launcher mit --app <AppId> anlegen, mit dem Icon aus der EXE der Applikation.
+### Requirement: Shortcut per application
+The setup SHALL create one shortcut per application to the launcher with --app <AppId>, with the icon from the application's EXE.
 
-#### Scenario: Icon übernommen
-- **WHEN** die Verknüpfung angelegt ist
-- **THEN** zeigt sie das Icon der gewählten Applikation
+#### Scenario: Icon applied
+- **WHEN** the shortcut has been created
+- **THEN** it shows the icon of the selected application
 
-### Requirement: Konten und Gruppe
-Das Setup SHALL das Konto appstart-app (Admin, keine interaktive Anmeldung), die Gruppe AppStart Users und auf Wunsch das Standard-Konto appstart-user anlegen.
+### Requirement: Accounts and group
+The setup SHALL create the account appstart-app (admin, no interactive logon), the group AppStart Users and, on request, the standard account appstart-user.
 
-#### Scenario: Keine Anmeldung als App-Konto
-- **WHEN** jemand sich interaktiv oder per Remote Desktop als appstart-app anmelden will
-- **THEN** wird die Anmeldung verweigert
+#### Scenario: No logon as app account
+- **WHEN** someone tries to log on interactively or via Remote Desktop as appstart-app
+- **THEN** the logon is denied
 
-### Requirement: Rechte auf Daten und Registry
-Das Setup SHALL Datenordner und Registry-Key je Applikation auf appstart-app, SYSTEM und Administratoren beschränken.
+### Requirement: Permissions on data and registry
+The setup SHALL restrict the data folder and registry key of each application to appstart-app, SYSTEM and Administrators.
 
-#### Scenario: Bediener liest Registry
-- **WHEN** ein Bediener den Registry-Key in regedit öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: Operator reads registry
+- **WHEN** an operator opens the registry key in regedit
+- **THEN** access is denied
 
-### Requirement: Installationsort
-Das Paket SHALL ausschliesslich per-machine nach Program Files installieren.
+### Requirement: Installation location
+The package SHALL install exclusively per-machine into Program Files.
 
-#### Scenario: Programmordner
-- **WHEN** die Installation abgeschlossen ist
-- **THEN** können nur SYSTEM und Administratoren im Programmordner schreiben
+#### Scenario: Program folder
+- **WHEN** the installation is complete
+- **THEN** only SYSTEM and Administrators can write in the program folder
 
-### Requirement: Interaktive Installation per Bootstrapper
-Das Paket SHALL einen signierten Bootstrapper AppStart-Setup.exe enthalten (Native AOT, keine entpackten Bibliotheken), der Admin-Rechte verlangt, das eingebettete MSI still installiert und danach das installierte AppStart.Setup aus dem Programmordner mit dem Wizard startet.
+### Requirement: Interactive installation via bootstrapper
+The package SHALL include a signed bootstrapper AppStart-Setup.exe (Native AOT, no extracted libraries) that requires admin rights, installs the embedded MSI silently and then starts the installed AppStart.Setup from the program folder with the wizard.
 
-#### Scenario: Erstinstallation
-- **WHEN** der Installateur AppStart-Setup.exe startet und die UAC-Abfrage bestätigt
-- **THEN** wird das MSI installiert und anschliessend erscheint Schritt 1 des Wizards aus C:\Program Files\AppStart, ohne zweite UAC-Abfrage
+#### Scenario: First installation
+- **WHEN** the installer starts AppStart-Setup.exe and confirms the UAC prompt
+- **THEN** the MSI is installed and then step 1 of the wizard appears from C:\Program Files\AppStart, without a second UAC prompt
 
-#### Scenario: Start aus beschreibbarem Ordner
-- **WHEN** AppStart-Setup.exe aus einem für Benutzer beschreibbaren Ordner wie Downloads gestartet wird
-- **THEN** lädt oder startet der Bootstrapper mit Admin-Rechten keine Dateien aus diesem Ordner oder aus %TEMP% und startet AppStart.Setup nur aus dem Programmordner nach erfolgreicher Signaturprüfung
+#### Scenario: Start from a writable folder
+- **WHEN** AppStart-Setup.exe is started from a folder writable by users, such as Downloads
+- **THEN** the bootstrapper with admin rights loads or starts no files from this folder or from %TEMP% and starts AppStart.Setup only from the program folder after successful signature verification
 
-#### Scenario: Fehler bei der MSI-Installation
-- **WHEN** msiexec mit einem Fehler endet, etwa 1618 weil eine andere Installation läuft
-- **THEN** zeigt der Bootstrapper eine Meldung mit Ursache und Massnahme, legt das MSI-Log unter C:\ProgramData\AppStart\Logs ab und startet den Wizard nicht
+#### Scenario: Error during MSI installation
+- **WHEN** msiexec ends with an error, for example 1618 because another installation is running
+- **THEN** the bootstrapper shows a message with cause and action, stores the MSI log under C:\ProgramData\AppStart\Logs and does not start the wizard
 
-#### Scenario: Abbruch im Wizard
-- **WHEN** der Installateur den Wizard nach erfolgreicher MSI-Installation abbricht
-- **THEN** bleibt AppStart installiert, der Wizard ist über das Startmenü erneut startbar und verify meldet die fehlende Einrichtung als Abweichung
+#### Scenario: Cancel in the wizard
+- **WHEN** the installer cancels the wizard after a successful MSI installation
+- **THEN** AppStart remains installed, the wizard can be started again from the Start menu and verify reports the missing setup as a deviation
 
-#### Scenario: Update über bestehende Installation
-- **WHEN** AppStart-Setup.exe einer neueren Version auf einem eingerichteten Rechner gestartet wird
-- **THEN** wird das MSI aktualisiert, der Wizard zeigt die bestehende Konfiguration und am Ende läuft verify
+#### Scenario: Update over an existing installation
+- **WHEN** AppStart-Setup.exe of a newer version is started on a computer that has been set up
+- **THEN** the MSI is updated, the wizard shows the existing configuration and verify runs at the end
 
-### Requirement: Stille Installation per MSI
-Das MSI SHALL ohne Bootstrapper und ohne Oberfläche installierbar sein, damit Softwareverteilung es nutzen kann. Die Einrichtung erfolgt dann über die Kommandozeile von AppStart.Setup.
+### Requirement: Silent installation via MSI
+The MSI SHALL be installable without bootstrapper and without user interface, so that software distribution can use it. Setup is then done via the command line of AppStart.Setup.
 
-#### Scenario: Softwareverteilung als SYSTEM
-- **WHEN** msiexec /i AppStart.msi /qn als SYSTEM ausgeführt wird
-- **THEN** ist AppStart im Programmordner installiert, der Dienst läuft und es erscheint keine Oberfläche
+#### Scenario: Software distribution as SYSTEM
+- **WHEN** msiexec /i AppStart.msi /qn is run as SYSTEM
+- **THEN** AppStart is installed in the program folder, the service is running and no user interface appears
 
-### Requirement: Installer-Hooks ohne Oberfläche
-Der Install-Hook des Pakets SHALL nur den Dienst registrieren und starten, der Uninstall-Hook nur den Dienst stoppen und löschen. Beide zeigen keine Oberfläche. Konfiguration, Konten, Gruppe, Verknüpfungen und Rechte entfernt ausschliesslich AppStart.Setup.exe uninstall.
+### Requirement: Installer hooks without user interface
+The install hook of the package SHALL only register and start the service, the uninstall hook only stop and delete the service. Neither shows a user interface. Configuration, accounts, group, shortcuts and permissions are removed exclusively by AppStart.Setup.exe uninstall.
 
-#### Scenario: Update erhält die Einrichtung
-- **WHEN** ein neues MSI über eine eingerichtete Installation installiert wird
-- **THEN** bleiben apps.json, Konten, Gruppe, Verknüpfungen und Rechte unverändert und der Dienst läuft in der neuen Version
+#### Scenario: Update keeps the setup
+- **WHEN** a new MSI is installed over an installation that has been set up
+- **THEN** apps.json, accounts, group, shortcuts and permissions remain unchanged and the service runs in the new version
 
-#### Scenario: Vollständige Deinstallation
-- **WHEN** der Servicetechniker AppStart.Setup.exe uninstall und danach die MSI-Deinstallation ausführt
-- **THEN** sind die ursprünglichen Verknüpfungen zurückgestellt, Rechte auf Datenordnern und Registry-Keys zurückgesetzt, Konten und Gruppe entfernt sowie Dienst und Programmordner gelöscht
+#### Scenario: Complete uninstallation
+- **WHEN** the service technician runs AppStart.Setup.exe uninstall and then the MSI uninstallation
+- **THEN** the original shortcuts are restored, permissions on data folders and registry keys are reset, accounts and group are removed, and the service and program folder are deleted

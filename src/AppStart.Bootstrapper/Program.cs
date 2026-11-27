@@ -12,7 +12,7 @@ using Windows.Win32;
 namespace AppStart.Bootstrapper;
 
 /// <summary>
-/// AppStart-Setup.exe (task 7.5, design D6, spec installation «Interaktive Installation per Bootstrapper»):
+/// AppStart-Setup.exe (task 7.5, design D6, spec installation "Interactive installation via bootstrapper"):
 ///   (no arguments)  extract the embedded MSI into a protected folder, msiexec /qn with log and progress
 ///                   dialog, evaluate the exit code, then start the installed AppStart.Setup.exe (wizard)
 ///                   after the signature check.
@@ -52,7 +52,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            log.Write("Unerwarteter Fehler: " + ex);
+            log.Write("Unexpected error: " + ex);
             Report(ui, BootstrapperLogic.Unexpected(ex.Message, log.FilePath));
             return BootstrapperLogic.ExitInternalError;
         }
@@ -62,7 +62,7 @@ internal static class Program
     {
         var paths = BootstrapperPaths.ForMachine();
         var now = DateTime.Now;
-        log.Write($"AppStart-Setup.exe {typeof(Program).Assembly.GetName().Version} gestartet aus {Environment.ProcessPath}, Modus {(ui ? "interaktiv" : "/quiet")}{(configPath is null ? string.Empty : ", Antwortdatei " + configPath)}.");
+        log.Write($"AppStart-Setup.exe {typeof(Program).Assembly.GetName().Version} started from {Environment.ProcessPath}, mode {(ui ? "interactive" : "/quiet")}{(configPath is null ? string.Empty : ", answer file " + configPath)}.");
 
         if (!IsElevated())
         {
@@ -96,7 +96,7 @@ internal static class Program
         }
         catch (UnsafeFolderException ex)
         {
-            log.Write("Ordner nicht geschützt: " + ex.Message);
+            log.Write("Folder not protected: " + ex.Message);
             Report(ui, BootstrapperLogic.UnsafeFolder(ex.Folder, log.FilePath));
             return BootstrapperLogic.ExitInternalError;
         }
@@ -114,7 +114,7 @@ internal static class Program
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                log.Write("Entpacken fehlgeschlagen: " + ex);
+                log.Write("Extraction failed: " + ex);
                 Report(ui, BootstrapperLogic.ExtractFailed(extractionDir, ex.Message, log.FilePath));
                 return BootstrapperLogic.ExitInternalError;
             }
@@ -124,11 +124,11 @@ internal static class Program
             var info = MsiPackage.ReadInfo(msiPath);
             upgradeCode = info.UpgradeCode;
             installed = MsiPackage.FindInstalled(upgradeCode);
-            log.Write($"Paket {msiPath}: Version {info.ProductVersion ?? "?"}, UpgradeCode {info.UpgradeCode ?? "?"}; installiert: {installed?.Version ?? "nichts"}.");
+            log.Write($"Package {msiPath}: version {info.ProductVersion ?? "?"}, UpgradeCode {info.UpgradeCode ?? "?"}; installed: {installed?.Version ?? "nothing"}.");
 
             if (installed is not null && BootstrapperLogic.ShouldSkipInstall(installed.Version, info.ProductVersion))
             {
-                log.Write("Gleiche oder neuere Version installiert: Installation übersprungen.");
+                log.Write("Same or newer version installed: installation skipped.");
                 if (!ui)
                 {
                     return configPath is null ? BootstrapperLogic.ExitOk : RunApply(paths, installed, log, configPath, BootstrapperLogic.ExitOk, now);
@@ -140,7 +140,7 @@ internal static class Program
 
             var msiexec = paths.Msiexec;
             var arguments = BootstrapperLogic.MsiexecArguments(msiPath, installLog);
-            log.Write($"Starte {msiexec} {arguments}");
+            log.Write($"Starting {msiexec} {arguments}");
             Process process;
             try
             {
@@ -149,11 +149,11 @@ internal static class Program
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     WorkingDirectory = Path.Combine(paths.WindowsDirectory, "System32"),
-                }) ?? throw new Win32Exception("Prozess wurde nicht erstellt.");
+                }) ?? throw new Win32Exception("Process was not created.");
             }
             catch (Win32Exception ex)
             {
-                log.Write("msiexec nicht startbar: " + ex);
+                log.Write("msiexec cannot be started: " + ex);
                 Report(ui, BootstrapperLogic.MsiexecFailed(ex.Message, log.FilePath));
                 return BootstrapperLogic.ExitInternalError;
             }
@@ -170,7 +170,7 @@ internal static class Program
                 msiExit = process.ExitCode;
             }
 
-            log.Write($"msiexec beendet mit {msiExit}. Protokoll: {installLog}");
+            log.Write($"msiexec ended with {msiExit}. Log: {installLog}");
         }
         finally
         {
@@ -206,7 +206,7 @@ internal static class Program
     {
         var setupPath = SetupStarter.LocateSetup(paths, installed);
         var result = SetupStarter.VerifyAndStart(setupPath, SetupStarter.OwnSignerThumbprint(), log);
-        log.Write($"Einrichtung {setupPath}: {result.Status} ({result.Detail}).");
+        log.Write($"Setup {setupPath}: {result.Status} ({result.Detail}).");
         switch (result.Status)
         {
             case SetupStartStatus.Started:
@@ -230,7 +230,7 @@ internal static class Program
         var applyLog = Path.Combine(paths.LogsDirectory, BootstrapperLogic.ApplyLogFileName(now));
         var result = SetupStarter.VerifyAndRun(setupPath, SetupStarter.OwnSignerThumbprint(), log,
             BootstrapperLogic.ApplyArguments(configPath), applyLog, out var applyExit);
-        log.Write($"Einrichtung {setupPath}: {result.Status} ({result.Detail}). Ausgabe: {applyLog}");
+        log.Write($"Setup {setupPath}: {result.Status} ({result.Detail}). Output: {applyLog}");
         return result.Status switch
         {
             SetupStartStatus.Started => BootstrapperLogic.MapApplyExit(applyExit, msiExit),
@@ -249,11 +249,11 @@ internal static class Program
                 Directory.Delete(extractionDir, recursive: true);
             }
 
-            log.Write($"Entpacktes Paket gelöscht: {extractionDir}");
+            log.Write($"Extracted package deleted: {extractionDir}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            log.Write($"Entpacktes Paket konnte nicht gelöscht werden ({extractionDir}): {ex.Message}");
+            log.Write($"Extracted package could not be deleted ({extractionDir}): {ex.Message}");
         }
     }
 

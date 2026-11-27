@@ -1,29 +1,29 @@
 # AppStart
 
 ## Purpose
-Startet freigegebene Windows-Applikationen für Standard-User mit Admin-Rechten, ohne Passwort und ohne UAC. Eigenständige Komponente, ändert weder Applikationen noch deren Installer.
+Starts approved Windows applications for standard users with admin rights, without a password and without UAC. Standalone component; changes neither the applications nor their installers.
 
 ## Tech Stack
-- C# / .NET 10 LTS, self-contained, x64, Windows 10 und 11
-- Dienst: .NET Worker Service (Microsoft.Extensions.Hosting.WindowsServices)
+- C# / .NET 10 LTS, self-contained, x64, Windows 10 and 11
+- Service: .NET Worker Service (Microsoft.Extensions.Hosting.WindowsServices)
 - Win32: CsWin32
-- Launcher: Native AOT, WinExe ohne Fenster
-- Bootstrapper AppStart-Setup.exe: Native AOT, bettet das MSI ein, startet danach das installierte Setup
-- UI: WPF (MVVM, Fluent-Theme) für Setup und TestApp
-- Kommandozeile: System.CommandLine
-- Paket: Velopack MSI, per-machine
-- Tests: xUnit, Integrationstests auf Windows-Test-VM mit Snapshot
-- CI: GitHub Actions, windows-latest (CI bei Push/PR, Release bei Tag v*.*.*)
+- Launcher: Native AOT, WinExe without a window
+- Bootstrapper AppStart-Setup.exe: Native AOT, embeds the MSI, then starts the installed setup
+- UI: WPF (MVVM, Fluent theme) for setup and TestApp
+- Command line: System.CommandLine
+- Package: Velopack MSI, per-machine
+- Tests: xUnit, integration tests on a Windows test VM with snapshot
+- CI: GitHub Actions, windows-latest (CI on push/PR, release on tag v*.*.*)
 
 ## Environment
-- Entwicklung, Build und Tests ausschliesslich unter Windows 11 x64
-- Setup, Dienstinstallation und Integrationstests nur auf der separaten Test-VM, nie auf dem Entwicklungsrechner
+- Development, build and tests on Windows 11 x64 only
+- Setup, service installation and integration tests only on the separate test VM, never on the development machine
 
 ## Conventions
-- Sicherheit vor Komfort: jede Abweichung von der Soll-Konfiguration führt zu Ablehnung und Eintrag im Ereignisprotokoll
-- Keine Pfade oder freien Parameter vom Launcher, nur AppId aus apps.json
-- Kein Passwort im Klartext, keine Geheimnisse im Repository
-- Alle Binaries Authenticode-signiert
-- Mit Admin-Rechten nur Code aus Ordnern ausführen, die Bediener nicht beschreiben können (Programmordner); nie aus Downloads oder %TEMP%
-- Code und Kommentare Englisch, Doku Deutsch
-- Jede Anforderung hat mindestens einen automatisierten Test
+- Security before convenience: every deviation from the expected configuration leads to rejection and an entry in the Event Log
+- No paths or free parameters from the launcher, only an AppId from apps.json
+- No plain-text passwords, no secrets in the repository
+- All binaries Authenticode-signed
+- Run code with admin rights only from folders that operators cannot write to (program folder); never from Downloads or %TEMP%
+- Code, comments, UI and documentation in English
+- Every requirement has at least one automated test

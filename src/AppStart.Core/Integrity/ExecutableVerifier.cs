@@ -21,7 +21,7 @@ public static class ExecutableVerifier
     {
         IntegrityCheck.Sha256 => VerifySha256(exe, app.Sha256!),
         IntegrityCheck.Signature => VerifySignature(exe, app.SignerThumbprint!),
-        _ => IntegrityResult.Fail($"Unbekannte Prüfart {app.Check}."),
+        _ => IntegrityResult.Fail($"Unknown check type {app.Check}."),
     };
 
     /// <summary>Same rules as for the main EXE (add-allowed-child-processes, design D1).</summary>
@@ -29,7 +29,7 @@ public static class ExecutableVerifier
     {
         IntegrityCheck.Sha256 => VerifySha256(exe, child.Sha256!),
         IntegrityCheck.Signature => VerifySignature(exe, child.SignerThumbprint!),
-        _ => IntegrityResult.Fail($"Unbekannte Prüfart {child.Check}."),
+        _ => IntegrityResult.Fail($"Unknown check type {child.Check}."),
     };
 
     public static string ComputeSha256(LockedExecutable exe)
@@ -43,8 +43,8 @@ public static class ExecutableVerifier
     {
         var actual = ComputeSha256(exe);
         return string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase)
-            ? IntegrityResult.Ok($"SHA-256 stimmt ({actual}).")
-            : IntegrityResult.Fail($"SHA-256 weicht ab: erwartet {expected.ToUpperInvariant()}, gefunden {actual}.");
+            ? IntegrityResult.Ok($"SHA-256 matches ({actual}).")
+            : IntegrityResult.Fail($"SHA-256 differs: expected {expected.ToUpperInvariant()}, found {actual}.");
     }
 
     /// <summary>Valid Authenticode chain (no online revocation, design D7) and pinned signer thumbprint.</summary>
@@ -53,17 +53,17 @@ public static class ExecutableVerifier
         var (trust, thumbprint) = WinVerifyTrustFile(exe);
         if (trust != 0)
         {
-            return IntegrityResult.Fail($"Authenticode-Prüfung fehlgeschlagen (0x{trust:X8}).");
+            return IntegrityResult.Fail($"Authenticode check failed (0x{trust:X8}).");
         }
 
         if (thumbprint is null)
         {
-            return IntegrityResult.Fail("Signaturzertifikat nicht lesbar.");
+            return IntegrityResult.Fail("Signing certificate not readable.");
         }
 
         return string.Equals(thumbprint, expectedThumbprint, StringComparison.OrdinalIgnoreCase)
-            ? IntegrityResult.Ok($"Signatur gültig, Thumbprint {thumbprint}.")
-            : IntegrityResult.Fail($"Signatur gültig, aber fremdes Zertifikat: erwartet {expectedThumbprint.ToUpperInvariant()}, gefunden {thumbprint}.");
+            ? IntegrityResult.Ok($"Signature valid, thumbprint {thumbprint}.")
+            : IntegrityResult.Fail($"Signature valid, but foreign certificate: expected {expectedThumbprint.ToUpperInvariant()}, found {thumbprint}.");
     }
 
     /// <summary>Signer thumbprint of a validly signed file (for setup: add/rehash). Null when unsigned or invalid.</summary>

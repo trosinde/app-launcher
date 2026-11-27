@@ -81,7 +81,7 @@ public class LearningTests
         Assert.Empty(result.State.Apps);
     }
 
-    // Spec app-launch, scenario «Manipulierte Steuerdatei»: a file operators can write is ignored.
+    // Spec app-launch, scenario "Tampered control file": a file operators can write is ignored.
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Writable_learn_file_is_ignored_and_reported()
     {
@@ -191,7 +191,7 @@ public class LearningTests
             var (loaded, error) = LearnRecordingStore.Load("appa", dir);
 
             Assert.Null(loaded);
-            Assert.Contains("nicht geschützt", error, StringComparison.Ordinal);
+            Assert.Contains("not protected", error, StringComparison.Ordinal);
             Assert.Equal((null, null), LearnRecordingStore.Load("appb", dir)); // nothing recorded
         }
         finally

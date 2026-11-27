@@ -1,109 +1,109 @@
-# Konzept – Start-Dienst «AppStart»
+# Concept – launch service "AppStart"
 
-> **Historisches Dokument.** Übergabe zu Projektbeginn. Massgeblich sind inzwischen die Specs und Entscheide im [OpenSpec-Change](../../openspec/changes/add-appstart-service/) (z. B. GitHub Actions statt Azure DevOps, S4U statt DPAPI, Bootstrapper für die Installation). Aktuelle Übersicht: [Dokumentation](../README.md).
+> **Historical document.** Handover at project start. The specs and decisions in the [OpenSpec change](../../openspec/changes/add-appstart-service/) now take precedence (e.g. GitHub Actions instead of Azure DevOps, S4U instead of DPAPI, bootstrapper for the installation). Current overview: [Documentation](../README.md).
 
-AppStart wird als eigenständige Komponente in einem eigenen Repository spec-driven mit OpenSpec umgesetzt. Applikationen und ihre Installer bleiben unverändert.
+AppStart is implemented as a standalone component in its own repository, spec-driven with OpenSpec. Applications and their installers remain unchanged.
 
-## Ziel und Abgrenzung
+## Goal and scope
 
-- Standard-User starten freigegebene Applikationen mit Admin-Rechten, ohne Passwort und ohne UAC-Abfrage.
-- Austauschdateien und Passwörter in der Registry sind für Standard-User gesperrt.
-- Bei der Installation werden eine oder mehrere Applikationen ausgewählt. Jede bekommt eine eigene Verknüpfung mit ihrem eigenen Icon.
-- Eigenes Repository, eigener Release-Zyklus, eigenes Installationspaket.
-- Nicht Teil dieser Komponente: Änderungen an den Applikationen.
+- Standard users start approved applications with admin rights, without a password and without a UAC prompt.
+- Exchange files and passwords in the registry are locked for standard users.
+- During installation, one or more applications are selected. Each gets its own shortcut with its own icon.
+- Own repository, own release cycle, own installation package.
+- Not part of this component: changes to the applications.
 
-## UI-Entwürfe
+## UI designs
 
-Verbindliche Vorlage für die Oberflächen: [AppStart – UI-Entwürfe](https://claude.ai/artifact/VSjT6YSVy9BbDpmqEMvwrW)
+Binding template for the user interfaces: [AppStart – UI designs](https://claude.ai/artifact/VSjT6YSVy9BbDpmqEMvwrW)
 
-| Entwurf | Komponente |
+| Design | Component |
 |---|---|
-| Setup 1/3 – Applikationen auswählen (Mehrfachauswahl, Datenordner, Registry-Key) | AppStart.Setup |
-| Setup 2/3 – Konten und Gruppe | AppStart.Setup |
-| Setup 3/3 – Zusammenfassung und Prüfung | AppStart.Setup |
-| Prüfbericht (`verify`) | AppStart.Setup |
-| Testapplikation | AppStart.TestApp |
-| Meldungen: Dienst nicht erreichbar, Start verweigert | AppStart.Launcher |
+| Setup 1/3 – Select applications (multiple selection, data folder, registry key) | AppStart.Setup |
+| Setup 2/3 – Accounts and group | AppStart.Setup |
+| Setup 3/3 – Summary and verification | AppStart.Setup |
+| Verification report (`verify`) | AppStart.Setup |
+| Test application | AppStart.TestApp |
+| Messages: service unreachable, start denied | AppStart.Launcher |
 
-## Komponenten
+## Components
 
-| Komponente | Art | Aufgabe | Läuft mit |
+| Component | Type | Task | Runs with |
 |---|---|---|---|
-| AppStart.Service | Windows-Dienst (.NET Worker Service) | Nimmt Startanfragen an, prüft sie und startet die Applikation in der Session des Users | LocalSystem |
-| AppStart.Launcher | EXE ohne Fenster (Native AOT) | Sendet nur `START <AppId>` an den Dienst | Benutzerrechten |
-| AppStart.Setup | Konfigurations-Tool mit WPF-Oberfläche und Kommandozeile | Applikationen auswählen, Konfiguration schreiben, Verknüpfungen und Rechte setzen, Einrichtung prüfen (`verify`) | Admin-Rechten |
-| AppStart.Core | Bibliothek | Konfigurationsmodell, Prüfsumme und Signatur, Pipe-Protokoll, gemeinsame Konstanten | – |
-| Installationspaket | Velopack, MSI per-machine | Installiert alles nach `C:\Program Files\AppStart` | Admin-Rechten |
+| AppStart.Service | Windows service (.NET Worker Service) | Accepts start requests, checks them and starts the application in the user's session | LocalSystem |
+| AppStart.Launcher | EXE without a window (Native AOT) | Only sends `START <AppId>` to the service | user rights |
+| AppStart.Setup | Configuration tool with WPF user interface and command line | Select applications, write the configuration, set shortcuts and rights, verify the setup (`verify`) | admin rights |
+| AppStart.Core | Library | Configuration model, checksum and signature, pipe protocol, shared constants | – |
+| Installation package | Velopack, MSI per-machine | Installs everything to `C:\Program Files\AppStart` | admin rights |
 
-## Ablauf beim Start einer Applikation
+## Sequence when an application starts
 
-1. Der User klickt die Verknüpfung der Applikation. Sie zeigt auf den Launcher mit `--app <AppId>` und trägt das Icon der Applikation.
-1. Der Launcher prüft das Format der AppId und sendet `START <AppId>` über die Named Pipe an den Dienst.
-1. Der Dienst ermittelt die Session des Anfragenden, sucht die AppId in der Liste freigegebener Applikationen und prüft Signatur oder Prüfsumme der EXE.
-1. Der Dienst startet die Applikation als Konto appstart-app in genau dieser Session, eingeschlossen in ein Job-Objekt (siehe Sicherheit).
-1. Jede Anfrage wird mit Zeit, User, Session, AppId und Ergebnis ins Windows-Ereignisprotokoll geschrieben.
+1. The user clicks the application's shortcut. It points to the launcher with `--app <AppId>` and carries the application's icon.
+1. The launcher checks the format of the AppId and sends `START <AppId>` to the service over the named pipe.
+1. The service determines the requester's session, looks up the AppId in the list of approved applications and verifies the signature or checksum of the EXE.
+1. The service starts the application as the account appstart-app in exactly this session, enclosed in a job object (see Security).
+1. Every request is written to the Windows Event Log with time, user, session, AppId and result.
 
-## Technologie
+## Technology
 
-| Baustein | Entscheid | Begründung |
+| Building block | Decision | Rationale |
 |---|---|---|
-| Sprache und Laufzeit | C# auf .NET 10 LTS, self-contained | Bestehender Stack. .NET 8 ist seit 10.11.2026 ohne Support, .NET 10 wird bis November 2028 unterstützt. Auf dem Kunden-PC muss kein .NET installiert sein. |
-| Dienst | .NET Worker Service mit `Microsoft.Extensions.Hosting.WindowsServices` | Standardweg für Windows-Dienste in .NET, Ereignisprotokoll eingebaut |
-| Windows-Schnittstellen | CsWin32 (Microsoft-Codegenerator für Win32-Aufrufe) | Typsichere Aufrufe für Token, Session, Pipe und Job-Objekt |
-| Launcher | Native AOT, WinExe ohne Fenster | Startet sofort, keine Abhängigkeiten |
-| Oberflächen | WPF (.NET 10), MVVM, Fluent-Theme – festgelegt | Für Setup und Testapplikation. Setzt die UI-Entwürfe genau um, Logik in testbaren ViewModels |
-| Kommandozeile | System.CommandLine | Stille Installation und Prüfbefehl für den Service |
-| Installationspaket | Velopack, als MSI mit `--msi --instLocation PerMachine` | Gewünschtes Werkzeug. Nur die per-machine-MSI installiert nach Program Files. Lizenz: Open Source (MIT). |
-| Signatur | Authenticode mit dem Code-Signing-Zertifikat des Herausgebers für alle EXE und das MSI | Integrität und Vertrauen beim Kunden |
-| Tests | xUnit, Integrationstests auf einer Windows-VM | Dienst, Pipe und Rechte lassen sich nur unter echtem Windows prüfen |
-| Build | Azure DevOps Pipeline auf Windows-Agent | Bestehende Umgebung |
+| Language and runtime | C# on .NET 10 LTS, self-contained | Existing stack. .NET 8 has been out of support since 2026-11-10, .NET 10 is supported until November 2028. No .NET needs to be installed on the customer PC. |
+| Service | .NET Worker Service with `Microsoft.Extensions.Hosting.WindowsServices` | Standard way for Windows services in .NET, Event Log built in |
+| Windows interfaces | CsWin32 (Microsoft code generator for Win32 calls) | Type-safe calls for token, session, pipe and job object |
+| Launcher | Native AOT, WinExe without a window | Starts instantly, no dependencies |
+| User interfaces | WPF (.NET 10), MVVM, Fluent theme – fixed | For setup and test application. Implements the UI designs exactly, logic in testable view models |
+| Command line | System.CommandLine | Silent installation and verify command for service |
+| Installation package | Velopack, as MSI with `--msi --instLocation PerMachine` | Requested tool. Only the per-machine MSI installs to Program Files. License: open source (MIT). |
+| Signature | Authenticode with the publisher's code signing certificate for all EXEs and the MSI | Integrity and trust at the customer |
+| Tests | xUnit, integration tests on a Windows VM | Service, pipe and rights can only be verified on real Windows |
+| Build | Azure DevOps pipeline on a Windows agent | Existing environment |
 
-## Konten, die die Installation anlegt
+## Accounts created by the installation
 
-| Konto | Art | Zweck | Rechte |
+| Account | Type | Purpose | Rights |
 |---|---|---|---|
-| `appstart-app` | Lokales Konto, nicht interaktiv anmeldbar | Unter diesem Konto laufen die freigegebenen Applikationen | Mitglied der lokalen Administratoren |
-| `appstart-user` | Lokales Standard-Benutzerkonto | Konto für die Bediener, die die Applikationen über den Launcher starten | Keine Admin-Rechte, Mitglied der Gruppe `AppStart Users` |
-| `AppStart Users` | Lokale Gruppe | Nur Mitglieder dürfen den Launcher bzw. die Pipe nutzen. Weitere lokale oder Domänen-User können aufgenommen werden. | – |
+| `appstart-app` | Local account, no interactive logon | The approved applications run under this account | Member of the local Administrators |
+| `appstart-user` | Local standard user account | Account for the operators who start the applications through the launcher | No admin rights, member of the group `AppStart Users` |
+| `AppStart Users` | Local group | Only members may use the launcher or the pipe. Further local or domain users can be added. | – |
 
-Regeln:
+Rules:
 
-- `appstart-app` bekommt ein Zufallspasswort pro PC, das niemand kennt. Interaktive Anmeldung und Anmeldung über Remote Desktop werden per Benutzerrecht verweigert.
-- Der Dienst holt sich das Token für `appstart-app` bevorzugt per S4U-Anmeldung (kein gespeichertes Passwort). Geht das nicht, liegt das Passwort mit DPAPI (LocalMachine) verschlüsselt in einer Datei, die nur SYSTEM lesen kann. Klärung im Spike, Task 1.
-- Die Applikation läuft damit nicht als SYSTEM, sondern als `appstart-app`. Ihr Benutzerbereich der Registry liegt im eigenen Profil dieses Kontos und ist für Bediener nicht lesbar.
-- Damit die Applikation auf dem Bildschirm des Bedieners erscheint, gibt der Dienst dem Konto Zugriff auf `WinSta0\Default` dieser Session, wie es auch `runas` tut.
-- `appstart-user` wird nur angelegt, wenn bei der Installation gewählt. Das Passwort vergibt der Installateur. Bestehende User können stattdessen in die Gruppe aufgenommen werden.
+- `appstart-app` gets a random password per PC that nobody knows. Interactive logon and logon via Remote Desktop are denied by user right.
+- The service preferably obtains the token for `appstart-app` via S4U logon (no stored password). If that is not possible, the password is stored encrypted with DPAPI (LocalMachine) in a file that only SYSTEM can read. To be clarified in the spike, task 1.
+- The application therefore does not run as SYSTEM but as `appstart-app`. Its user part of the registry is in this account's own profile and is not readable for operators.
+- So that the application appears on the operator's screen, the service gives the account access to `WinSta0\Default` of this session, as `runas` does.
+- `appstart-user` is only created if chosen during installation. The installer sets the password. Existing users can be added to the group instead.
 
-## Installation und Auswahl der Applikationen
+## Installation and selection of the applications
 
-1. Installation des Velopack-MSI per-machine nach `C:\Program Files\AppStart`. Nie das per-user-Setup von Velopack verwenden: Es installiert in einen Ordner, den der User beschreiben kann. Damit könnte er die Dienst-EXE austauschen und SYSTEM-Rechte erlangen.
-1. Danach startet `AppStart.Setup` mit Admin-Rechten und zeigt den Auswahldialog.
-1. Der Installateur wählt eine oder mehrere Applikations-EXE aus (Mehrfachauswahl). Je Applikation kann er Datenordner und Registry-Key mit den Passwörtern angeben.
-1. Das Setup legt die Konten und die Gruppe an (siehe oben), sofern noch nicht vorhanden.
-1. Je Applikation: AppId vergeben, Signatur oder SHA-256 erfassen, Eintrag in `apps.json` schreiben.
-1. Je Applikation: eine eigene Verknüpfung im öffentlichen Startmenü und auf dem öffentlichen Desktop. Ziel ist der Launcher mit `--app <AppId>`, das Icon kommt aus der EXE der Applikation, Arbeitsordner ist der Ordner der Applikation.
-1. Vorhandene Verknüpfungen, die direkt auf die EXE der Applikation zeigen, werden gesichert und ersetzt. Bei der Deinstallation werden sie zurückgestellt.
-1. Datenordner und Registry-Key je Applikation sperren: Zugriff nur für `appstart-app`, SYSTEM und Administratoren.
-1. Dienst registrieren (Start automatisch, Neustart nach Absturz) und starten.
-1. Zum Schluss läuft automatisch `verify`. Der Prüfbericht wird abgelegt.
+1. Install the Velopack MSI per-machine to `C:\Program Files\AppStart`. Never use Velopack's per-user setup: it installs into a folder the user can write to. The user could then replace the service EXE and gain SYSTEM rights.
+1. Then `AppStart.Setup` starts with admin rights and shows the selection dialog.
+1. The installer selects one or more application EXEs (multiple selection). For each application, they can specify the data folder and the registry key with the passwords.
+1. The setup creates the accounts and the group (see above) if they do not exist yet.
+1. For each application: assign an AppId, capture the signature or SHA-256, write an entry to `apps.json`.
+1. For each application: its own shortcut in the public Start menu and on the public desktop. The target is the launcher with `--app <AppId>`, the icon comes from the application's EXE, the working folder is the application's folder.
+1. Existing shortcuts that point directly to the application's EXE are backed up and replaced. They are restored on uninstallation.
+1. Lock the data folder and registry key of each application: access only for `appstart-app`, SYSTEM and Administrators.
+1. Register the service (automatic start, restart after crash) and start it.
+1. Finally `verify` runs automatically. The verification report is saved.
 
-Kommandozeile für stille Installation und Service:
+Command line for silent installation and service:
 
 ```text
-AppStart.Setup.exe add --exe "<Pfad>" [--data-dir "<Ordner>"] [--reg-key "<Key>"] [--name "<Anzeigename>"]
+AppStart.Setup.exe add --exe "<path>" [--data-dir "<folder>"] [--reg-key "<key>"] [--name "<display name>"]
 AppStart.Setup.exe add-user --name appstart-user | --member "<DOMAIN\User>"
 AppStart.Setup.exe remove --app <AppId>
 AppStart.Setup.exe list
-AppStart.Setup.exe rehash --app <AppId>     # nach Update einer Applikation
-AppStart.Setup.exe verify [--report "<Pfad>"]
+AppStart.Setup.exe rehash --app <AppId>     # after an update of an application
+AppStart.Setup.exe verify [--report "<path>"]
 AppStart.Setup.exe uninstall
 ```
 
-Updates: Automatische Updates von Velopack bleiben aus. Updates installiert der Servicetechniker mit einem neuen MSI. Vorher wird der Dienst gestoppt, danach läuft `verify`.
+Updates: Velopack's automatic updates stay off. The service technician installs updates with a new MSI. The service is stopped beforehand, `verify` runs afterwards.
 
-## Konfiguration
+## Configuration
 
-Datei `C:\ProgramData\AppStart\apps.json`, nur für SYSTEM und Administratoren les- und schreibbar:
+File `C:\ProgramData\AppStart\apps.json`, readable and writable only for SYSTEM and Administrators:
 
 ```json
 {
@@ -111,43 +111,43 @@ Datei `C:\ProgramData\AppStart\apps.json`, nur für SYSTEM und Administratoren l
   "apps": [
     {
       "id": "app-a",
-      "name": "Applikation A",
-      "exe": "C:\\Program Files\\Hersteller\\AppA\\AppA.exe",
-      "workingDir": "C:\\Program Files\\Hersteller\\AppA",
+      "name": "Application A",
+      "exe": "C:\\Program Files\\Vendor\\AppA\\AppA.exe",
+      "workingDir": "C:\\Program Files\\Vendor\\AppA",
       "check": "signature",
-      "signerThumbprint": "<Thumbprint>",
+      "signerThumbprint": "<thumbprint>",
       "sha256": null,
       "allowChildProcesses": false,
-      "dataDir": "C:\\ProgramData\\Hersteller\\AppA",
-      "registryKey": "HKLM\\SOFTWARE\\Hersteller\\AppA"
+      "dataDir": "C:\\ProgramData\\Vendor\\AppA",
+      "registryKey": "HKLM\\SOFTWARE\\Vendor\\AppA"
     }
   ]
 }
 ```
 
-- `check`: `signature` wenn die EXE signiert ist (übersteht Updates der Applikation), sonst `sha256`.
-- AppId: nur Kleinbuchstaben, Ziffern und Bindestrich, maximal 32 Zeichen.
-- Der Dienst liest die Datei bei jeder Anfrage. Ist sie für Nicht-Admins beschreibbar, verweigert er jeden Start und meldet einen Fehler.
+- `check`: `signature` if the EXE is signed (survives updates of the application), otherwise `sha256`.
+- AppId: lowercase letters, digits and hyphens only, at most 32 characters.
+- The service reads the file on every request. If non-admins can write to it, it refuses every start and reports an error.
 
-## Sicherheit
+## Security
 
-**Named Pipe** `\\.\pipe\AppStart`:
+**Named pipe** `\\.\pipe\AppStart`:
 
-1. Rechte: Verbinden nur für die Gruppe `AppStart Users`, Vollzugriff für SYSTEM und Administratoren, Netzwerk ausdrücklich verweigert. Beispiel-SDDL: `D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;<SID ``AppStart Users>)(D;;GA;;;NU)`.
-1. `PIPE_REJECT_REMOTE_CLIENTS` gesetzt.
-1. Der Dienst legt die Pipe beim Start als erste Instanz an (`FILE_FLAG_FIRST_PIPE_INSTANCE`). Existiert sie schon, startet er nicht und meldet einen Fehler.
-1. Session des Anfragenden per `GetNamedPipeClientSessionId`. Start nur in genau dieser Session.
-1. Anfrage hat das feste Format `START <AppId>`, maximal 64 Byte. Alles andere wird verworfen. Eine Anfrage pro Session gleichzeitig, kurze Sperrzeit nach jedem Start, Timeout beim Lesen.
+1. Rights: connect only for the group `AppStart Users`, full access for SYSTEM and Administrators, network explicitly denied. Example SDDL: `D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;<SID ``AppStart Users>)(D;;GA;;;NU)`.
+1. `PIPE_REJECT_REMOTE_CLIENTS` set.
+1. The service creates the pipe at startup as the first instance (`FILE_FLAG_FIRST_PIPE_INSTANCE`). If it already exists, the service does not start and reports an error.
+1. Session of the requester via `GetNamedPipeClientSessionId`. Start only in exactly this session.
+1. A request has the fixed format `START <AppId>`, at most 64 bytes. Everything else is discarded. One request per session at a time, short lockout time after every start, timeout when reading.
 
-**Start der Applikation:**
+**Starting the application:**
 
-- Nur Applikationen aus `apps.json`, nach erfolgreicher Prüfung von Signatur oder Prüfsumme.
-- Start im Job-Objekt. Bei `allowChildProcesses: false` darf die Applikation keine weiteren Programme starten. Das verhindert, dass ein Bediener über einen Datei-öffnen-Dialog eine Eingabeaufforderung mit Admin-Rechten öffnet. Je Applikation testen, ob sie ohne Kindprozesse funktioniert.
+- Only applications from `apps.json`, after successful verification of the signature or checksum.
+- Start in a job object. With `allowChildProcesses: false` the application may not start any further programs. This prevents an operator from opening a command prompt with admin rights through a file open dialog. Test for each application whether it works without child processes.
 
-**Registry-Key mit Passwörtern sperren** (Teil von `AppStart.Setup`, hier als PowerShell-Referenz):
+**Locking the registry key with passwords** (part of `AppStart.Setup`, here as a PowerShell reference):
 
 ```powershell
-$RegKey = "HKLM:\SOFTWARE\Hersteller\AppA"
+$RegKey = "HKLM:\SOFTWARE\Vendor\AppA"
 $acl = New-Object System.Security.AccessControl.RegistrySecurity
 $acl.SetAccessRuleProtection($true, $false)
 $inh = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit
@@ -158,94 +158,94 @@ foreach ($id in @("$env:COMPUTERNAME\appstart-app", "NT AUTHORITY\SYSTEM", "BUIL
 Set-Acl -Path $RegKey -AclObject $acl
 ```
 
-**Programmordner** `C:\Program Files\AppStart`: nur für SYSTEM und Administratoren beschreibbar.
+**Program folder** `C:\Program Files\AppStart`: writable only for SYSTEM and Administrators.
 
-**Restrisiko:** Administratoren können die Passwörter weiterhin lesen.
+**Residual risk:** Administrators can still read the passwords.
 
-## Prüfbefehl für das Service and Security Manual
+## Verify command for the Service and Security Manual
 
-`AppStart.Setup.exe verify` prüft und erzeugt einen Prüfbericht (lesbar und JSON). Exit-Code ungleich 0 bei jeder Abweichung.
+`AppStart.Setup.exe verify` verifies and creates a verification report (readable and JSON). Exit code other than 0 on every deviation.
 
-| Prüfpunkt | Soll |
+| Check | Expected |
 |---|---|
-| Dienst | Installiert, läuft, Start automatisch, Konto LocalSystem |
-| Programmordner | Nur SYSTEM und Administratoren schreiben |
-| Konten | `appstart-app` vorhanden, keine interaktive Anmeldung; Bediener ohne Admin-Rechte |
-| Pipe | Rechte gemäss SDDL, keine Fernzugriffe |
-| `apps.json` | Nur SYSTEM und Administratoren, jede EXE besteht die Prüfung |
-| Datenordner je App | Nur `appstart-app`, SYSTEM, Administratoren |
-| Registry-Key je App | Für Bediener nicht lesbar |
-| Verknüpfungen | Zeigen auf den Launcher, keine direkte Verknüpfung auf die App-EXE |
+| Service | Installed, running, automatic start, account LocalSystem |
+| Program folder | Only SYSTEM and Administrators can write |
+| Accounts | `appstart-app` present, no interactive logon; operators without admin rights |
+| Pipe | Rights as per SDDL, no remote access |
+| `apps.json` | Only SYSTEM and Administrators, every EXE passes verification |
+| Data folder per app | Only `appstart-app`, SYSTEM, Administrators |
+| Registry key per app | Not readable for operators |
+| Shortcuts | Point to the launcher, no direct shortcut to the app EXE |
 
-Das Service and Security Manual verlangt `verify` nach der Installation und am Ende jedes Serviceeinsatzes. Der Bericht wird dem Einsatz beigelegt.
+The Service and Security Manual requires `verify` after the installation and at the end of every service visit. The report is attached to the service visit.
 
-**So wird die Prüfung gestartet:**
+**How to start the verification:**
 
-1. **Startmenü (Standardweg für den Servicetechniker):** Eintrag «AppStart – Einrichtung prüfen» unter AppStart. Nach der UAC-Abfrage mit Admin-Zugangsdaten öffnet sich die Prüfansicht. Sie zeigt das Ergebnis je Prüfpunkt, speichert den Bericht automatisch und bietet «Bericht drucken» und «Bericht speichern unter».
-1. **Setup-Oberfläche:** Knopf «Einrichtung prüfen», gleiche Prüfansicht.
-1. **Automatisch:** am Ende jeder Installation, jeder Änderung im Setup und jedes Updates.
-1. **Kommandozeile für Skripte:** `AppStart.Setup.exe verify --report "<Pfad>"`, Exit-Code 0 nur ohne Abweichung.
+1. **Start menu (standard way for the service technician):** entry "AppStart – Verify setup" under AppStart. After the UAC prompt with admin credentials, the verification view opens. It shows the result per check, saves the report automatically and offers "Print report" and "Save report as".
+1. **Setup user interface:** button "Verify setup", same verification view.
+1. **Automatically:** at the end of every installation, every change in the setup and every update.
+1. **Command line for scripts:** `AppStart.Setup.exe verify --report "<path>"`, exit code 0 only without deviation.
 
-Bediener können die Prüfung nicht starten, da sie Admin-Rechte verlangt. Berichte liegen unter `C:\ProgramData\AppStart\Reports`, je Prüfung eine Datei mit Datum und Uhrzeit.
+Operators cannot start the verification because it requires admin rights. Reports are stored under `C:\ProgramData\AppStart\Reports`, one file per verification with date and time.
 
-## Benutzerhandbuch (Pflicht-Lieferumfang)
+## User manual (mandatory deliverable)
 
-Teil der Entwicklung ist ein vollständiges Benutzerhandbuch für Installateur und Servicetechniker. Ohne Handbuch gilt die Umsetzung nicht als abgeschlossen. Es ist zugleich die Grundlage für das Service and Security Manual.
+Part of the development is a complete user manual for installers and service technicians. Without the manual the implementation is not considered complete. It is also the basis for the Service and Security Manual.
 
-| Kapitel | Inhalt |
+| Chapter | Contents |
 |---|---|
-| Überblick | Zweck, Funktionsweise in einem Bild, Begriffe (App-Konto, Bedienerkonto, Gruppe, Launcher) |
-| Voraussetzungen | Windows-Versionen, Admin-Rechte, benötigte Angaben je Applikation (EXE, Datenordner, Registry-Key) |
-| Installation | Schritt für Schritt mit Bildschirmfotos aller drei Setup-Schritte, stille Installation |
-| Applikationen verwalten | Hinzufügen, entfernen, nach Update der Applikation neu prüfen (`rehash`) |
-| Konten und Gruppe | Bedienerkonto anlegen, weitere User in die Gruppe aufnehmen |
-| Prüfung nach Serviceeinsatz | Start über das Startmenü, Prüfbericht lesen, jede mögliche Abweichung mit Ursache und Behebung, Ablage des Berichts |
-| Meldungen und Fehlerbehebung | Alle Meldungen des Launchers und Einträge im Ereignisprotokoll mit Bedeutung und Massnahme |
-| Update und Deinstallation | Ablauf, was zurückgestellt wird |
-| Referenz | Alle Kommandozeilenbefehle, Soll-Konfiguration, Pfade |
+| Overview | Purpose, how it works in one picture, terms (app account, operator account, group, launcher) |
+| Prerequisites | Windows versions, admin rights, required information per application (EXE, data folder, registry key) |
+| Installation | Step by step with screenshots of all three setup steps, silent installation |
+| Managing applications | Add, remove, verify again after an update of the application (`rehash`) |
+| Accounts and group | Create the operator account, add further users to the group |
+| Verification after a service visit | Start from the Start menu, read the verification report, every possible deviation with cause and fix, filing the report |
+| Messages and troubleshooting | All launcher messages and Event Log entries with meaning and action |
+| Update and uninstallation | Procedure, what is restored |
+| Reference | All command line commands, expected configuration, paths |
 
-- Quelle als Markdown in `docs/manual/` im Repository, daraus erzeugt die Pipeline ein PDF.
-- Das PDF wird im Paket mitgeliefert und ist im Startmenü unter «AppStart – Handbuch» erreichbar.
-- Bildschirmfotos stammen aus der fertigen Software auf der Test-VM, nicht aus den UI-Entwürfen.
-- Jede Meldung, jeder Prüfpunkt und jeder Befehl der Software kommt im Handbuch vor. Ein Test prüft das gegen die Ressourcen der Software.
-- Sprache: Deutsch. Englische Fassung offen.
+- Source as Markdown in `docs/manual/` in the repository; the pipeline generates a PDF from it.
+- The PDF is shipped in the package and is available in the Start menu under "AppStart – Manual".
+- Screenshots come from the finished software on the test VM, not from the UI designs.
+- Every message, every check and every command of the software appears in the manual. A test checks this against the software's resources.
+- Language: German. English version open.
 
-## Testapplikation `AppStart.TestApp`
+## Test application `AppStart.TestApp`
 
-Eine kleine Testapplikation, mit der sich AppStart vollständig prüfen lässt, ohne eine echte Applikation zu brauchen. Sie verhält sich wie die betroffenen Fat Clients.
+A small test application that allows AppStart to be verified completely without needing a real application. It behaves like the affected fat clients.
 
-| Eigenschaft | Umsetzung |
+| Property | Implementation |
 |---|---|
-| Braucht Admin-Rechte | Manifest `requireAdministrator`. Ohne Admin-Rechte bricht sie mit einer Meldung ab. |
-| Speichert in der Registry | Schreibt Testwerte inkl. eines Test-Passworts im Klartext nach `HKLM\SOFTWARE\AppStartTest` |
-| Nutzt Dateien | Schreibt und liest Austauschdateien in `C:\ProgramData\AppStartTest` |
-| Zeigt ihren Zustand | Fenster zeigt: laufendes Konto, Admin ja/nein, Registry lesen/schreiben ok, Datei lesen/schreiben ok |
-| Ausbruchstest | Knopf «Eingabeaufforderung starten» versucht `cmd.exe` zu starten. Mit Job-Objekt muss das scheitern. |
-| Signatur | Wie alle Binaries signiert, damit die Signaturprüfung getestet werden kann |
+| Needs admin rights | Manifest `requireAdministrator`. Without admin rights it aborts with a message. |
+| Stores in the registry | Writes test values including a test password in plain text to `HKLM\SOFTWARE\AppStartTest` |
+| Uses files | Writes and reads exchange files in `C:\ProgramData\AppStartTest` |
+| Shows its state | Window shows: running account, admin yes/no, registry read/write ok, file read/write ok |
+| Breakout test | Button "Start command prompt" tries to start `cmd.exe`. With a job object this must fail. |
+| Signature | Signed like all binaries so that signature verification can be tested |
 
-Die Testapplikation wird mit AppStart ausgeliefert, aber nicht automatisch freigegeben. Der Tester wählt sie im Setup wie jede andere Applikation aus, mit Datenordner und Registry-Key oben.
+The test application is shipped with AppStart but not approved automatically. The tester selects it in the setup like any other application, with the data folder and registry key above.
 
-**Abnahmetest mit der Testapplikation:**
+**Acceptance test with the test application:**
 
-1. Als `appstart-user` über die Verknüpfung starten: Applikation läuft als `appstart-app`, alle Anzeigen grün.
-1. Als `appstart-user` den Registry-Key in regedit öffnen: Zugriff verweigert.
-1. Als `appstart-user` den Datenordner im Explorer öffnen: Zugriff verweigert.
-1. Als `appstart-user` die TestApp-EXE direkt starten: Abbruch, weil keine Admin-Rechte.
-1. Knopf «Eingabeaufforderung starten»: Start scheitert.
-1. Ein Byte der TestApp-EXE ändern: Start über den Launcher wird verweigert und protokolliert.
-1. `verify` liefert Exit-Code 0, nach absichtlicher Fehlkonfiguration ungleich 0.
+1. As `appstart-user`, start via the shortcut: the application runs as `appstart-app`, all indicators green.
+1. As `appstart-user`, open the registry key in regedit: access denied.
+1. As `appstart-user`, open the data folder in Explorer: access denied.
+1. As `appstart-user`, start the TestApp EXE directly: aborts because there are no admin rights.
+1. Button "Start command prompt": start fails.
+1. Change one byte of the TestApp EXE: start through the launcher is denied and logged.
+1. `verify` returns exit code 0, and other than 0 after a deliberate misconfiguration.
 
-## Entwicklungs- und Testumgebung
+## Development and test environment
 
-Die Entwicklung läuft ausschliesslich unter Windows. Oberflächen (WPF), Launcher (Native AOT), Dienst, Pipe, Konten, Rechte, MSI und Signatur lassen sich nur unter Windows bauen, ausführen und testen.
+Development runs on Windows only. User interfaces (WPF), launcher (Native AOT), service, pipe, accounts, rights, MSI and signature can only be built, run and tested on Windows.
 
-| Umgebung | Zweck | Vorgabe |
+| Environment | Purpose | Requirement |
 |---|---|---|
-| Windows-Entwicklungsrechner oder Windows-VM | Claude Code, Entwicklung, Build, Unit-Tests | Windows 11 x64, .NET 10 SDK, Git, OpenSpec CLI, Velopack CLI (`vpk`), Claude Code nativ unter Windows |
-| Separate Windows-Test-VM mit Snapshot | Installation, Integrationstests, Abnahmetest mit der TestApp | Windows 10 und 11 x64, nie der eigene Arbeitsrechner, vor jedem Test auf Snapshot zurücksetzen |
-| Azure DevOps Pipeline | Build, Tests, Paket, Signatur | Windows-Agent |
+| Windows development machine or Windows VM | Claude Code, development, build, unit tests | Windows 11 x64, .NET 10 SDK, Git, OpenSpec CLI, Velopack CLI (`vpk`), Claude Code natively on Windows |
+| Separate Windows test VM with snapshot | Installation, integration tests, acceptance test with the TestApp | Windows 10 and 11 x64, never your own workstation, revert to the snapshot before every test |
+| Azure DevOps pipeline | Build, tests, package, signature | Windows agent |
 
-Das Setup legt Konten an, registriert einen Dienst und ändert Rechte. Deshalb wird es nur auf der Test-VM ausgeführt, nie auf dem Entwicklungsrechner.
+The setup creates accounts, registers a service and changes rights. It is therefore run only on the test VM, never on the development machine.
 
 ## Repository
 
@@ -275,7 +275,7 @@ appstart/
   azure-pipelines.yml
 ```
 
-## OpenSpec-Change `add-appstart-service`
+## OpenSpec change `add-appstart-service`
 
 ### openspec/project.md
 
@@ -283,49 +283,49 @@ appstart/
 # AppStart
 
 ## Purpose
-Startet freigegebene Windows-Applikationen für Standard-User mit Admin-Rechten, ohne Passwort und ohne UAC. Eigenständige Komponente, ändert weder Applikationen noch deren Installer.
+Starts approved Windows applications for standard users with admin rights, without a password and without UAC. Standalone component; changes neither the applications nor their installers.
 
 ## Tech Stack
-- C# / .NET 10 LTS, self-contained, x64, Windows 10 und 11
-- Dienst: .NET Worker Service (Microsoft.Extensions.Hosting.WindowsServices)
+- C# / .NET 10 LTS, self-contained, x64, Windows 10 and 11
+- Service: .NET Worker Service (Microsoft.Extensions.Hosting.WindowsServices)
 - Win32: CsWin32
-- Launcher: Native AOT, WinExe ohne Fenster
-- UI: WPF (MVVM, Fluent-Theme) für Setup und TestApp
-- Kommandozeile: System.CommandLine
-- Paket: Velopack MSI, per-machine
-- Tests: xUnit, Integrationstests auf Windows-Test-VM mit Snapshot
-- CI: Azure DevOps, Windows-Agent
+- Launcher: Native AOT, WinExe without a window
+- UI: WPF (MVVM, Fluent theme) for setup and TestApp
+- Command line: System.CommandLine
+- Package: Velopack MSI, per-machine
+- Tests: xUnit, integration tests on a Windows test VM with snapshot
+- CI: Azure DevOps, Windows agent
 
 ## Environment
-- Entwicklung, Build und Tests ausschliesslich unter Windows 11 x64
-- Setup, Dienstinstallation und Integrationstests nur auf der separaten Test-VM, nie auf dem Entwicklungsrechner
+- Development, build and tests on Windows 11 x64 only
+- Setup, service installation and integration tests only on the separate test VM, never on the development machine
 
 ## Conventions
-- Sicherheit vor Komfort: jede Abweichung von der Soll-Konfiguration führt zu Ablehnung und Eintrag im Ereignisprotokoll
-- Keine Pfade oder freien Parameter vom Launcher, nur AppId aus apps.json
-- Kein Passwort im Klartext, keine Geheimnisse im Repository
-- Alle Binaries Authenticode-signiert
-- Code und Kommentare Englisch, Doku Deutsch
-- Jede Anforderung hat mindestens einen automatisierten Test
+- Security before convenience: every deviation from the expected configuration leads to rejection and an entry in the Event Log
+- No paths or free parameters from the launcher, only an AppId from apps.json
+- No plain-text passwords, no secrets in the repository
+- All binaries Authenticode-signed
+- Code and comments in English, documentation in German
+- Every requirement has at least one automated test
 ```
 
 ### proposal.md
 
 ```markdown
 ## Why
-Mehrere Applikationen brauchen Admin-Rechte. Bediener arbeiten deshalb heute als Administrator und können Austauschdateien ändern und Passwörter in der Registry lesen. Befund bei Audits und Mangel nach EU CRA.
+Several applications need admin rights. That is why operators work as administrators today and can change exchange files and read passwords in the registry. A finding in audits and a deficiency under the EU CRA.
 
 ## What Changes
-- Neuer Windows-Dienst AppStart.Service (LocalSystem) startet freigegebene Applikationen als Konto appstart-app in der Session des Bedieners
-- Launcher ohne Rechte, eine Verknüpfung je Applikation mit deren Icon
-- Setup mit Mehrfachauswahl der Applikationen, legt Konten, Gruppe, Konfiguration, Verknüpfungen und Rechte an
-- Prüfbefehl verify für das Service and Security Manual
-- Installationspaket Velopack MSI per-machine
+- New Windows service AppStart.Service (LocalSystem) starts approved applications as the account appstart-app in the operator's session
+- Launcher without rights, one shortcut per application with its icon
+- Setup with multiple selection of the applications; creates accounts, group, configuration, shortcuts and rights
+- Verify command for the Service and Security Manual
+- Installation package Velopack MSI per-machine
 
 ## Impact
-- Keine Änderung an Applikationen und deren Installern
-- Neue Komponenten: Service, Launcher, Setup, Core, MSI
-- Restrisiko: Administratoren können Passwörter weiterhin lesen
+- No changes to applications and their installers
+- New components: Service, Launcher, Setup, Core, MSI
+- Residual risk: administrators can still read passwords
 ```
 
 ### specs/app-launch/spec.md
@@ -333,27 +333,27 @@ Mehrere Applikationen brauchen Admin-Rechte. Bediener arbeiten deshalb heute als
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Start freigegebener Applikationen
-Der Dienst SHALL nur Applikationen aus apps.json starten, nach erfolgreicher Prüfung von Signatur oder SHA-256, als Konto appstart-app in der Session des anfragenden Users.
+### Requirement: Start of approved applications
+The service SHALL start only applications from apps.json, after successful verification of the signature or SHA-256, as the account appstart-app in the requesting user's session.
 
-#### Scenario: Start durch Bediener
-- **WHEN** ein Mitglied von AppStart Users die Verknüpfung einer freigegebenen Applikation startet
-- **THEN** läuft die Applikation als appstart-app auf seinem Bildschirm, ohne Passwort- oder UAC-Abfrage
+#### Scenario: Start by an operator
+- **WHEN** a member of AppStart Users starts the shortcut of an approved application
+- **THEN** the application runs as appstart-app on their screen, without a password or UAC prompt
 
-#### Scenario: Veränderte EXE
-- **WHEN** Signatur oder Prüfsumme der EXE nicht stimmt
-- **THEN** wird der Start verweigert und im Ereignisprotokoll gemeldet
+#### Scenario: Modified EXE
+- **WHEN** the signature or checksum of the EXE does not match
+- **THEN** the start is denied and reported in the Event Log
 
-#### Scenario: Unbekannte AppId
-- **WHEN** eine AppId angefragt wird, die nicht in apps.json steht
-- **THEN** wird der Start verweigert und protokolliert
+#### Scenario: Unknown AppId
+- **WHEN** an AppId is requested that is not in apps.json
+- **THEN** the start is denied and logged
 
-### Requirement: Keine Kindprozesse
-Der Dienst SHALL Applikationen mit allowChildProcesses false in einem Job-Objekt starten, das weitere Prozesse verhindert.
+### Requirement: No child processes
+The service SHALL start applications with allowChildProcesses false in a job object that prevents further processes.
 
-#### Scenario: Ausbruch über Dateidialog
-- **WHEN** die Applikation versucht, cmd.exe zu starten
-- **THEN** schlägt der Start des Kindprozesses fehl
+#### Scenario: Breakout via file dialog
+- **WHEN** the application tries to start cmd.exe
+- **THEN** the start of the child process fails
 ```
 
 ### specs/pipe-security/spec.md
@@ -361,28 +361,28 @@ Der Dienst SHALL Applikationen mit allowChildProcesses false in einem Job-Objekt
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Geschützte Named Pipe
-Die Pipe SHALL nur für AppStart Users erreichbar sein, keine Fernzugriffe annehmen, beim Dienststart als erste Instanz angelegt werden und nur Anfragen im Format START <AppId> mit maximal 64 Byte annehmen.
+### Requirement: Protected named pipe
+The pipe SHALL be reachable only for AppStart Users, accept no remote access, be created as the first instance when the service starts and accept only requests in the format START <AppId> with at most 64 bytes.
 
-#### Scenario: Zugriff über das Netzwerk
-- **WHEN** ein anderer Rechner die Pipe öffnet
-- **THEN** wird die Verbindung abgewiesen
+#### Scenario: Access over the network
+- **WHEN** another computer opens the pipe
+- **THEN** the connection is rejected
 
-#### Scenario: User ausserhalb der Gruppe
-- **WHEN** ein User ohne Mitgliedschaft in AppStart Users die Pipe öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: User outside the group
+- **WHEN** a user without membership in AppStart Users opens the pipe
+- **THEN** access is denied
 
-#### Scenario: Gefälschte Pipe
-- **WHEN** beim Dienststart bereits eine Pipe mit dem Namen existiert
-- **THEN** startet der Dienst nicht und meldet einen Fehler
+#### Scenario: Fake pipe
+- **WHEN** a pipe with the name already exists when the service starts
+- **THEN** the service does not start and reports an error
 
-#### Scenario: Ungültige Anfrage
-- **WHEN** eine Anfrage ein anderes Format hat oder länger als 64 Byte ist
-- **THEN** wird sie verworfen und protokolliert
+#### Scenario: Invalid request
+- **WHEN** a request has a different format or is longer than 64 bytes
+- **THEN** it is discarded and logged
 
-#### Scenario: Fremde Session
-- **WHEN** eine Anfrage eingeht
-- **THEN** startet die Applikation nur in der Session des Anfragenden
+#### Scenario: Other session
+- **WHEN** a request arrives
+- **THEN** the application starts only in the requester's session
 ```
 
 ### specs/installation/spec.md
@@ -390,40 +390,40 @@ Die Pipe SHALL nur für AppStart Users erreichbar sein, keine Fernzugriffe anneh
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Auswahl der Applikationen
-Das Setup SHALL die Auswahl einer oder mehrerer Applikations-EXE ermöglichen, per Dialog und per Kommandozeile.
+### Requirement: Selection of the applications
+The setup SHALL allow selecting one or more application EXEs, via dialog and via command line.
 
-#### Scenario: Mehrfachauswahl
-- **WHEN** der Installateur zwei Applikationen auswählt
-- **THEN** stehen beide in apps.json und jede hat eine eigene Verknüpfung
+#### Scenario: Multiple selection
+- **WHEN** the installer selects two applications
+- **THEN** both are in apps.json and each has its own shortcut
 
-### Requirement: Verknüpfung je Applikation
-Das Setup SHALL je Applikation eine Verknüpfung auf den Launcher mit --app <AppId> anlegen, mit dem Icon aus der EXE der Applikation.
+### Requirement: Shortcut per application
+The setup SHALL create a shortcut to the launcher with --app <AppId> for each application, with the icon from the application's EXE.
 
-#### Scenario: Icon übernommen
-- **WHEN** die Verknüpfung angelegt ist
-- **THEN** zeigt sie das Icon der gewählten Applikation
+#### Scenario: Icon taken over
+- **WHEN** the shortcut has been created
+- **THEN** it shows the icon of the selected application
 
-### Requirement: Konten und Gruppe
-Das Setup SHALL das Konto appstart-app (Admin, keine interaktive Anmeldung), die Gruppe AppStart Users und auf Wunsch das Standard-Konto appstart-user anlegen.
+### Requirement: Accounts and group
+The setup SHALL create the account appstart-app (admin, no interactive logon), the group AppStart Users and, on request, the standard account appstart-user.
 
-#### Scenario: Keine Anmeldung als App-Konto
-- **WHEN** jemand sich interaktiv oder per Remote Desktop als appstart-app anmelden will
-- **THEN** wird die Anmeldung verweigert
+#### Scenario: No logon as the app account
+- **WHEN** someone tries to log on as appstart-app interactively or via Remote Desktop
+- **THEN** the logon is denied
 
-### Requirement: Rechte auf Daten und Registry
-Das Setup SHALL Datenordner und Registry-Key je Applikation auf appstart-app, SYSTEM und Administratoren beschränken.
+### Requirement: Rights on data and registry
+The setup SHALL restrict the data folder and registry key of each application to appstart-app, SYSTEM and Administrators.
 
-#### Scenario: Bediener liest Registry
-- **WHEN** ein Bediener den Registry-Key in regedit öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: Operator reads the registry
+- **WHEN** an operator opens the registry key in regedit
+- **THEN** access is denied
 
-### Requirement: Installationsort
-Das Paket SHALL ausschliesslich per-machine nach Program Files installieren.
+### Requirement: Installation location
+The package SHALL install exclusively per-machine to Program Files.
 
-#### Scenario: Programmordner
-- **WHEN** die Installation abgeschlossen ist
-- **THEN** können nur SYSTEM und Administratoren im Programmordner schreiben
+#### Scenario: Program folder
+- **WHEN** the installation is complete
+- **THEN** only SYSTEM and Administrators can write to the program folder
 ```
 
 ### specs/verification/spec.md
@@ -431,27 +431,27 @@ Das Paket SHALL ausschliesslich per-machine nach Program Files installieren.
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Prüfbefehl
-verify SHALL alle Prüfpunkte der Soll-Einrichtung prüfen, einen Prüfbericht erzeugen und bei Abweichung einen Exit-Code ungleich 0 liefern.
+### Requirement: Verify command
+verify SHALL check all checks of the expected setup, create a verification report and return an exit code other than 0 on a deviation.
 
-#### Scenario: Korrekte Einrichtung
-- **WHEN** verify auf einer korrekt eingerichteten Maschine läuft
-- **THEN** ist der Exit-Code 0 und der Bericht zeigt alle Punkte als erfüllt
+#### Scenario: Correct setup
+- **WHEN** verify runs on a correctly set up machine
+- **THEN** the exit code is 0 and the report shows all checks as passed
 
-#### Scenario: Abweichung nach Service
-- **WHEN** ein Bediener wieder Admin ist oder der Registry-Key wieder lesbar ist
-- **THEN** meldet verify die Abweichung mit Exit-Code ungleich 0
+#### Scenario: Deviation after service
+- **WHEN** an operator is admin again or the registry key is readable again
+- **THEN** verify reports the deviation with an exit code other than 0
 
-### Requirement: Start der Prüfung
-Die Prüfung SHALL über einen Startmenü-Eintrag, einen Knopf im Setup und die Kommandozeile startbar sein, Admin-Rechte verlangen und jeden Bericht mit Datum und Uhrzeit ablegen.
+### Requirement: Starting the verification
+The verification SHALL be startable from a Start menu entry, a button in the setup and the command line, require admin rights and save every report with date and time.
 
-#### Scenario: Servicetechniker nach dem Einsatz
-- **WHEN** der Servicetechniker «AppStart – Einrichtung prüfen» im Startmenü wählt und die UAC-Abfrage bestätigt
-- **THEN** zeigt die Prüfansicht das Ergebnis je Prüfpunkt und der Bericht liegt in C:\ProgramData\AppStart\Reports
+#### Scenario: Service technician after the service visit
+- **WHEN** the service technician chooses "AppStart – Verify setup" in the Start menu and confirms the UAC prompt
+- **THEN** the verification view shows the result per check and the report is in C:\ProgramData\AppStart\Reports
 
-#### Scenario: Bediener startet die Prüfung
-- **WHEN** ein Bediener ohne Admin-Rechte die Prüfung starten will
-- **THEN** läuft sie nur nach Eingabe von Admin-Zugangsdaten
+#### Scenario: Operator starts the verification
+- **WHEN** an operator without admin rights tries to start the verification
+- **THEN** it runs only after admin credentials are entered
 ```
 
 ### specs/test-app/spec.md
@@ -459,24 +459,24 @@ Die Prüfung SHALL über einen Startmenü-Eintrag, einen Knopf im Setup und die 
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Testapplikation wie ein betroffener Fat Client
-AppStart.TestApp SHALL Admin-Rechte verlangen, Werte inkl. Test-Passwort in HKLM\SOFTWARE\AppStartTest speichern, Dateien in C:\ProgramData\AppStartTest lesen und schreiben und ihren Zustand anzeigen.
+### Requirement: Test application like an affected fat client
+AppStart.TestApp SHALL require admin rights, store values including a test password in HKLM\SOFTWARE\AppStartTest, read and write files in C:\ProgramData\AppStartTest and show its state.
 
-#### Scenario: Start ohne Admin-Rechte
-- **WHEN** ein Standard-User die TestApp-EXE direkt startet
-- **THEN** bricht sie mit einer Meldung ab
+#### Scenario: Start without admin rights
+- **WHEN** a standard user starts the TestApp EXE directly
+- **THEN** it aborts with a message
 
-#### Scenario: Start über den Launcher
-- **WHEN** ein Mitglied von AppStart Users die TestApp über ihre Verknüpfung startet
-- **THEN** zeigt sie Konto appstart-app, Admin ja und Zugriff auf Registry und Dateien ok
+#### Scenario: Start through the launcher
+- **WHEN** a member of AppStart Users starts the TestApp through its shortcut
+- **THEN** it shows account appstart-app, admin yes and access to registry and files ok
 
-#### Scenario: Daten für Bediener gesperrt
-- **WHEN** der Bediener Registry-Key oder Datenordner der TestApp selbst öffnet
-- **THEN** wird der Zugriff verweigert
+#### Scenario: Data locked for operators
+- **WHEN** the operator opens the TestApp's registry key or data folder directly
+- **THEN** access is denied
 
-#### Scenario: Ausbruchsversuch
-- **WHEN** in der TestApp «Eingabeaufforderung starten» gewählt wird
-- **THEN** scheitert der Start von cmd.exe
+#### Scenario: Breakout attempt
+- **WHEN** "Start command prompt" is chosen in the TestApp
+- **THEN** the start of cmd.exe fails
 ```
 
 ### specs/documentation/spec.md
@@ -484,106 +484,106 @@ AppStart.TestApp SHALL Admin-Rechte verlangen, Werte inkl. Test-Passwort in HKLM
 ```markdown
 ## ADDED Requirements
 
-### Requirement: Vollständiges Benutzerhandbuch
-Das Release SHALL ein Benutzerhandbuch für Installateur und Servicetechniker enthalten, mit Installation, Verwaltung der Applikationen und Konten, Prüfung nach Serviceeinsatz, Meldungen und Fehlerbehebung, Update, Deinstallation und Kommandozeilen-Referenz.
+### Requirement: Complete user manual
+The release SHALL contain a user manual for installers and service technicians, with installation, management of applications and accounts, verification after a service visit, messages and troubleshooting, update, uninstallation and command line reference.
 
-#### Scenario: Handbuch im Paket
-- **WHEN** AppStart installiert ist
-- **THEN** ist das Handbuch als PDF im Startmenü unter AppStart – Handbuch erreichbar
+#### Scenario: Manual in the package
+- **WHEN** AppStart is installed
+- **THEN** the manual is available as a PDF in the Start menu under AppStart – Manual
 
-#### Scenario: Vollständigkeit
-- **WHEN** die Pipeline baut
-- **THEN** prüft ein Test, dass jede Meldung, jeder Prüfpunkt und jeder Befehl der Software im Handbuch beschrieben ist
+#### Scenario: Completeness
+- **WHEN** the pipeline builds
+- **THEN** a test checks that every message, every check and every command of the software is described in the manual
 
-#### Scenario: Abweichung im Prüfbericht
-- **WHEN** der Prüfbericht eine Abweichung zeigt
-- **THEN** findet der Servicetechniker im Handbuch Ursache und Behebung zu genau diesem Prüfpunkt
+#### Scenario: Deviation in the verification report
+- **WHEN** the verification report shows a deviation
+- **THEN** the service technician finds the cause and the fix for exactly this check in the manual
 ```
 
 ### tasks.md
 
 ```markdown
-## 1. Spike und Klärung
-- [ ] 1.1 S4U-Anmeldung für appstart-app aus dem Dienst prüfen; sonst Passwort mit DPAPI LocalMachine
-- [ ] 1.2 Anzeige der Applikation in der User-Session (WinSta0\Default) als appstart-app prüfen
-- [ ] 1.3 Velopack MSI per-machine: Lauf von Setup nach Installation, Dienst stoppen bei Update, Deinstallation; Ergebnis dokumentieren, sonst Fallback WiX MSI vorschlagen
-- [ ] 1.4 Je Ziel-Applikation prüfen: läuft sie ohne Kindprozesse, wo liegen Daten und Registry-Key
+## 1. Spike and clarification
+- [ ] 1.1 Check S4U logon for appstart-app from the service; otherwise password with DPAPI LocalMachine
+- [ ] 1.2 Check display of the application in the user session (WinSta0\Default) as appstart-app
+- [ ] 1.3 Velopack MSI per-machine: running the setup after installation, stopping the service on update, uninstallation; document the result, otherwise propose WiX MSI as fallback
+- [ ] 1.4 For each target application: does it run without child processes, where are the data and registry key
 
-## 2. Testapplikation (zuerst, dient allen weiteren Tests)
-- [ ] 2.1 AppStart.TestApp: WPF (MVVM), Manifest requireAdministrator
-- [ ] 2.2 Registry-Werte inkl. Test-Passwort in HKLM\SOFTWARE\AppStartTest
-- [ ] 2.3 Austauschdateien in C:\ProgramData\AppStartTest
-- [ ] 2.4 Zustandsanzeige (Konto, Admin, Registry, Dateien) und Knopf «Eingabeaufforderung starten»
+## 2. Test application (first, serves all further tests)
+- [ ] 2.1 AppStart.TestApp: WPF (MVVM), manifest requireAdministrator
+- [ ] 2.2 Registry values including test password in HKLM\SOFTWARE\AppStartTest
+- [ ] 2.3 Exchange files in C:\ProgramData\AppStartTest
+- [ ] 2.4 State display (account, admin, registry, files) and button "Start command prompt"
 
 ## 3. Core
-- [ ] 3.1 Konfigurationsmodell apps.json, Validierung AppId, Prüfung der Datei-Rechte
-- [ ] 3.2 Prüfung Signatur (WinVerifyTrust, Thumbprint) und SHA-256
-- [ ] 3.3 Pipe-Protokoll START <AppId>, Parser mit Längenlimit
+- [ ] 3.1 Configuration model apps.json, AppId validation, check of the file rights
+- [ ] 3.2 Verification of signature (WinVerifyTrust, thumbprint) and SHA-256
+- [ ] 3.3 Pipe protocol START <AppId>, parser with length limit
 
-## 4. Dienst
-- [ ] 4.1 Worker Service, LocalSystem, Ereignisprotokoll-Quelle AppStart
-- [ ] 4.2 Named Pipe mit SDDL, PIPE_REJECT_REMOTE_CLIENTS, FILE_FLAG_FIRST_PIPE_INSTANCE
-- [ ] 4.3 Session des Anfragenden, Sperrzeit, Timeout, eine Anfrage pro Session
-- [ ] 4.4 Token für appstart-app, Zugriff auf WinSta0\Default, CreateProcessAsUser in der User-Session
-- [ ] 4.5 Job-Objekt mit Prozesslimit bei allowChildProcesses false
+## 4. Service
+- [ ] 4.1 Worker Service, LocalSystem, Event Log source AppStart
+- [ ] 4.2 Named pipe with SDDL, PIPE_REJECT_REMOTE_CLIENTS, FILE_FLAG_FIRST_PIPE_INSTANCE
+- [ ] 4.3 Session of the requester, lockout time, timeout, one request per session
+- [ ] 4.4 Token for appstart-app, access to WinSta0\Default, CreateProcessAsUser in the user session
+- [ ] 4.5 Job object with process limit for allowChildProcesses false
 
 ## 5. Launcher
-- [ ] 5.1 Native AOT WinExe, Argument --app, Formatprüfung, Meldung bei nicht erreichbarem Dienst
+- [ ] 5.1 Native AOT WinExe, argument --app, format check, message when the service is unreachable
 
 ## 6. Setup
-- [ ] 6.1 WPF-Oberfläche nach UI-Entwürfen (MVVM): Mehrfachauswahl, Datenordner und Registry-Key je App
-- [ ] 6.2 Konten appstart-app, appstart-user (optional), Gruppe AppStart Users; Anmelderechte verweigern
-- [ ] 6.3 apps.json schreiben, Rechte setzen auf ProgramData, Datenordner, Registry-Keys
-- [ ] 6.4 Verknüpfungen je App mit Icon der EXE, Originale sichern und ersetzen
-- [ ] 6.5 Dienst registrieren und starten
-- [ ] 6.6 Befehle add, add-user, remove, list, rehash, verify, uninstall
+- [ ] 6.1 WPF user interface according to the UI designs (MVVM): multiple selection, data folder and registry key per app
+- [ ] 6.2 Accounts appstart-app, appstart-user (optional), group AppStart Users; deny logon rights
+- [ ] 6.3 Write apps.json, set rights on ProgramData, data folders, registry keys
+- [ ] 6.4 Shortcuts per app with the EXE's icon, back up and replace originals
+- [ ] 6.5 Register and start the service
+- [ ] 6.6 Commands add, add-user, remove, list, rehash, verify, uninstall
 
-## 7. Paket und Build
-- [ ] 7.1 Velopack MSI per-machine, Auto-Update aus, TestApp im Paket
-- [ ] 7.2 Authenticode-Signatur aller Binaries und des MSI
-- [ ] 7.3 Azure DevOps Pipeline: Build, Tests, Paket, Signatur
+## 7. Package and build
+- [ ] 7.1 Velopack MSI per-machine, auto-update off, TestApp in the package
+- [ ] 7.2 Authenticode signature of all binaries and the MSI
+- [ ] 7.3 Azure DevOps pipeline: build, tests, package, signature
 
 ## 8. Tests
-- [ ] 8.1 Unit-Tests Core
-- [ ] 8.2 Integrationstests auf Windows-VM für alle Scenarios, inkl. Missbrauchsversuche
-- [ ] 8.3 Abnahmetest mit der TestApp (7 Schritte im Konzept)
-- [ ] 8.4 Mehrbenutzer, Remote Desktop, Sperrbildschirm, Neustart, Update einer Applikation, Deinstallation
+- [ ] 8.1 Unit tests Core
+- [ ] 8.2 Integration tests on a Windows VM for all scenarios, including misuse attempts
+- [ ] 8.3 Acceptance test with the TestApp (7 steps in the concept)
+- [ ] 8.4 Multiple users, Remote Desktop, lock screen, restart, update of an application, uninstallation
 
-## 9. Prüfung nach Serviceeinsatz
-- [ ] 9.1 WPF-Prüfansicht nach UI-Entwurf «Prüfbericht», Bericht drucken und speichern
-- [ ] 9.2 Startmenü-Eintrag «AppStart – Einrichtung prüfen» mit UAC-Abfrage, Knopf im Setup
-- [ ] 9.3 Automatische Prüfung nach Installation, Änderung und Update; Berichte mit Datum und Uhrzeit ablegen
+## 9. Verification after a service visit
+- [ ] 9.1 WPF verification view according to the UI design "Verification report", print and save report
+- [ ] 9.2 Start menu entry "AppStart – Verify setup" with UAC prompt, button in the setup
+- [ ] 9.3 Automatic verification after installation, change and update; save reports with date and time
 
-## 10. Benutzerhandbuch
-- [ ] 10.1 Handbuch als Markdown in docs/manual/ mit allen Kapiteln laut Konzept
-- [ ] 10.2 Bildschirmfotos aus der fertigen Software auf der Test-VM
-- [ ] 10.3 PDF-Erzeugung in der Pipeline, PDF im Paket, Startmenü-Eintrag «AppStart – Handbuch»
-- [ ] 10.4 Test auf Vollständigkeit: jede Meldung, jeder Prüfpunkt, jeder Befehl im Handbuch
+## 10. User manual
+- [ ] 10.1 Manual as Markdown in docs/manual/ with all chapters as in the concept
+- [ ] 10.2 Screenshots from the finished software on the test VM
+- [ ] 10.3 PDF generation in the pipeline, PDF in the package, Start menu entry "AppStart – Manual"
+- [ ] 10.4 Completeness test: every message, every check, every command in the manual
 ```
 
-## Übergabe an Claude Code
+## Handover to Claude Code
 
-1. Repository `appstart` anlegen und `openspec init` ausführen.
-1. Inhalte oben in `openspec/project.md` und `openspec/changes/add-appstart-service/` ablegen.
-1. `openspec validate add-appstart-service --strict` muss fehlerfrei durchlaufen.
-1. `CLAUDE.md` im Repository:
+1. Create the repository `appstart` and run `openspec init`.
+1. Put the contents above into `openspec/project.md` and `openspec/changes/add-appstart-service/`.
+1. `openspec validate add-appstart-service --strict` must pass without errors.
+1. `CLAUDE.md` in the repository:
 
 ```markdown
 # CLAUDE.md
-- Arbeite spec-driven nach openspec/project.md und dem aktiven Change.
-- Entwicklung läuft unter Windows. Setup und Dienst nie auf diesem Rechner installieren, nur auf der Test-VM.
-- Setze tasks.md der Reihe nach um, hake erledigte Tasks ab.
-- Kein Code ohne Anforderung in den Specs. Fehlt etwas, Spec zuerst ergänzen und validieren.
-- Spike-Ergebnisse (Abschnitt 1) im Change dokumentieren, bevor Abschnitt 3 beginnt.
-- Sicherheitsregeln aus project.md sind nicht verhandelbar.
-- Nach Abschluss: alle Tests grün, dann openspec archive add-appstart-service.
+- Work spec-driven according to openspec/project.md and the active change.
+- Development runs on Windows. Never install setup and service on this machine, only on the test VM.
+- Implement tasks.md in order, check off completed tasks.
+- No code without a requirement in the specs. If something is missing, add it to the spec first and validate.
+- Document spike results (section 1) in the change before section 3 starts.
+- The security rules in project.md are not negotiable.
+- When done: all tests green, then openspec archive add-appstart-service.
 ```
 
-1. Start-Prompt für Claude Code: «Lies openspec/project.md und den Change add-appstart-service. Validiere ihn. Beginne mit den Spikes in Abschnitt 1 von tasks.md und berichte die Ergebnisse, bevor du weitermachst.»
+1. Start prompt for Claude Code: "Read openspec/project.md and the change add-appstart-service. Validate it. Start with the spikes in section 1 of tasks.md and report the results before you continue."
 
-## Offene Punkte
+## Open points
 
-- Velopack: ob das Setup nach der MSI-Installation zuverlässig mit Admin-Rechten läuft und Updates den Dienst sauber stoppen, ist in der Doku nicht beschrieben. Spike 1.3, Fallback WiX.
-- S4U-Anmeldung für das App-Konto: Spike 1.1.
-- Liste der betroffenen Applikationen mit Datenordner und Registry-Key: Spike 1.4.
-- Code-Signing-Zertifikat für AppStart bereitstellen.
+- Velopack: whether the setup runs reliably with admin rights after the MSI installation and whether updates stop the service cleanly is not described in the documentation. Spike 1.3, fallback WiX.
+- S4U logon for the app account: spike 1.1.
+- List of the affected applications with data folder and registry key: spike 1.4.
+- Provide a code signing certificate for AppStart.

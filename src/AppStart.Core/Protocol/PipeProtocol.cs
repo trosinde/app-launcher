@@ -41,7 +41,7 @@ public static class PipeProtocol
     {
         if (!AppId.IsValid(appId))
         {
-            throw new ArgumentException("Ungültige AppId.", nameof(appId));
+            throw new ArgumentException("Invalid AppId.", nameof(appId));
         }
 
         return Encoding.ASCII.GetBytes("START " + appId);

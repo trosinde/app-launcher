@@ -1,8 +1,9 @@
 # CLAUDE.md
-- Arbeite spec-driven nach openspec/project.md und dem aktiven Change.
-- Entwicklung läuft unter Windows. Setup und Dienst nur auf der Test-VM installieren. Dieser Rechner ist die Test-VM (Proxmox, Windows 11 Pro): Installation über die E2E-/UAT-Skripte (tests/e2e/Invoke-Uat.ps1, geplante Aufgabe «AppStartUAT»), die alles wieder entfernen.
-- Setze tasks.md der Reihe nach um, hake erledigte Tasks ab.
-- Kein Code ohne Anforderung in den Specs. Fehlt etwas, Spec zuerst ergänzen und validieren.
-- Spike-Ergebnisse (Abschnitt 1) im Change dokumentieren, bevor Abschnitt 3 beginnt.
-- Sicherheitsregeln aus project.md sind nicht verhandelbar.
-- Nach Abschluss: alle Tests grün, dann openspec archive add-appstart-service.
+- Work spec-driven according to openspec/project.md and the active change.
+- Development runs on Windows. Install setup and service only on the test VM. This machine is the test VM (Proxmox, Windows 11 Pro): install via the E2E/UAT scripts (tests/e2e/Invoke-Uat.ps1, scheduled task "AppStartUAT"), which remove everything again.
+- Implement tasks.md in order, check off completed tasks.
+- No code without a requirement in the specs. If something is missing, add it to the spec first and validate.
+- Document spike results (section 1) in the change before section 3 starts.
+- The security rules in project.md are not negotiable.
+- Language: code, comments, UI and documentation in English.
+- When done: all tests green, then openspec archive add-appstart-service.

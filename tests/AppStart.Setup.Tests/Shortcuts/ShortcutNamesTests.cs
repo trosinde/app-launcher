@@ -39,6 +39,6 @@ public sealed class ShortcutNamesTests
     public void Unusable_names_are_rejected(string name)
     {
         var ex = Assert.Throws<ArgumentException>(() => ShortcutNames.Sanitize(name));
-        Assert.Contains("kein gültiger Dateiname", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("No valid file name", ex.Message, StringComparison.Ordinal);
     }
 }

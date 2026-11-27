@@ -10,7 +10,7 @@ namespace AppStart.Setup.Engine.Protection;
 
 /// <summary>
 /// ACLs on C:\ProgramData\AppStart, apps.json, the data folders and registry keys of the apps (task 6.3,
-/// spec installation "Rechte auf Daten und Registry", spec app-launch "Geschützte und gültige Konfiguration").
+/// spec installation "Permissions on data and registry", spec app-launch "Protected and valid configuration").
 /// </summary>
 /// <remarks>
 /// <para>
@@ -83,7 +83,7 @@ public sealed class ProtectionService : IProtectionService
             Directory.CreateDirectory(folder);
             if (IsReparsePoint(folder))
             {
-                throw new InvalidOperationException($"{folder} ist ein Verweis (Junction oder symbolischer Link) und wird nicht geschützt.");
+                throw new InvalidOperationException($"{folder} is a reparse point (junction or symbolic link) and is not protected.");
             }
         }
 
@@ -100,10 +100,10 @@ public sealed class ProtectionService : IProtectionService
 
         var target = Path.GetFullPath(path);
         var folder = Path.GetDirectoryName(target)
-            ?? throw new ArgumentException($"{path} hat keinen Ordner.", nameof(path));
+            ?? throw new ArgumentException($"{path} has no folder.", nameof(path));
         if (!Directory.Exists(folder))
         {
-            throw new DirectoryNotFoundException($"Ordner {folder} fehlt. Zuerst den Konfigurationsordner schützen.");
+            throw new DirectoryNotFoundException($"Folder {folder} is missing. Protect the configuration folder first.");
         }
 
         // The temp file gets the target ACL at creation (explicit, protected), so neither it nor the replaced
@@ -150,7 +150,7 @@ public sealed class ProtectionService : IProtectionService
         Directory.CreateDirectory(full);
         if (IsReparsePoint(full))
         {
-            throw new InvalidOperationException($"Datenordner {full} ist ein Verweis (Junction oder symbolischer Link) und wird nicht geschützt.");
+            throw new InvalidOperationException($"Data folder {full} is a reparse point (junction or symbolic link) and is not protected.");
         }
 
         var original = new DirectoryInfo(full)
@@ -189,7 +189,7 @@ public sealed class ProtectionService : IProtectionService
 
         string original;
         using (var key = root.OpenSubKey(subKey, RegistryKeyPermissionCheck.Default, RegistryRights.ReadPermissions)
-                         ?? throw new InvalidOperationException($"Registry-Key {backupPath} kann nicht geöffnet werden."))
+                         ?? throw new InvalidOperationException($"Registry key {backupPath} cannot be opened."))
         {
             original = key.GetAccessControl(AccessControlSections.Owner | AccessControlSections.Access)
                 .GetSecurityDescriptorSddlForm(AccessControlSections.Owner | AccessControlSections.Access);
@@ -226,7 +226,7 @@ public sealed class ProtectionService : IProtectionService
 
                 break;
             default:
-                throw new ArgumentException($"Unbekanntes Ziel {backup.Target}.", nameof(backup));
+                throw new ArgumentException($"Unknown target {backup.Target}.", nameof(backup));
         }
     }
 
@@ -281,7 +281,7 @@ public sealed class ProtectionService : IProtectionService
             case AclTarget.Directory:
                 if (!Directory.Exists(path))
                 {
-                    throw new DirectoryNotFoundException($"Datenordner {path} existiert nicht.");
+                    throw new DirectoryNotFoundException($"Data folder {path} does not exist.");
                 }
 
                 var security = new DirectoryInfo(path).GetAccessControl(AccessControlSections.Owner | AccessControlSections.Access);
@@ -295,7 +295,7 @@ public sealed class ProtectionService : IProtectionService
                 }
 
             default:
-                throw new ArgumentException($"Unbekanntes Ziel {target}.", nameof(target));
+                throw new ArgumentException($"Unknown target {target}.", nameof(target));
         }
     }
 
@@ -303,14 +303,14 @@ public sealed class ProtectionService : IProtectionService
     internal IReadOnlyList<string> FindForeignAccess(RegistryKey root, string subKey, string displayPath, SecurityIdentifier appAccount)
     {
         using var key = root.OpenSubKey(subKey, RegistryKeyPermissionCheck.Default, RegistryRights.ReadPermissions)
-                        ?? throw new InvalidOperationException($"Registry-Key {displayPath} existiert nicht.");
+                        ?? throw new InvalidOperationException($"Registry key {displayPath} does not exist.");
         var security = key.GetAccessControl(AccessControlSections.Owner | AccessControlSections.Access);
         return FindForeignAccess(new RawSecurityDescriptor(security.GetSecurityDescriptorBinaryForm(), 0), appAccount, isRegistry: true);
     }
 
     /// <summary>
     /// Every principal besides the app account, SYSTEM, Administrators and TrustedInstaller with an effective
-    /// allow ACE, read access included ("für Bediener nicht lesbar"). A foreign owner counts too: the owner
+    /// allow ACE, read access included ("not readable by operators"). A foreign owner counts too: the owner
     /// can always read and change the DACL.
     /// </summary>
     internal IReadOnlyList<string> FindForeignAccess(RawSecurityDescriptor descriptor, SecurityIdentifier appAccount, bool isRegistry)
@@ -324,12 +324,12 @@ public sealed class ProtectionService : IProtectionService
         var findings = new List<string>();
         if (descriptor.Owner is { } foreignOwner && !trusted.Contains(foreignOwner))
         {
-            findings.Add($"{Describe(foreignOwner)}: Besitzer (darf Rechte lesen und ändern)");
+            findings.Add($"{Describe(foreignOwner)}: owner (may read and change permissions)");
         }
 
         if (descriptor.DiscretionaryAcl is null)
         {
-            findings.Add("Jeder (NULL DACL): Vollzugriff");
+            findings.Add("Everyone (NULL DACL): full access");
             return findings;
         }
 
@@ -364,7 +364,7 @@ public sealed class ProtectionService : IProtectionService
         var hex = $"0x{mask:X8}";
         if ((mask & genericAll) != 0 || (mask & full) == full)
         {
-            return $"Vollzugriff ({hex})";
+            return $"Full access ({hex})";
         }
 
         // File: ReadData, ReadEA, Execute, ReadAttributes. Key: QueryValues, EnumerateSubKeys, Notify.
@@ -376,37 +376,37 @@ public sealed class ProtectionService : IProtectionService
         var parts = new List<string>();
         if ((mask & readBits) != 0)
         {
-            parts.Add("Lesen");
+            parts.Add("Read");
         }
 
         if ((mask & writeBits) != 0)
         {
-            parts.Add("Schreiben");
+            parts.Add("Write");
         }
 
         if ((mask & delete) != 0)
         {
-            parts.Add("Löschen");
+            parts.Add("Delete");
         }
 
         if ((mask & writeDac) != 0)
         {
-            parts.Add("Rechte ändern");
+            parts.Add("Change permissions");
         }
 
         if ((mask & writeOwner) != 0)
         {
-            parts.Add("Besitz übernehmen");
+            parts.Add("Take ownership");
         }
 
         if (parts.Count == 0 && (mask & readControl) != 0)
         {
-            parts.Add("Rechte lesen");
+            parts.Add("Read permissions");
         }
 
         if (parts.Count == 0)
         {
-            parts.Add("Sonstige");
+            parts.Add("Other");
         }
 
         return $"{string.Join(", ", parts)} ({hex})";
@@ -485,7 +485,7 @@ public sealed class ProtectionService : IProtectionService
         key.SetAccessControl(dacl);
 
         using var enumerable = root.OpenSubKey(subKey, RegistryKeyPermissionCheck.Default, RegistryRights.ReadKey)
-                               ?? throw new InvalidOperationException($"Registry-Key {subKey} kann nicht geöffnet werden.");
+                               ?? throw new InvalidOperationException($"Registry key {subKey} cannot be opened.");
         foreach (var name in enumerable.GetSubKeyNames())
         {
             ProtectKeyTree(enumerable, name, "D:");
@@ -494,7 +494,7 @@ public sealed class ProtectionService : IProtectionService
 
     private static RegistryKey OpenForAcl(RegistryKey root, string subKey) =>
         root.OpenSubKey(subKey, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.ReadPermissions | RegistryRights.ChangePermissions | RegistryRights.TakeOwnership)
-        ?? throw new InvalidOperationException($"Registry-Key {subKey} kann nicht geöffnet werden.");
+        ?? throw new InvalidOperationException($"Registry key {subKey} cannot be opened.");
 
     private string TrustedAces(string rights, string inheritance, SecurityIdentifier? except = null)
     {
@@ -522,7 +522,7 @@ public sealed class ProtectionService : IProtectionService
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (!Path.IsPathFullyQualified(path))
         {
-            throw new ArgumentException($"Datenordner «{path}» muss ein absoluter Pfad sein.", nameof(path));
+            throw new ArgumentException($"Data folder \"{path}\" must be an absolute path.", nameof(path));
         }
 
         var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
@@ -551,7 +551,7 @@ public sealed class ProtectionService : IProtectionService
 
         if (forbidden.Any(f => f.Length > 0 && string.Equals(f, full, StringComparison.OrdinalIgnoreCase)))
         {
-            throw new ArgumentException($"Datenordner «{full}» ist ein Laufwerk oder Systemordner und darf nicht gesperrt werden.", nameof(path));
+            throw new ArgumentException($"Data folder \"{full}\" is a drive or system folder and must not be locked.", nameof(path));
         }
 
         return full;
@@ -565,7 +565,7 @@ public sealed class ProtectionService : IProtectionService
         }
         catch (Exception ex) when (ex is IdentityNotMappedException or SystemException)
         {
-            return $"Unbekannt ({sid.Value})";
+            return $"Unknown ({sid.Value})";
         }
     }
 }

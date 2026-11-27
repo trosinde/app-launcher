@@ -50,7 +50,7 @@ public static class ShortcutNames
         if (name.Length == 0 || name.All(c => c == Replacement))
         {
             throw new ArgumentException(
-                $"Aus dem Namen «{appName}» lässt sich kein gültiger Dateiname für die Verknüpfung bilden.",
+                $"No valid file name for the shortcut can be formed from the name \"{appName}\".",
                 nameof(appName));
         }
 

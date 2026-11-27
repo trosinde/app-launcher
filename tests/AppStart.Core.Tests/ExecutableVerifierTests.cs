@@ -74,7 +74,7 @@ public sealed class ExecutableVerifierTests : IDisposable
 
         var foreign = ExecutableVerifier.VerifySignature(exe, new string('A', 40));
         Assert.False(foreign.Success);
-        Assert.Contains("fremdes Zertifikat", foreign.Detail, StringComparison.Ordinal);
+        Assert.Contains("foreign certificate", foreign.Detail, StringComparison.Ordinal);
     }
 
     [Fact]

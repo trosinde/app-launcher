@@ -64,7 +64,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(NextCommand), nameof(BackCommand), nameof(CancelCommand), nameof(AddExeCommand), nameof(RemoveAppCommand))]
     private bool _isBusy;
 
-    /// <summary>Apply and verify have run (successfully or not); only «Fertig» remains.</summary>
+    /// <summary>Apply and verify have run (successfully or not); only "Finish" remains.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SummaryHeading), nameof(SummaryIntro))]
     [NotifyCanExecuteChangedFor(nameof(FinishCommand), nameof(CancelCommand))]
@@ -230,7 +230,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
             foreach (AppItemViewModel item in e.NewItems)
             {
                 item.PropertyChanged += OnAppItemChanged;
-                item.ConfirmAllowAll = ConfirmAllowAll; // spec installation «Alle erlaubt»: confirmation first
+                item.ConfirmAllowAll = ConfirmAllowAll; // spec installation "All allowed": confirmation first
             }
         }
 
@@ -247,7 +247,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
 
     private bool CanEditApps => !IsBusy;
 
-    /// <summary>«Einrichtung prüfen» (task 9.2): same verify view as the Start menu entry.</summary>
+    /// <summary>"Verify setup" (task 9.2): same verify view as the Start menu entry.</summary>
     [RelayCommand(CanExecute = nameof(CanEditApps))]
     private void OpenVerify() => _ui.ShowVerifyView(_engine);
 
@@ -314,7 +314,7 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
     private bool ConfirmAllowAll(AppItemViewModel item) =>
         _ui.Confirm(SetupTexts.ConfirmAllHeading, SetupTexts.Format(SetupTexts.ConfirmAllTextFormat, item.Name));
 
-    /// <summary>«Hilfsprogramme (n)…»: dialog «Erlaubte Hilfsprogramme»; the list is taken only with «Übernehmen».</summary>
+    /// <summary>"Helper programs (n)…": dialog "Allowed helper programs"; the list is taken only with "Apply".</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedApp))]
     private void OpenHelpers()
     {
@@ -452,14 +452,14 @@ public sealed partial class WizardViewModel : ObservableObject, IDisposable
         NewMember = string.Empty;
     }
 
-    /// <summary>spec fix-wizard-findings «Warnung bei Administratoren ohne Passwort»; null when there is none.</summary>
+    /// <summary>spec fix-wizard-findings "Warning about administrators without password"; null when there is none.</summary>
     [ObservableProperty]
     private string? _adminPasswordWarning;
 
     // Members that were in AppStart Users when the wizard opened and were removed from the list.
     private readonly List<string> _removedMembers = [];
 
-    /// <summary>spec fix-wizard-findings «Bediener entfernen»: any listed member (appstart-user is never listed).</summary>
+    /// <summary>spec fix-wizard-findings "Removing operators": any listed member (appstart-user is never listed).</summary>
     [RelayCommand]
     private void RemoveMember(MemberItem? member)
     {

@@ -1,18 +1,18 @@
-# Dokumentation
+# Documentation
 
-| Dokument | Inhalt | Für wen |
+| Document | Contents | Audience |
 |---|---|---|
-| [Funktionsweise](funktionsweise.md) | Ablauf beim Start, Konten, `apps.json`, Einrichtung, Meldungen, Ereignisprotokoll, Prüfung | alle |
-| [Sicherheitsmodell](sicherheitsmodell.md) | Schutzziele, Angriffe und Gegenmassnahmen, Restrisiken | Sicherheit und Review |
-| [Entwicklung](entwicklung.md) | Voraussetzungen, Build, Tests, Release, Projektstruktur | Entwicklung und Mitwirkende |
-| Benutzerhandbuch (`manual/`) | Installation und Service Schritt für Schritt, mit Bildschirmfotos der fertigen Software | Installation und Service – **in Arbeit** |
+| [How it works](funktionsweise.md) | Start sequence, accounts, `apps.json`, setup, messages, Event Log, verification | everyone |
+| [Security model](sicherheitsmodell.md) | Security goals, attacks and countermeasures, residual risks | security and review |
+| [Development](entwicklung.md) | Prerequisites, build, tests, release, project structure | developers and contributors |
+| User manual (`manual/`) | Installation and service step by step, with screenshots of the finished software | installation and service – **work in progress** |
 
-Weitere Quellen:
+Other sources:
 
-- [UI-Entwürfe](ui-designs/) – verbindliche Vorlage für die Oberflächen. Gerenderte Ansichten liegen in [`images/`](images/).
-- [Ursprüngliches Konzept](konzept/konzept.md) – Stand zu Projektbeginn. Wo es von den Specs abweicht, gelten die Specs.
-- [OpenSpec-Change](../openspec/changes/add-appstart-service/) – Anforderungen, Entscheide, Aufgaben.
+- [UI designs](ui-designs/) – binding template for the user interfaces. Rendered views are in [`images/`](images/).
+- [Original concept](konzept/konzept.md) – state at project start. Where it differs from the specs, the specs apply.
+- [OpenSpec change](../openspec/changes/add-appstart-service/) – requirements, decisions, tasks.
 
-## Bilder aktualisieren
+## Updating the images
 
-Die Bilder in `images/` sind aus den HTML-Entwürfen in `ui-designs/` gerendert. Sobald die Oberflächen fertig sind, werden sie durch Bildschirmfotos der echten Software von der Test-VM ersetzt. Dateinamen bleiben gleich, damit die Verweise stimmen.
+The images in `images/` are rendered from the HTML designs in `ui-designs/`. Once the user interfaces are finished, they are replaced by screenshots of the real software from the test VM. File names stay the same so the links remain valid.

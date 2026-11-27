@@ -130,7 +130,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>«Erlaubtes Hilfsprogramm starten»: shows what the configured mode does with a helper (task 6.1).</summary>
+    /// <summary>"Start allowed helper program": shows what the configured mode does with a helper (task 6.1).</summary>
     [RelayCommand]
     public void StartHelper()
     {

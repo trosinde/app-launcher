@@ -10,7 +10,7 @@
      and works while Edge is open).
   3. Checks that the PDF exists and reports size and page count.
 
-  Output (default): artifacts/manual/AppStart-Handbuch.html and artifacts/manual/AppStart-Handbuch.pdf.
+  Output (default): artifacts/manual/AppStart-Manual.html and artifacts/manual/AppStart-Manual.pdf.
   Needs Windows for the PDF step (Edge); with -SkipPdf only the HTML is built (any OS).
 
 .EXAMPLE
@@ -25,11 +25,11 @@ param(
     # Shown on the title page. Default: <Version> from Directory.Build.props.
     [string] $Version,
 
-    # Folder for AppStart-Handbuch.html and .pdf.
+    # Folder for AppStart-Manual.html and .pdf.
     [string] $OutputDir = 'artifacts/manual',
 
     # File name of the PDF (and of the HTML with .html).
-    [string] $Name = 'AppStart-Handbuch',
+    [string] $Name = 'AppStart-Manual',
 
     # msedge.exe; default: searched in Program Files (x86), Program Files and the App Paths registry key.
     [string] $EdgePath,
@@ -82,7 +82,7 @@ function Find-Edge {
     foreach ($candidate in $candidates) {
         if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return $candidate }
     }
-    throw 'Microsoft Edge (msedge.exe) nicht gefunden. Pfad mit -EdgePath angeben.'
+    throw 'Microsoft Edge (msedge.exe) not found. Specify the path with -EdgePath.'
 }
 
 function Get-PdfPageCount([string] $path) {
@@ -100,7 +100,7 @@ if ($SkipPdf) {
     Write-Host "HTML: $html"
     return
 }
-if (-not $IsWindows) { throw 'Die PDF-Erzeugung braucht Windows mit Microsoft Edge. Nur HTML: -SkipPdf.' }
+if (-not $IsWindows) { throw 'Creating the PDF needs Windows with Microsoft Edge. HTML only: -SkipPdf.' }
 
 # 2. HTML -> PDF with headless Edge and a throw-away profile
 if (-not $EdgePath) { $EdgePath = Find-Edge }
@@ -118,7 +118,7 @@ try {
     $process = Start-Process -FilePath $EdgePath -ArgumentList $arguments -PassThru -WindowStyle Hidden
     if (-not $process.WaitForExit(180000)) {
         $process.Kill($true)
-        throw 'Edge hat das PDF nicht innerhalb von 3 Minuten erzeugt.'
+        throw 'Edge did not create the PDF within 3 minutes.'
     }
     # Edge may hand the job to a child process; wait for the file to appear and stop growing.
     $deadline = (Get-Date).AddSeconds(60)
@@ -138,9 +138,9 @@ finally {
 
 # 3. Check
 if (-not (Test-Path -LiteralPath $pdf) -or (Get-Item -LiteralPath $pdf).Length -eq 0) {
-    throw "PDF wurde nicht erzeugt: $pdf"
+    throw "PDF was not created: $pdf"
 }
 $pages = Get-PdfPageCount $pdf
 $sizeKb = [math]::Round((Get-Item -LiteralPath $pdf).Length / 1KB)
-if ($pages -lt 2) { throw "PDF hat nur $pages Seite(n): $pdf" }
+if ($pages -lt 2) { throw "PDF has only $pages page(s): $pdf" }
 Write-Host "PDF: $pdf ($pages Seiten, $sizeKb KB)" -ForegroundColor Green

@@ -37,7 +37,7 @@ function Invoke-WithMsiMutex([scriptblock] $body) {
     $created = $false
     $m = New-Object System.Threading.Mutex($true, 'Global\_MSIExecute', [ref]$created)
     try {
-        if (-not $created) { if (-not $m.WaitOne(0)) { throw 'Global\_MSIExecute ist belegt, läuft gerade eine andere Installation?' } }
+        if (-not $created) { if (-not $m.WaitOne(0)) { throw 'Global\_MSIExecute is taken, is another installation in progress?' } }
         & $body
     } finally {
         try { $m.ReleaseMutex() } catch { }
@@ -46,24 +46,24 @@ function Invoke-WithMsiMutex([scriptblock] $body) {
 }
 
 function Get-Snapshot {
-    # Everything an upgrade must leave untouched (spec installation, «Update erhält die Einrichtung»).
+    # Everything an upgrade must leave untouched (spec installation, "Update keeps the setup").
     $s = [ordered]@{}
     $s['apps.json SHA-256'] = (Get-FileHash $ConfigPath).Hash
     $s['apps.json SDDL'] = Get-Sddl $ConfigPath
     $s['ProgramData\AppStart SDDL'] = Get-Sddl $AppStartData
-    $s['Datenordner SDDL'] = Get-Sddl $TestDataDir
-    $s['Registry-Key SDDL'] = Get-Sddl $TestRegKey
+    $s['Data folder SDDL'] = Get-Sddl $TestDataDir
+    $s['Registry key SDDL'] = Get-Sddl $TestRegKey
     $s['TestApp SHA-256'] = (Get-FileHash $extTestApp).Hash
     foreach ($u in 'appstart-app', 'appstart-user') {
         $lu = Get-LocalUser $u -ErrorAction SilentlyContinue
-        $s["Konto $u"] = if ($lu) { "$($lu.SID) enabled=$($lu.Enabled) pwdLastSet=$($lu.PasswordLastSet.ToString('s'))" } else { '<fehlt>' }
+        $s["Account $u"] = if ($lu) { "$($lu.SID) enabled=$($lu.Enabled) pwdLastSet=$($lu.PasswordLastSet.ToString('s'))" } else { '<missing>' }
     }
     $g = Get-LocalGroup 'AppStart Users' -ErrorAction SilentlyContinue
-    $s['Gruppe AppStart Users'] = if ($g) { "$($g.SID) members=" + ((@(Get-LocalGroupMember -SID $g.SID.Value | ForEach-Object { $_.SID.Value }) | Sort-Object) -join ',') } else { '<fehlt>' }
+    $s['Group AppStart Users'] = if ($g) { "$($g.SID) members=" + ((@(Get-LocalGroupMember -SID $g.SID.Value | ForEach-Object { $_.SID.Value }) | Sort-Object) -join ',') } else { '<missing>' }
     # net localgroup instead of Get-LocalGroupMember: the latter fails on orphaned SIDs in Administrators
-    $s['Administratoren enthält appstart-app'] = [string][bool](@(net localgroup (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')).Translate([System.Security.Principal.NTAccount]).Value.Split('\')[-1]) -contains 'appstart-app')
+    $s['Administrators contains appstart-app'] = [string][bool](@(net localgroup (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')).Translate([System.Security.Principal.NTAccount]).Value.Split('\')[-1]) -contains 'appstart-app')
     foreach ($l in @(Get-LauncherShortcuts | Sort-Object Path)) {
-        $s["Verknüpfung $($l.Path)"] = "$($l.Target) $($l.Arguments) icon=$($l.Icon) wd=$($l.WorkDir) sddl=$(Get-Sddl $l.Path)"
+        $s["Shortcut $($l.Path)"] = "$($l.Target) $($l.Arguments) icon=$($l.Icon) wd=$($l.WorkDir) sddl=$(Get-Sddl $l.Path)"
     }
     return $s
 }
@@ -78,19 +78,19 @@ function Test-OperatorStart([pscredential] $cred, [string] $appId, [string] $lab
 }
 
 function Test-ChildCmd([pscredential] $cred, [string] $appId, [string] $label, [string] $expectedRow, [int] $expectedCmd) {
-    # TestApp as the operator, «Eingabeaufforderung starten»: row text and running cmd.exe of appstart-app.
+    # TestApp as the operator, "Start command prompt": row text and running cmd.exe of appstart-app.
     Start-Sleep -Seconds 3
     $t = Get-Date
     $l = Start-LauncherAs $cred "--app $appId" ''
     $apps = @(Wait-TestApp $t)
     $win = if ($apps) { Wait-ProcessWindow $apps[0].Id 20 } else { $null }
-    if (-not $win) { Check $label $false "exit=$($l.Exit) kein TestApp-Fenster"; Stop-TestApps; return }
+    if (-not $win) { Check $label $false "exit=$($l.Exit) no TestApp window"; Stop-TestApps; return }
     Start-Sleep -Seconds 2
     $app = @{ Window = $win }
-    Invoke-TestAppButton $app 'Eingabeaufforderung starten'
-    $row = Get-TestAppRow $app 'Kindprozess (cmd.exe)'
+    Invoke-TestAppButton $app 'Start command prompt'
+    $row = Get-TestAppRow $app 'Child process (cmd.exe)'
     $cmdCount = @(Get-OperatorCmd).Count
-    Check $label ($row -like $expectedRow -and $cmdCount -eq $expectedCmd) "$row, cmd.exe als appstart-app: $cmdCount"
+    Check $label ($row -like $expectedRow -and $cmdCount -eq $expectedCmd) "$row, cmd.exe as appstart-app: $cmdCount"
     Stop-OperatorCmd
     Stop-TestApps
 }
@@ -113,13 +113,13 @@ function Get-MsiexecCommandLines {
 
 try {
     Write-Host "== Windows $((Get-CimInstance Win32_OperatingSystem).Version), MSI $MsiPath -> $MsiNextPath"
-    if (Get-AppStartProduct) { throw 'AppStart ist bereits installiert. Test nur auf einer frischen Test-VM (Snapshot) ausführen.' }
+    if (Get-AppStartProduct) { throw 'AppStart is already installed. Run the test only on a fresh test VM (snapshot).' }
     Initialize-WorkDir
     New-TestAppPrerequisites
     $v1 = Get-MsiProperty $MsiPath 'ProductVersion'
     $v2 = Get-MsiProperty $MsiNextPath 'ProductVersion'
     $newer = try { [version]$v2 -gt [version]$v1 } catch { $v2 -ne $v1 }
-    Check 'MSI-Versionen: zweites MSI ist neuer' $newer "$v1 -> $v2"
+    Check 'MSI versions: second MSI is newer' $newer "$v1 -> $v2"
     # Local copies: SYSTEM must be able to read the MSI (no mapped drive, no user profile).
     $msiLocal = Join-Path $WorkDir 'AppStart.msi'
     Copy-Item $MsiPath $msiLocal -Force
@@ -128,9 +128,9 @@ try {
     $log1618 = Join-Path $StageDir 'install-1618.log'
     $code = Invoke-WithMsiMutex { Invoke-Msiexec "/i `"$msiLocal`" /qn /l*v `"$log1618`"" 180 }
     if ($code -eq 1618) {
-        Check 'msiexec bei laufender Installation: Exit-Code 1618, nichts installiert' (-not (Get-AppStartProduct) -and -not (Get-Service AppStart -ErrorAction SilentlyContinue)) "exit $code"
+        Check 'msiexec during a running installation: exit code 1618, nothing installed' (-not (Get-AppStartProduct) -and -not (Get-Service AppStart -ErrorAction SilentlyContinue)) "exit $code"
     } else {
-        Skip 'msiexec 1618 mit gehaltenem _MSIExecute-Mutex nicht reproduzierbar' "exit $code (siehe README, manuell prüfen)"
+        Skip 'msiexec 1618 with held _MSIExecute mutex not reproducible' "exit $code (see README, check manually)"
         if (Get-AppStartProduct) { Uninstall-AppStartMsi | Out-Null }
     }
 
@@ -151,25 +151,25 @@ try {
     Copy-Item $logSystem (Join-Path $StageDir 'install-system.log') -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 3
     $svc = Get-CimInstance Win32_Service -Filter "Name='AppStart'"
-    Check 'Stille Installation als SYSTEM: Exit-Code 0' ($info.LastTaskResult -eq 0) "LastTaskResult=$($info.LastTaskResult)"
-    Check 'Stille Installation als SYSTEM: im Programmordner installiert' ((Test-Path $SetupExe) -and (Test-Path $LauncherExe)) $CurDir
-    Check 'Stille Installation als SYSTEM: Dienst läuft, automatisch, LocalSystem' ($svc -and $svc.State -eq 'Running' -and $svc.StartMode -eq 'Auto' -and $svc.StartName -eq 'LocalSystem') "$($svc.State) $($svc.StartMode) $($svc.StartName)"
-    Check 'Stille Installation als SYSTEM: keine Oberfläche in der Benutzersitzung' ($newWindows.Count -eq 0) ($newWindows -join ',')
-    Check 'Stille Installation als SYSTEM: Startmenü «AppStart – Einrichtung» angelegt' (Test-Path "$StartMenuDir\AppStart – Einrichtung.lnk") ''
+    Check 'Silent installation as SYSTEM: exit code 0' ($info.LastTaskResult -eq 0) "LastTaskResult=$($info.LastTaskResult)"
+    Check 'Silent installation as SYSTEM: installed in the program folder' ((Test-Path $SetupExe) -and (Test-Path $LauncherExe)) $CurDir
+    Check 'Silent installation as SYSTEM: service running, automatic, LocalSystem' ($svc -and $svc.State -eq 'Running' -and $svc.StartMode -eq 'Auto' -and $svc.StartName -eq 'LocalSystem') "$($svc.State) $($svc.StartMode) $($svc.StartName)"
+    Check 'Silent installation as SYSTEM: no user interface in the user session' ($newWindows.Count -eq 0) ($newWindows -join ',')
+    Check 'Silent installation as SYSTEM: Start menu "AppStart – Setup" created' (Test-Path "$StartMenuDir\AppStart – Setup.lnk") ''
 
     # ------------------------------------------------------------ 3. setup through the CLI
     New-Item -ItemType Directory -Force $extTestAppDir | Out-Null
     Copy-Item (Join-Path $CurDir 'TestApp\*') $extTestAppDir -Recurse -Force
     $r = Invoke-Setup @('add', '--exe', $extTestApp, '--data-dir', $TestDataDir, '--reg-key', $TestRegKeyCli, '--name', $TestAppName)
-    Check 'Einrichtung: TestApp (ausserhalb des Pakets) freigegeben' ($r.Exit -eq 0) ''
+    Check 'Setup: TestApp (outside the package) approved' ($r.Exit -eq 0) ''
     $password = New-RandomPassword
     $r = Invoke-Setup @('add-user', '--name', 'appstart-user', '--password-stdin') $password
-    Check 'Einrichtung: appstart-user angelegt' ($r.Exit -eq 0) ''
+    Check 'Setup: appstart-user created' ($r.Exit -eq 0) ''
     $op = New-OperatorCredential 'appstart-user' $password
     $appId = Get-TestAppId $extTestApp
     $r = Invoke-Setup @('verify')
-    Check 'Einrichtung: verify Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
-    Test-OperatorStart $op $appId 'Einrichtung: Start als appstart-user funktioniert'
+    Check 'Setup: verify exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Test-OperatorStart $op $appId 'Setup: start as appstart-user works'
 
     $before = Get-Snapshot
     $packagedHashBefore = (Get-FileHash $PackagedTestApp).Hash
@@ -179,43 +179,43 @@ try {
     # ------------------------------------------------------------ 4. upgrade over the configured installation
     $tUpgrade = Get-Date
     $code = Install-AppStartMsi $MsiNextPath (Join-Path $StageDir 'install-upgrade.log')
-    Check 'Update: MSI der neueren Version installiert' ($code -eq 0 -or $code -eq 3010) "exit $code"
+    Check 'Update: MSI of the newer version installed' ($code -eq 0 -or $code -eq 3010) "exit $code"
     Start-Sleep -Seconds 3
     $products = @(Get-AppStartProduct)
-    Check 'Update: genau ein Produkt, Version des neuen MSI' ($products.Count -eq 1 -and $products[0].DisplayVersion -eq $v2) (($products | ForEach-Object { "$($_.PSChildName) $($_.DisplayVersion)" }) -join '; ')
+    Check 'Update: exactly one product, version of the new MSI' ($products.Count -eq 1 -and $products[0].DisplayVersion -eq $v2) (($products | ForEach-Object { "$($_.PSChildName) $($_.DisplayVersion)" }) -join '; ')
     $svc = Get-CimInstance Win32_Service -Filter "Name='AppStart'"
     $svcProc = if ($svc -and $svc.ProcessId) { Get-Process -Id $svc.ProcessId -ErrorAction SilentlyContinue } else { $null }
     $svcExeAfter = (Get-Item (Join-Path $CurDir 'AppStart.Service.exe')).VersionInfo.ProductVersion
-    Check 'Update: Dienst läuft in der neuen Version (neu gestartet, neue Datei)' ($svc.State -eq 'Running' -and $svcProc -and $svcProc.StartTime -gt $tUpgrade -and $svcExeAfter -ne $svcExeBefore -and $svc.StartMode -eq 'Auto' -and $svc.StartName -eq 'LocalSystem') "$svcExeBefore -> $svcExeAfter, Pfad $($svc.PathName)"
+    Check 'Update: service runs in the new version (restarted, new file)' ($svc.State -eq 'Running' -and $svcProc -and $svcProc.StartTime -gt $tUpgrade -and $svcExeAfter -ne $svcExeBefore -and $svc.StartMode -eq 'Auto' -and $svc.StartName -eq 'LocalSystem') "$svcExeBefore -> $svcExeAfter, Pfad $($svc.PathName)"
 
     $after = Get-Snapshot
     $diff = @(foreach ($k in @($before.Keys) + @($after.Keys | Where-Object { -not $before.Contains($_) })) {
         if ($before[$k] -ne $after[$k]) { "$k : '$($before[$k])' -> '$($after[$k])'" }
     })
-    $diff | ForEach-Object { Write-Host "  ABWEICHUNG $_" }
-    Check 'Update: apps.json, Konten, Gruppe, Verknüpfungen und Rechte unverändert' ($diff.Count -eq 0) "$($diff.Count) Abweichung(en)"
-    Check 'Update: Startmenü-Einträge von AppStart wieder vorhanden' ((Test-Path "$StartMenuDir\AppStart – Einrichtung.lnk") -and (Test-Path "$StartMenuDir\AppStart – Einrichtung prüfen.lnk")) ''
+    $diff | ForEach-Object { Write-Host "  DEVIATION $_" }
+    Check 'Update: apps.json, accounts, group, shortcuts and permissions unchanged' ($diff.Count -eq 0) "$($diff.Count) deviation(s)"
+    Check 'Update: Start menu entries of AppStart present again' ((Test-Path "$StartMenuDir\AppStart – Setup.lnk") -and (Test-Path "$StartMenuDir\AppStart – Verify setup.lnk")) ''
     $r = Invoke-Setup @('verify')
-    Check 'Update: verify Exit-Code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
-    Test-OperatorStart $op $appId 'Update: Start als appstart-user funktioniert weiterhin'
+    Check 'Update: verify exit code 0' ($r.Exit -eq 0) "exit $($r.Exit)"
+    Test-OperatorStart $op $appId 'Update: start as appstart-user still works'
     # Information: would a TestApp released from inside the package survive the update?
     $packagedHashAfter = (Get-FileHash $PackagedTestApp).Hash
-    Write-Host "  INFO TestApp im Paket nach Update $(if ($packagedHashAfter -eq $packagedHashBefore) { 'unverändert' } else { 'GEÄNDERT: eine aus dem Paket freigegebene TestApp braucht nach jedem Update rehash' })"
+    Write-Host "  INFO TestApp in the package after update $(if ($packagedHashAfter -eq $packagedHashBefore) { 'unchanged' } else { 'CHANGED: a TestApp approved from the package needs rehash after every update' })"
 
     # ------------------------------------------------------------ 4b. apps.json version 1 after the update
-    # add-allowed-child-processes 7.2: app-launch «Konfiguration Version 1», installation «Update einer
-    # bestehenden Installation» (false -> blocked, true -> all, protection unchanged). Only when the first MSI
+    # add-allowed-child-processes 7.2: app-launch "Configuration version 1", installation "Update of an existing
+    # installation" (false -> blocked, true -> all, protection unchanged). Only when the first MSI
     # still writes version 1.
     $c = Get-ConfigApp $appId
     if ($c.Version -eq 1) {
         $sddlV1 = Get-Sddl $ConfigPath
-        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses false: Dienst startet wie blocked, cmd.exe blockiert' 'Start blockiert durch Job-Objekt*' 0
+        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses false: service starts as blocked, cmd.exe blocked' 'Start blocked by job object*' 0
         $r = Invoke-Setup @('rehash', '--app', $appId)
         $c = Get-ConfigApp $appId
-        Check 'Migration false: erste Änderung schreibt Version 2 mit childProcesses blocked, ohne allowChildProcesses' (
+        Check 'Migration false: first change writes version 2 with childProcesses blocked, without allowChildProcesses' (
             $r.Exit -eq 0 -and $c.Version -eq 2 -and $c.App.childProcesses -eq 'blocked' -and -not ($c.App.PSObject.Properties.Name -contains 'allowChildProcesses')) "exit $($r.Exit), version $($c.Version), $($c.App.childProcesses)"
-        Check 'Migration false: Rechte von apps.json unverändert' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
-        Test-ChildCmd $op $appId 'Migration false: cmd.exe weiterhin blockiert' 'Start blockiert durch Job-Objekt*' 0
+        Check 'Migration false: permissions of apps.json unchanged' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
+        Test-ChildCmd $op $appId 'Migration false: cmd.exe still blocked' 'Start blocked by job object*' 0
 
         # Back to version 1 with allowChildProcesses true (hand edit of an existing installation).
         $cfg = Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -223,26 +223,26 @@ try {
         foreach ($a in @($cfg.apps)) { $a.PSObject.Properties.Remove('childProcesses'); $a.PSObject.Properties.Remove('allowedChildren') }
         [IO.File]::WriteAllText($ConfigPath, ($cfg | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding($false)))
         Set-ConfigV1AllowChildren $true
-        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses true: Dienst startet wie all, cmd.exe läuft' 'Gestartet*' 1
+        Test-ChildCmd $op $appId 'Version 1, allowChildProcesses true: service starts as all, cmd.exe runs' 'Started*' 1
         $r = Invoke-Setup @('rehash', '--app', $appId)
         $c = Get-ConfigApp $appId
-        Check 'Migration true: erste Änderung schreibt Version 2 mit childProcesses all' (
+        Check 'Migration true: first change writes version 2 with childProcesses all' (
             $r.Exit -eq 0 -and $c.Version -eq 2 -and $c.App.childProcesses -eq 'all' -and -not ($c.App.PSObject.Properties.Name -contains 'allowChildProcesses')) "exit $($r.Exit), version $($c.Version), $($c.App.childProcesses)"
-        Check 'Migration true: Rechte von apps.json unverändert' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
-        Test-ChildCmd $op $appId 'Migration true: cmd.exe läuft weiterhin (all)' 'Gestartet*' 1
+        Check 'Migration true: permissions of apps.json unchanged' ((Get-Sddl $ConfigPath) -eq $sddlV1) ''
+        Test-ChildCmd $op $appId 'Migration true: cmd.exe still runs (all)' 'Started*' 1
 
         $r = Invoke-Setup @('set-children', '--app', $appId, '--mode', 'blocked')
-        Check 'Nach der Migration: zurück auf blocked, verify Exit-Code 0' ($r.Exit -eq 0 -and (Get-ConfigApp $appId).App.childProcesses -eq 'blocked') "exit $($r.Exit)"
+        Check 'After the migration: back to blocked, verify exit code 0' ($r.Exit -eq 0 -and (Get-ConfigApp $appId).App.childProcesses -eq 'blocked') "exit $($r.Exit)"
     } else {
-        Skip 'apps.json Version 1 nach Update' "erstes MSI schreibt Version $($c.Version)"
+        Skip 'apps.json version 1 after update' "first MSI writes version $($c.Version)"
     }
 
     # ------------------------------------------------------------ 5. bootstrapper (optional)
     if ($BootstrapperPath) {
         Invoke-Setup @('uninstall') | Out-Null
         Uninstall-AppStartMsi | Out-Null
-        Check 'Bootstrapper-Vorbereitung: AppStart vollständig entfernt' (-not (Get-AppStartProduct) -and -not (Get-Service AppStart -ErrorAction SilentlyContinue)) ''
-        # From a folder operators can write (spec: «Start aus beschreibbarem Ordner»)
+        Check 'Bootstrapper preparation: AppStart completely removed' (-not (Get-AppStartProduct) -and -not (Get-Service AppStart -ErrorAction SilentlyContinue)) ''
+        # From a folder operators can write (spec: "Start from a writable folder")
         Copy-Item $BootstrapperPath $bootCopy -Force
 
         # 5a. 1618 through the bootstrapper: error, log, no wizard
@@ -255,12 +255,12 @@ try {
         $logs = @(Get-ChildItem $logDir -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $t })
         $wizard = @(Get-Process AppStart.Setup -ErrorAction SilentlyContinue)
         if ($res.Exit -eq 0 -and (Get-AppStartProduct)) {
-            Skip 'Bootstrapper bei laufender Installation (1618) nicht reproduzierbar' 'Mutex wirkt nicht, siehe README'
+            Skip 'Bootstrapper during a running installation (1618) not reproducible' 'mutex has no effect, see README'
             Uninstall-AppStartMsi | Out-Null
         } else {
-            Check 'Bootstrapper bei laufender Installation: Exit-Code ungleich 0, nichts installiert' ($res.Exit -ne 0 -and -not $res.TimedOut -and -not (Get-AppStartProduct)) "exit=$($res.Exit) timeout=$($res.TimedOut) :: $($res.Texts)"
-            Check 'Bootstrapper bei laufender Installation: MSI-Log in C:\ProgramData\AppStart\Logs' ($logs.Count -ge 1) (($logs | ForEach-Object Name) -join ', ')
-            Check 'Bootstrapper bei laufender Installation: Wizard nicht gestartet' ($wizard.Count -eq 0) ''
+            Check 'Bootstrapper during a running installation: exit code not 0, nothing installed' ($res.Exit -ne 0 -and -not $res.TimedOut -and -not (Get-AppStartProduct)) "exit=$($res.Exit) timeout=$($res.TimedOut) :: $($res.Texts)"
+            Check 'Bootstrapper during a running installation: MSI log in C:\ProgramData\AppStart\Logs' ($logs.Count -ge 1) (($logs | ForEach-Object Name) -join ', ')
+            Check 'Bootstrapper during a running installation: wizard not started' ($wizard.Count -eq 0) ''
         }
         Get-Process AppStart.Setup -ErrorAction SilentlyContinue | Stop-Process -Force
 
@@ -270,11 +270,11 @@ try {
         while (-not $wizardProc -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1; $wizardProc = Get-Process AppStart.Setup -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1 }
         if ($wizardProc) {
             $wizardPath = $wizardProc.Path
-            Check 'Bootstrapper interaktiv: Wizard startet aus C:\Program Files\AppStart' ($wizardPath -like "$ProgDir\*") $wizardPath
+            Check 'Bootstrapper interactive: wizard starts from C:\Program Files\AppStart' ($wizardPath -like "$ProgDir\*") $wizardPath
             # Cancel: close the window, confirm a possible question
             for ($i = 0; $i -lt 3 -and -not $wizardProc.HasExited; $i++) {
                 foreach ($w in Get-ProcessWindows $wizardProc.Id) {
-                    $yes = $w.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, 'Ja')))
+                    $yes = @('Yes', 'Ja') | ForEach-Object { $w.FindFirst('Descendants', (New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, $_))) } | Where-Object { $_ } | Select-Object -First 1 # MessageBox buttons follow the Windows language
                     if ($yes) { try { $yes.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() } catch { } } else { Close-UiWindow $w }
                 }
                 $wizardProc.WaitForExit(5000) | Out-Null
@@ -282,14 +282,14 @@ try {
             if ($wizardProc.HasExited) {
                 $p.WaitForExit(30000) | Out-Null
                 $r = Invoke-Setup @('verify')
-                Check 'Abbruch im Wizard: AppStart bleibt installiert, Dienst läuft' ((Get-AppStartProduct) -and (Get-Service AppStart).Status -eq 'Running') ''
-                Check 'Abbruch im Wizard: Wizard über Startmenü erneut startbar' (Test-Path "$StartMenuDir\AppStart – Einrichtung.lnk") ''
-                Check 'Abbruch im Wizard: verify meldet fehlende Einrichtung (Exit-Code ungleich 0)' ($r.Exit -ne 0) "exit $($r.Exit)"
+                Check 'Cancel in the wizard: AppStart stays installed, service running' ((Get-AppStartProduct) -and (Get-Service AppStart).Status -eq 'Running') ''
+                Check 'Cancel in the wizard: wizard can be started again from the Start menu' (Test-Path "$StartMenuDir\AppStart – Setup.lnk") ''
+                Check 'Cancel in the wizard: verify reports missing setup (exit code not 0)' ($r.Exit -ne 0) "exit $($r.Exit)"
             } else {
-                Skip 'Abbruch im Wizard automatisch nicht möglich' 'Wizard liess sich nicht per UI Automation schliessen, siehe MANUAL-TESTS.md'
+                Skip 'Cancel in the wizard not possible automatically' 'wizard could not be closed via UI Automation, see MANUAL-TESTS.md'
             }
         } else {
-            Check 'Bootstrapper interaktiv: Wizard erscheint' $false 'kein Fenster von AppStart.Setup nach 5 Minuten'
+            Check 'Bootstrapper interactive: wizard appears' $false 'no window of AppStart.Setup after 5 minutes'
         }
         Get-Process AppStart.Setup -ErrorAction SilentlyContinue | Stop-Process -Force
         if (-not $p.HasExited) { $p.Kill() }
@@ -313,24 +313,24 @@ try {
         Start-Sleep -Seconds 2
         $seenCmd | ForEach-Object { Write-Host "  msiexec: $_" }
         $svc = Get-CimInstance Win32_Service -Filter "Name='AppStart'"
-        Check 'Bootstrapper /quiet: Exit-Code 0, installiert, Dienst läuft' ($p.ExitCode -eq 0 -and (Get-AppStartProduct) -and $svc.State -eq 'Running') "exit $($p.ExitCode)"
+        Check 'Bootstrapper /quiet: exit code 0, installed, service running' ($p.ExitCode -eq 0 -and (Get-AppStartProduct) -and $svc.State -eq 'Running') "exit $($p.ExitCode)"
         $usedInstallerDir = @($seenMsi).Count -gt 0 -or @($seenCmd | Where-Object { $_ -like "*$installerDir*" }).Count -gt 0
-        Check 'Bootstrapper /quiet: MSI nach C:\ProgramData\AppStart\Installer entpackt' $usedInstallerDir ((@($seenMsi) + @($seenCmd)) -join ' | ')
+        Check 'Bootstrapper /quiet: MSI extracted to C:\ProgramData\AppStart\Installer' $usedInstallerDir ((@($seenMsi) + @($seenCmd)) -join ' | ')
         $unsafe = @($seenCmd | Where-Object { $_ -like '*\Downloads\*' -or $_ -like "*$env:TEMP*" -or $_ -like '*\AppData\Local\Temp\*' })
-        Check 'Bootstrapper /quiet: kein MSI aus Downloads oder %TEMP%' ($unsafe.Count -eq 0) ($unsafe -join ' | ')
-        Check 'Bootstrapper /quiet: entpacktes MSI danach gelöscht' (@(Get-ChildItem $installerDir -Filter '*.msi' -ErrorAction SilentlyContinue).Count -eq 0) ''
+        Check 'Bootstrapper /quiet: no MSI from Downloads or %TEMP%' ($unsafe.Count -eq 0) ($unsafe -join ' | ')
+        Check 'Bootstrapper /quiet: extracted MSI deleted afterwards' (@(Get-ChildItem $installerDir -Filter '*.msi' -ErrorAction SilentlyContinue).Count -eq 0) ''
         $logs = @(Get-ChildItem $logDir -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $t })
         Check 'Bootstrapper /quiet: Log in C:\ProgramData\AppStart\Logs' ($logs.Count -ge 1) (($logs | ForEach-Object Name) -join ', ')
-        Check 'Bootstrapper /quiet: kein Wizard gestartet' (@(Get-Process AppStart.Setup -ErrorAction SilentlyContinue).Count -eq 0) ''
+        Check 'Bootstrapper /quiet: no wizard started' (@(Get-Process AppStart.Setup -ErrorAction SilentlyContinue).Count -eq 0) ''
         if ($logs) {
             $acl = (Get-Acl $logDir).GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]) | Where-Object {
                 $_.AccessControlType -eq 'Allow' -and $_.IdentityReference.Value -in 'S-1-5-32-545', 'S-1-5-11', 'S-1-1-0' -and ([int64]$_.FileSystemRights -band 0x500D0046) }
-            Check 'Bootstrapper: Logs-Ordner für Benutzer nicht beschreibbar' (-not $acl) ''
+            Check 'Bootstrapper: Logs folder not writable by users' (-not $acl) ''
         }
     }
 }
 catch {
-    Check 'Testlauf ohne Ausnahme' $false "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
+    Check 'Test run without exception' $false "$($_.Exception.Message) @ $($_.InvocationInfo.ScriptLineNumber)"
 }
 finally {
     Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue

@@ -25,7 +25,7 @@ internal static class PasswordGenerator
     {
         if (destination.Length < Length)
         {
-            throw new ArgumentException($"Puffer zu klein, mindestens {Length} Zeichen nötig.", nameof(destination));
+            throw new ArgumentException($"Buffer too small, at least {Length} characters needed.", nameof(destination));
         }
 
         Span<byte> bytes = stackalloc byte[RandomBytes];
@@ -34,7 +34,7 @@ internal static class PasswordGenerator
             RandomNumberGenerator.Fill(bytes);
             if (!Convert.TryToBase64Chars(bytes, destination, out var written) || written != 44)
             {
-                throw new InvalidOperationException("Zufallspasswort konnte nicht erzeugt werden.");
+                throw new InvalidOperationException("Random password could not be generated.");
             }
 
             destination[44] = Upper[RandomNumberGenerator.GetInt32(Upper.Length)];

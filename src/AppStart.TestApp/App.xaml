@@ -5,7 +5,7 @@
              ThemeMode="Light"
              ShutdownMode="OnMainWindowClose">
   <Application.Resources>
-    <!-- Colours from the UI design "Testapplikation" (docs/ui-designs/TestApp.dc.html) -->
+    <!-- Colours from the UI design "Test application" (docs/ui-designs/TestApp.dc.html) -->
     <SolidColorBrush x:Key="WindowBackground" Color="#F3F3F3" />
     <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="CardBorder" Color="#D6D6D6" />

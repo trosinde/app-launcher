@@ -4,7 +4,7 @@ namespace AppStart.Service;
 
 /// <summary>
 /// Event log ids of the service (source "AppStart", log "Application"). Every id must be described
-/// in the manual, chapter "Meldungen und Fehlerbehebung" (task 10.4 checks this list).
+/// in the manual, chapter on messages and troubleshooting (task 10.4 checks this list).
 /// </summary>
 public static class EventIds
 {

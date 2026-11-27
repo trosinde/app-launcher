@@ -60,22 +60,22 @@ public sealed class SetupStateStore : ISetupStateStore
         }
         catch (JsonException ex)
         {
-            throw new InvalidDataException($"{source} ist ungültig: {ex.Message}", ex);
+            throw new InvalidDataException($"{source} is invalid: {ex.Message}", ex);
         }
 
         if (state is null)
         {
-            throw new InvalidDataException($"{source} ist leer.");
+            throw new InvalidDataException($"{source} is empty.");
         }
 
         if (state.Version != 1)
         {
-            throw new InvalidDataException($"{source} hat die unbekannte Version {state.Version}.");
+            throw new InvalidDataException($"{source} has the unknown version {state.Version}.");
         }
 
         if (state.AclBackups.Any(b => !Enum.IsDefined(b.Target) || b.Path.Length == 0 || b.OriginalSddl.Length == 0))
         {
-            throw new InvalidDataException($"{source} enthält eine ungültige Rechte-Sicherung.");
+            throw new InvalidDataException($"{source} contains an invalid permissions backup.");
         }
 
         return state;

@@ -7,7 +7,7 @@ using Windows.Win32.Security.Authentication.Identity;
 
 namespace AppStart.Setup.Engine.Accounts;
 
-/// <summary>User rights assignment ("Zuweisen von Benutzerrechten") of the local LSA policy.</summary>
+/// <summary>User rights assignment ("User Rights Assignment") of the local LSA policy.</summary>
 internal sealed unsafe class LsaPolicy : IDisposable
 {
     // ntlsa.h policy access rights
@@ -29,7 +29,7 @@ internal sealed unsafe class LsaPolicy : IDisposable
     {
         var attributes = new LSA_OBJECT_ATTRIBUTES { Length = (uint)sizeof(LSA_OBJECT_ATTRIBUTES) };
         LSA_HANDLE h;
-        AccountErrors.Check(PInvoke.LsaOpenPolicy(null, &attributes, access, &h), "Lokale Sicherheitsrichtlinie öffnen (LsaOpenPolicy)");
+        AccountErrors.Check(PInvoke.LsaOpenPolicy(null, &attributes, access, &h), "Open local security policy (LsaOpenPolicy)");
         return new LsaPolicy(h);
     }
 
@@ -51,7 +51,7 @@ internal sealed unsafe class LsaPolicy : IDisposable
             fixed (byte* s = SidBytes(sid))
             {
                 AccountErrors.Check(PInvoke.LsaAddAccountRights(handle, (PSID)s, p, (uint)rights.Length),
-                    $"Benutzerrechte {string.Join(", ", rights)} für {sid} setzen");
+                    $"Set user rights {string.Join(", ", rights)} for {sid}");
             }
         }
         finally
@@ -77,7 +77,7 @@ internal sealed unsafe class LsaPolicy : IDisposable
             var status = PInvoke.LsaRemoveAccountRights(handle, (PSID)s, true, null, 0);
             if (status != NTSTATUS.STATUS_OBJECT_NAME_NOT_FOUND)
             {
-                AccountErrors.Check(status, $"Benutzerrechte von {sid} entfernen");
+                AccountErrors.Check(status, $"Remove user rights of {sid}");
             }
         }
     }
@@ -95,7 +95,7 @@ internal sealed unsafe class LsaPolicy : IDisposable
                 return [];
             }
 
-            AccountErrors.Check(status, $"Benutzerrechte von {sid} lesen");
+            AccountErrors.Check(status, $"Read user rights of {sid}");
             try
             {
                 var result = new List<string>((int)count);

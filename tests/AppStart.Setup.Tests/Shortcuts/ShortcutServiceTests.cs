@@ -104,7 +104,7 @@ public sealed class ShortcutServiceTests : IDisposable
 
         // Another app with the same display name must not silently take over the shortcut.
         var ex = Assert.Throws<InvalidOperationException>(() => _service.CreateAppShortcuts(App(id: "other"), _launcher));
-        Assert.Contains("nicht überschrieben", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("not overwritten", ex.Message, StringComparison.Ordinal);
         Assert.Equal("--app waage", _service.Read(Path.Combine(_desktop, "Waage Pro.lnk"))!.Arguments);
 
         // A foreign file on the desktop only: nothing is written, also not in the Start menu.
@@ -190,7 +190,7 @@ public sealed class ShortcutServiceTests : IDisposable
 
         var ex = Assert.Throws<IOException>(() => _service.Restore(backup));
 
-        Assert.Contains("liegt bereits eine Datei", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("A file already exists", ex.Message, StringComparison.Ordinal);
         Assert.Equal("new file", File.ReadAllText(original));
         Assert.True(File.Exists(backup.BackupPath));
     }
@@ -201,7 +201,7 @@ public sealed class ShortcutServiceTests : IDisposable
         var backup = new ShortcutBackup(Path.Combine(_desktop, "x.lnk"), Path.Combine(_backup, "gone.lnk"), "waage");
 
         var ex = Assert.Throws<FileNotFoundException>(() => _service.Restore(backup));
-        Assert.Contains("fehlt", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("is missing", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -247,10 +247,10 @@ public sealed class ShortcutServiceTests : IDisposable
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void CreateShortcut_writes_folder_and_overwrites()
     {
-        var lnk = Path.Combine(_startMenu, "AppStart", "AppStart – Einrichtung prüfen.lnk");
+        var lnk = Path.Combine(_startMenu, "AppStart", "AppStart – Verify setup.lnk");
 
         _service.CreateShortcut(lnk, _exe, "verify", string.Empty, _appDir);
-        _service.CreateShortcut(lnk, _launcher, "verify --ui", $"{_exe},2", _root, "Prüft die Einrichtung");
+        _service.CreateShortcut(lnk, _launcher, "verify --ui", $"{_exe},2", _root, "Verifies the setup");
 
         var info = _service.Read(lnk);
         Assert.NotNull(info);

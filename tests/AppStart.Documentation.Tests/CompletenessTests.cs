@@ -8,7 +8,7 @@ using AppStart.Setup.Engine.Verification;
 namespace AppStart.Documentation.Tests;
 
 /// <summary>
-/// Task 10.4 / spec documentation «Vollständigkeit»: every message, check point and command of the software is
+/// Task 10.4 / spec documentation "Completeness": every message, check point and command of the software is
 /// described in the manual. Failures name the missing text and where it comes from.
 /// </summary>
 public sealed partial class CompletenessTests
@@ -20,7 +20,7 @@ public sealed partial class CompletenessTests
     {
         var found = TextCatalog.TextTypes().Select(t => t.FullName).ToHashSet();
         var missing = TextCatalog.RequiredTextTypes.Concat(TextCatalog.ExtraTextTypes).Where(t => !found.Contains(t)).ToList();
-        Assert.True(missing.Count == 0, "Textklassen nicht gefunden (Projektverweis fehlt?): " + string.Join(", ", missing));
+        Assert.True(missing.Count == 0, "Text classes not found (project reference missing?): " + string.Join(", ", missing));
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed partial class CompletenessTests
     {
         var keys = TextCatalog.Constants().Select(c => c.Key).ToHashSet();
         var stale = TextCatalog.Exceptions.Keys.Where(k => !keys.Contains(k)).ToList();
-        Assert.True(stale.Count == 0, "Ausnahmeliste enthält Texte, die es nicht mehr gibt: " + string.Join(", ", stale));
+        Assert.True(stale.Count == 0, "Exception list contains texts that no longer exist: " + string.Join(", ", stale));
     }
 
     [Fact]
@@ -39,39 +39,39 @@ public sealed partial class CompletenessTests
         {
             foreach (var fragment in TextCatalog.RequiredFragments(text.Value).Where(f => !M.AllPlain.Contains(f, StringComparison.Ordinal)))
             {
-                report.AppendLine($"  {text.Key}: «{fragment}»");
+                report.AppendLine($"  {text.Key}: \"{fragment}\"");
             }
         }
 
-        Assert.True(report.Length == 0, "Diese Texte der Software fehlen im Handbuch (docs/manual):\n" + report);
+        Assert.True(report.Length == 0, "These texts of the software are missing in the manual (docs/manual):\n" + report);
     }
 
     [Fact]
-    public void LauncherMessagesAreInChapterMeldungen()
+    public void LauncherMessagesAreInChapterMessages()
     {
         var chapter = M.Chapter("07-");
         var missing = TextCatalog.Constants()
             .Where(c => c.Type == "AppStart.Launcher.Texts")
             .SelectMany(c => TextCatalog.RequiredFragments(c.Value).Select(f => (c.Key, Fragment: f)))
             .Where(x => !chapter.Contains(x.Fragment, StringComparison.Ordinal))
-            .Select(x => $"  {x.Key}: «{x.Fragment}»")
+            .Select(x => $"  {x.Key}: \"{x.Fragment}\"")
             .ToList();
-        Assert.True(missing.Count == 0, "Launcher-Meldungen fehlen im Kapitel «Meldungen und Fehlerbehebung»:\n" + string.Join('\n', missing));
+        Assert.True(missing.Count == 0, "Launcher messages missing in the chapter \"Messages and troubleshooting\":\n" + string.Join('\n', missing));
     }
 
     [Fact]
-    public void EveryEventIdHasARowInChapterMeldungen()
+    public void EveryEventIdHasARowInChapterMessages()
     {
         var source = M.ChapterSource("07-");
         var missing = EventIds.All
             .Where(e => !Regex.IsMatch(source, $@"^\|\s*{e.Id}\s*\|", RegexOptions.Multiline))
             .Select(e => $"  {e.Id} ({e.Name})")
             .ToList();
-        Assert.True(missing.Count == 0, "Ereignis-IDs ohne Tabellenzeile «| <ID> |» im Kapitel «Meldungen und Fehlerbehebung»:\n" + string.Join('\n', missing));
+        Assert.True(missing.Count == 0, "Event IDs without table row \"| <ID> |\" in the chapter \"Messages and troubleshooting\":\n" + string.Join('\n', missing));
     }
 
     [Fact]
-    public void EveryCommandAndOptionIsInChapterReferenz()
+    public void EveryCommandAndOptionIsInChapterReference()
     {
         var root = BuildCommandLine();
         var source = M.ChapterSource("09-");
@@ -85,7 +85,7 @@ public sealed partial class CompletenessTests
             {
                 if (!chapter.Contains(name, StringComparison.Ordinal))
                 {
-                    problems.Add($"  Option der Wurzel «{name}» fehlt im Kapitel Referenz");
+                    problems.Add($"  Root option \"{name}\" missing in the chapter Reference");
                 }
             }
         }
@@ -97,35 +97,35 @@ public sealed partial class CompletenessTests
             var section = Manual.Section(source, line => line.Contains(heading, StringComparison.Ordinal));
             if (section is null)
             {
-                problems.Add($"  Befehl «{command.Name}»: keine Überschrift mit {heading} im Kapitel Referenz");
+                problems.Add($"  Command \"{command.Name}\": no heading with {heading} in the chapter Reference");
                 continue;
             }
 
             var text = Manual.ToPlainText(section);
             if (command.Description is { Length: > 0 } description && !text.Contains(Manual.Normalize(description), StringComparison.Ordinal))
             {
-                problems.Add($"  Befehl «{command.Name}»: Beschreibung «{description}» fehlt in seinem Abschnitt");
+                problems.Add($"  Command \"{command.Name}\": description \"{description}\" missing in its section");
             }
 
             foreach (var option in command.Options)
             {
                 foreach (var name in option.Aliases.Prepend(option.Name).Distinct().Where(n => !text.Contains(n, StringComparison.Ordinal)))
                 {
-                    problems.Add($"  Befehl «{command.Name}»: Option «{name}» fehlt in seinem Abschnitt");
+                    problems.Add($"  Command \"{command.Name}\": option \"{name}\" missing in its section");
                 }
 
                 if (option.Description is { Length: > 0 } od && !text.Contains(Manual.Normalize(od), StringComparison.Ordinal))
                 {
-                    problems.Add($"  Befehl «{command.Name}», Option «{option.Name}»: Beschreibung «{od}» fehlt in seinem Abschnitt");
+                    problems.Add($"  Command \"{command.Name}\", option \"{option.Name}\": description \"{od}\" missing in its section");
                 }
             }
         }
 
-        Assert.True(problems.Count == 0, "Kommandozeile unvollständig im Handbuch:\n" + string.Join('\n', problems));
+        Assert.True(problems.Count == 0, "Command line incomplete in the manual:\n" + string.Join('\n', problems));
     }
 
     [Fact]
-    public void EveryCheckPointHasASectionInChapterPruefung()
+    public void EveryCheckHasASectionInChapterVerification()
     {
         var source = M.ChapterSource("06-");
         var problems = new List<string>();
@@ -135,7 +135,7 @@ public sealed partial class CompletenessTests
             var at = source.IndexOf(anchor, StringComparison.Ordinal);
             if (at < 0)
             {
-                problems.Add($"  Prüfpunkt «{title}»: Anker {anchor} fehlt (Zeile direkt vor der Überschrift)");
+                problems.Add($"  Check \"{title}\": anchor {anchor} missing (line directly before the heading)");
                 continue;
             }
 
@@ -143,17 +143,17 @@ public sealed partial class CompletenessTests
             var headingLine = section?.Split('\n')[0] ?? string.Empty;
             if (section is null || !headingLine.Contains(title, StringComparison.Ordinal))
             {
-                problems.Add($"  Prüfpunkt «{title}»: auf den Anker {anchor} folgt keine Überschrift mit «{title}»");
+                problems.Add($"  Check \"{title}\": the anchor {anchor} is not followed by a heading with \"{title}\"");
                 continue;
             }
 
             if (!Manual.ToPlainText(section).Contains(Manual.Normalize(expected), StringComparison.Ordinal))
             {
-                problems.Add($"  Prüfpunkt «{title}»: Soll «{expected}» fehlt in seinem Abschnitt");
+                problems.Add($"  Check \"{title}\": expected \"{expected}\" missing in its section");
             }
         }
 
-        Assert.True(problems.Count == 0, "Prüfpunkte unvollständig im Kapitel «Prüfung nach Serviceeinsatz»:\n" + string.Join('\n', problems));
+        Assert.True(problems.Count == 0, "Checks incomplete in the chapter \"Verification after a service visit\":\n" + string.Join('\n', problems));
     }
 
     [Fact]
@@ -169,12 +169,12 @@ public sealed partial class CompletenessTests
                 var name = Path.GetFileName(path);
                 if (!File.Exists(Path.Combine(M.Directory, path)) && !listing.Contains($"`{name}`", StringComparison.Ordinal))
                 {
-                    problems.Add($"  {file}: Bild {path} fehlt und steht nicht in images/README.md");
+                    problems.Add($"  {file}: image {path} is missing and not listed in images/README.md");
                 }
             }
         }
 
-        Assert.True(problems.Count == 0, "Bilder:\n" + string.Join('\n', problems));
+        Assert.True(problems.Count == 0, "Images:\n" + string.Join('\n', problems));
     }
 
     [Fact]
@@ -187,12 +187,12 @@ public sealed partial class CompletenessTests
             {
                 if (!M.Sources.ContainsKey(m.Groups[1].Value))
                 {
-                    problems.Add($"  {file}: Verweis auf {m.Groups[1].Value} ohne Datei");
+                    problems.Add($"  {file}: link to {m.Groups[1].Value} without file");
                 }
             }
         }
 
-        Assert.True(problems.Count == 0, "Verweise:\n" + string.Join('\n', problems));
+        Assert.True(problems.Count == 0, "Links:\n" + string.Join('\n', problems));
     }
 
     // ------------------------------------------------------------------ helpers
@@ -230,7 +230,7 @@ public sealed partial class CompletenessTests
         {
             var stem = field.Name[..^"CheckId".Length];
             string Text(string suffix) => (string)(typeof(VerificationTexts).GetField(stem + suffix)?.GetRawConstantValue()
-                ?? throw new InvalidOperationException($"VerificationTexts.{stem}{suffix} fehlt zu Verifier.{field.Name}."));
+                ?? throw new InvalidOperationException($"VerificationTexts.{stem}{suffix} is missing for Verifier.{field.Name}."));
             yield return ((string)field.GetRawConstantValue()!, Text("Title"), Text("Expected"));
         }
     }

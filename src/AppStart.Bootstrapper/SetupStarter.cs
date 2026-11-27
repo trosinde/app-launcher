@@ -82,13 +82,13 @@ internal static class SetupStarter
             switch (BootstrapperLogic.DecideSignature(ownThumbprint, setupThumbprint))
             {
                 case SignatureDecision.SkippedUnsignedBootstrapper:
-                    log.Write($"WARNUNG: AppStart-Setup.exe ist nicht signiert (Entwicklungs-Build). Signaturprüfung von {setupPath} übersprungen (Signatur dort: {setupThumbprint ?? "keine gültige"}).");
+                    log.Write($"WARNING: AppStart-Setup.exe is not signed (development build). Signature check of {setupPath} skipped (signature there: {setupThumbprint ?? "none valid"}).");
                     break;
                 case SignatureDecision.Untrusted:
                     return new(SetupStartStatus.Untrusted, setupPath,
-                        $"erwartet Thumbprint {ownThumbprint}, gefunden {setupThumbprint ?? "keine gültige Signatur"}");
+                        $"expected thumbprint {ownThumbprint}, found {setupThumbprint ?? "no valid signature"}");
                 default:
-                    log.Write($"Signatur von {setupPath} gültig, Thumbprint {setupThumbprint}.");
+                    log.Write($"Signature of {setupPath} valid, thumbprint {setupThumbprint}.");
                     break;
             }
 
@@ -103,7 +103,7 @@ internal static class SetupStarter
                 {
                     using var wizard = Process.Start(start);
                     return wizard is null
-                        ? new(SetupStartStatus.StartFailed, setupPath, "Prozess wurde nicht erstellt.")
+                        ? new(SetupStartStatus.StartFailed, setupPath, "Process was not created.")
                         : new(SetupStartStatus.Started, setupPath, $"PID {wizard.Id}");
                 }
 
@@ -121,14 +121,14 @@ internal static class SetupStarter
                 process.ErrorDataReceived += (_, e) => { if (e.Data is not null) { lock (gate) { output.WriteLine(e.Data); } } };
                 if (!process.Start())
                 {
-                    return new(SetupStartStatus.StartFailed, setupPath, "Prozess wurde nicht erstellt.");
+                    return new(SetupStartStatus.StartFailed, setupPath, "Process was not created.");
                 }
 
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
                 exitCode = process.ExitCode;
-                return new(SetupStartStatus.Started, setupPath, $"{arguments}: Exit-Code {exitCode}");
+                return new(SetupStartStatus.Started, setupPath, $"{arguments}: exit code {exitCode}");
             }
             catch (Win32Exception ex)
             {

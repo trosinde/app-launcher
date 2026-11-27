@@ -32,7 +32,7 @@ public class VerifierTests
             ["dienst", "programmordner", "konten", "adminpasswort", "pipe", "appsjson", "datenordner", "hilfsprogramme", "registry", "verknuepfungen"],
             report.Checks.Select(c => c.Id));
         Assert.Equal(
-            ["Dienst", "Programmordner", "Konten", "Administratoren mit Passwort", "Pipe", "apps.json", "Datenordner je App", "Hilfsprogramme je App", "Registry-Key je App", "Verknüpfungen"],
+            ["Service", "Program folder", "Accounts", "Administrators with password", "Pipe", "apps.json", "Data folder per app", "Helper programs per app", "Registry key per app", "Shortcuts"],
             report.Checks.Select(c => c.Title));
         Assert.All(report.Checks, AssertPassed);
         Assert.Equal(0, report.Deviations);
@@ -59,15 +59,15 @@ public class VerifierTests
     public void Failing_probe_becomes_a_deviation_and_other_checks_still_run()
     {
         var machine = new Machine();
-        machine.Probe.ServiceError = new InvalidOperationException("Zugriff verweigert");
+        machine.Probe.ServiceError = new InvalidOperationException("access denied");
 
         var report = machine.Run();
 
-        AssertDeviation(report.Checks[0], "Prüfung nicht möglich: Zugriff verweigert");
+        AssertDeviation(report.Checks[0], "Verification not possible: access denied");
         Assert.All(report.Checks.Skip(1), AssertPassed);
     }
 
-    // ------------------------------------------------------------------ 1 Dienst
+    // ------------------------------------------------------------------ 1 Service
 
     [Theory(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     [InlineData("LocalSystem")]
@@ -84,7 +84,7 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Probe.Service = ServiceFacts.Missing;
-        AssertDeviation(machine.Run("dienst"), "Dienst «AppStart» ist nicht installiert");
+        AssertDeviation(machine.Run("dienst"), "Service \"AppStart\" is not installed");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -97,23 +97,23 @@ public class VerifierTests
 
         Assert.Equal(
             [
-                "Dienst «AppStart» läuft nicht (Status: beendet)",
-                "Dienst «AppStart» startet nicht automatisch (Starttyp: manuell)",
-                @"Dienst «AppStart» läuft unter «.\appstart-app» statt LocalSystem",
+                "Service \"AppStart\" is not running (status: stopped)",
+                "Service \"AppStart\" does not start automatically (start type: manual)",
+                @"Service ""AppStart"" runs as "".\appstart-app"" instead of LocalSystem",
             ],
             check.Findings);
     }
 
-    // ------------------------------------------------------------------ 2 Programmordner
+    // ------------------------------------------------------------------ 2 Program folder
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Program_folder_writable_by_users_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Probe.WriteViolations[Machine.InstallFolder] = ["BUILTIN\\Users (S-1-5-32-545) hat Schreibrechte (Maske 0x001301BF)."];
+        machine.Probe.WriteViolations[Machine.InstallFolder] = ["BUILTIN\\Users (S-1-5-32-545) has write permissions (mask 0x001301BF)."];
 
         AssertDeviation(machine.Run("programmordner"),
-            @"C:\Program Files\AppStart: BUILTIN\Users (S-1-5-32-545) hat Schreibrechte (Maske 0x001301BF).");
+            @"C:\Program Files\AppStart: BUILTIN\Users (S-1-5-32-545) has write permissions (mask 0x001301BF).");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -121,10 +121,10 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Probe.Directories.Remove(Machine.InstallFolder);
-        AssertDeviation(machine.Run("programmordner"), @"Programmordner C:\Program Files\AppStart fehlt");
+        AssertDeviation(machine.Run("programmordner"), @"Program folder C:\Program Files\AppStart is missing");
     }
 
-    // ------------------------------------------------------------------ 3 Konten
+    // ------------------------------------------------------------------ 3 Accounts
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Operator_with_admin_rights_is_a_deviation()
@@ -132,7 +132,7 @@ public class VerifierTests
         var machine = new Machine();
         machine.Accounts.Facts[@"LAB-PC-014\appstart-user"] = machine.Accounts.Facts[@"LAB-PC-014\appstart-user"] with { IsLocalAdministrator = true };
 
-        AssertDeviation(machine.Run("konten"), @"LAB-PC-014\appstart-user ist Mitglied der Administratoren");
+        AssertDeviation(machine.Run("konten"), @"LAB-PC-014\appstart-user is a member of Administrators");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -145,8 +145,8 @@ public class VerifierTests
 
         Assert.Equal(
             [
-                "appstart-app ist nicht Mitglied der Administratoren",
-                "appstart-app: Recht SeDenyRemoteInteractiveLogonRight fehlt (Anmeldung über Remotedesktop verweigern)",
+                "appstart-app is not a member of Administrators",
+                "appstart-app: right SeDenyRemoteInteractiveLogonRight is missing (deny log on through Remote Desktop Services)",
             ],
             check.Findings);
     }
@@ -156,22 +156,22 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Accounts.Facts.Remove("appstart-app");
-        AssertDeviation(machine.Run("konten"), "Konto «appstart-app» fehlt");
+        AssertDeviation(machine.Run("konten"), "Account \"appstart-app\" is missing");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Unreadable_operator_group_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Accounts.OperatorsError = new InvalidOperationException("Gruppe nicht gefunden");
-        AssertDeviation(machine.Run("konten"), "Gruppe «AppStart Users» ist nicht lesbar: Gruppe nicht gefunden");
+        machine.Accounts.OperatorsError = new InvalidOperationException("group not found");
+        AssertDeviation(machine.Run("konten"), "Group \"AppStart Users\" is not readable: group not found");
     }
 
     // ------------------------------------------------------------------ 4 Pipe
 
-    // ------------------------------------------------------------------ Administratoren mit Passwort
+    // ------------------------------------------------------------------ Administrators with password
 
-    // spec: fix-wizard-findings/verification «Admin ohne Passwort»
+    // spec: fix-wizard-findings/verification "Admin without password"
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Admin_without_password_is_a_deviation_with_exit_code_1()
     {
@@ -181,11 +181,11 @@ public class VerifierTests
         var report = machine.Run();
 
         AssertDeviation(report.Checks.Single(c => c.Id == "adminpasswort"),
-            @"LAB-PC-014\service ist Administrator und hat kein Passwort. Passwort setzen oder Konto deaktivieren");
+            @"LAB-PC-014\service is an administrator and has no password. Set a password or disable the account");
         Assert.Equal(1, report.ExitCode);
     }
 
-    // spec: fix-wizard-findings/verification «Alle Admins mit Passwort», «Deaktiviertes Konto ohne Passwort»
+    // spec: fix-wizard-findings/verification "All admins with password", "Disabled account without password"
     // (the account service only reports enabled accounts)
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void No_admin_without_password_passes() => AssertPassed(new Machine().Run("adminpasswort"));
@@ -197,7 +197,7 @@ public class VerifierTests
         machine.Accounts.AdminsWithoutPassword.Add(new AdminPasswordFinding(@"LAB-PC-014\admin2", 1909));
 
         AssertDeviation(machine.Run("adminpasswort"),
-            @"Passwort von LAB-PC-014\admin2 nicht prüfbar (Windows-Fehler 1909), z.B. weil das Konto gesperrt ist");
+            @"Password of LAB-PC-014\admin2 cannot be verified (Windows error 1909), e.g. because the account is locked out");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -215,7 +215,7 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Probe.Pipe = PipeFacts.Missing;
-        AssertDeviation(machine.Run("pipe"), @"\\.\pipe\AppStart existiert nicht (läuft der Dienst?)");
+        AssertDeviation(machine.Run("pipe"), @"\\.\pipe\AppStart does not exist (is the service running?)");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -228,22 +228,22 @@ public class VerifierTests
         var check = machine.Run("pipe");
 
         Assert.Equal(CheckOutcome.Deviation, check.Outcome);
-        Assert.Contains("Zugriffsliste der Pipe ist nicht geschützt (erbt Rechte)", check.Findings);
-        Assert.Contains("Unerwarteter Eintrag: Erlaubt für AppStart Users (S-1-5-21-1000-2000-3000-1002) (Maske 0xC0000000)", check.Findings);
-        Assert.Contains(@"Unerwarteter Eintrag: Erlaubt für BUILTIN\Users (S-1-5-32-545) (Maske 0x80000000)", check.Findings);
-        Assert.Contains("Eintrag fehlt: AppStart Users Verbinden (Maske 0x0012018B, ohne FILE_CREATE_PIPE_INSTANCE)", check.Findings);
-        Assert.Contains("Eintrag fehlt: Netzwerk-Anmeldungen verweigert (keine Fernzugriffe)", check.Findings);
+        Assert.Contains("Access control list of the pipe is not protected (inherits permissions)", check.Findings);
+        Assert.Contains("Unexpected entry: Allow for AppStart Users (S-1-5-21-1000-2000-3000-1002) (mask 0xC0000000)", check.Findings);
+        Assert.Contains(@"Unexpected entry: Allow for BUILTIN\Users (S-1-5-32-545) (mask 0x80000000)", check.Findings);
+        Assert.Contains("Entry missing: AppStart Users connect (mask 0x0012018B, without FILE_CREATE_PIPE_INSTANCE)", check.Findings);
+        Assert.Contains("Entry missing: Network logons denied (no remote access)", check.Findings);
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Pipe_unreadable_or_group_missing_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Probe.Pipe = new PipeFacts(true, null, "Alle Pipeinstanzen sind ausgelastet.");
-        AssertDeviation(machine.Run("pipe"), @"Rechte von \\.\pipe\AppStart sind nicht lesbar: Alle Pipeinstanzen sind ausgelastet.");
+        machine.Probe.Pipe = new PipeFacts(true, null, "All pipe instances are busy.");
+        AssertDeviation(machine.Run("pipe"), @"Permissions of \\.\pipe\AppStart are not readable: All pipe instances are busy.");
 
         machine.Probe.Sids.Remove("AppStart Users");
-        AssertDeviation(machine.Run("pipe"), "Gruppe «AppStart Users» fehlt, Rechte der Pipe können nicht geprüft werden");
+        AssertDeviation(machine.Run("pipe"), "Group \"AppStart Users\" is missing, permissions of the pipe cannot be verified");
     }
 
     // ------------------------------------------------------------------ 5 apps.json
@@ -253,13 +253,13 @@ public class VerifierTests
     {
         var machine = new Machine();
         var config = machine.Probe.Config;
-        machine.Probe.Config = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart\apps.json ist nicht geschützt: BUILTIN\Users hat Schreibrechte.");
+        machine.Probe.Config = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart\apps.json is not protected: BUILTIN\Users has write permissions.");
         machine.Probe.UncheckedConfig = config;
 
         var report = machine.Run();
 
         AssertDeviation(report.Checks.Single(c => c.Id == "appsjson"),
-            @"C:\ProgramData\AppStart\apps.json ist nicht geschützt: BUILTIN\Users hat Schreibrechte.");
+            @"C:\ProgramData\AppStart\apps.json is not protected: BUILTIN\Users has write permissions.");
         AssertPassed(report.Checks.Single(c => c.Id == "datenordner"));
         AssertPassed(report.Checks.Single(c => c.Id == "verknuepfungen"));
     }
@@ -268,14 +268,14 @@ public class VerifierTests
     public void Unreadable_apps_json_fails_the_per_app_checks_too()
     {
         var machine = new Machine();
-        machine.Probe.Config = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart\apps.json fehlt.");
+        machine.Probe.Config = ConfigLoadResult.Fail(@"C:\ProgramData\AppStart\apps.json is missing.");
 
         var report = machine.Run();
 
-        AssertDeviation(report.Checks.Single(c => c.Id == "appsjson"), @"C:\ProgramData\AppStart\apps.json fehlt.");
+        AssertDeviation(report.Checks.Single(c => c.Id == "appsjson"), @"C:\ProgramData\AppStart\apps.json is missing.");
         foreach (var id in new[] { "datenordner", "registry", "verknuepfungen" })
         {
-            AssertDeviation(report.Checks.Single(c => c.Id == id), "apps.json ist nicht lesbar, Prüfpunkt kann nicht geprüft werden");
+            AssertDeviation(report.Checks.Single(c => c.Id == id), "apps.json is not readable, check cannot be verified");
         }
     }
 
@@ -283,13 +283,13 @@ public class VerifierTests
     public void Exe_failing_its_integrity_check_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Probe.Integrity[Machine.Exe] = IntegrityResult.Fail("SHA-256 weicht ab: erwartet AAAA, gefunden BBBB.");
+        machine.Probe.Integrity[Machine.Exe] = IntegrityResult.Fail("SHA-256 differs: expected AAAA, found BBBB.");
 
         AssertDeviation(machine.Run("appsjson"),
-            @"App A (C:\Program Files\Hersteller\AppA\AppA.exe): SHA-256 weicht ab: erwartet AAAA, gefunden BBBB.");
+            @"App A (C:\Program Files\Hersteller\AppA\AppA.exe): SHA-256 differs: expected AAAA, found BBBB.");
     }
 
-    // ------------------------------------------------------------------ 6 Datenordner
+    // ------------------------------------------------------------------ 6 Data folder
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Data_dir_is_checked_with_the_app_account_sid()
@@ -303,9 +303,9 @@ public class VerifierTests
     public void Data_dir_readable_by_users_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Protection.Foreign[Machine.DataDir] = [@"BUILTIN\Users (S-1-5-32-545): Lesen"];
+        machine.Protection.Foreign[Machine.DataDir] = [@"BUILTIN\Users (S-1-5-32-545): Read"];
 
-        AssertDeviation(machine.Run("datenordner"), @"C:\ProgramData\Hersteller\AppA: BUILTIN\Users (S-1-5-32-545): Lesen");
+        AssertDeviation(machine.Run("datenordner"), @"C:\ProgramData\Hersteller\AppA: BUILTIN\Users (S-1-5-32-545): Read");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -313,10 +313,10 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Probe.Directories.Remove(Machine.DataDir);
-        AssertDeviation(machine.Run("datenordner"), @"C:\ProgramData\Hersteller\AppA: Ordner fehlt");
+        AssertDeviation(machine.Run("datenordner"), @"C:\ProgramData\Hersteller\AppA: folder is missing");
 
         machine.Accounts.Facts.Remove("appstart-app");
-        AssertDeviation(machine.Run("datenordner"), "Konto «appstart-app» fehlt, Rechte können nicht geprüft werden");
+        AssertDeviation(machine.Run("datenordner"), "Account \"appstart-app\" is missing, permissions cannot be verified");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -344,10 +344,10 @@ public class VerifierTests
     public void Registry_key_readable_by_operators_is_a_deviation()
     {
         var machine = new Machine();
-        machine.Protection.Foreign[Machine.RegistryKey] = [@"LAB-PC-014\AppStart Users (S-1-5-21-1000-2000-3000-1002): Lesen"];
+        machine.Protection.Foreign[Machine.RegistryKey] = [@"LAB-PC-014\AppStart Users (S-1-5-21-1000-2000-3000-1002): Read"];
 
         AssertDeviation(machine.Run("registry"),
-            @"HKLM\SOFTWARE\Hersteller\AppA: LAB-PC-014\AppStart Users (S-1-5-21-1000-2000-3000-1002): Lesen");
+            @"HKLM\SOFTWARE\Hersteller\AppA: LAB-PC-014\AppStart Users (S-1-5-21-1000-2000-3000-1002): Read");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -355,10 +355,10 @@ public class VerifierTests
     {
         var machine = new Machine();
         machine.Probe.RegistryKeys.Clear();
-        AssertDeviation(machine.Run("registry"), @"HKLM\SOFTWARE\Hersteller\AppA: Schlüssel fehlt");
+        AssertDeviation(machine.Run("registry"), @"HKLM\SOFTWARE\Hersteller\AppA: key is missing");
     }
 
-    // ------------------------------------------------------------------ 8 Verknüpfungen
+    // ------------------------------------------------------------------ 8 Shortcuts
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
     public void Desktop_shortcut_alone_is_enough()
@@ -374,7 +374,7 @@ public class VerifierTests
         var machine = new Machine();
         machine.Probe.Files.Clear();
         AssertDeviation(machine.Run("verknuepfungen"),
-            "App A: keine Verknüpfung «App A.lnk» auf den Launcher im öffentlichen Startmenü oder auf dem öffentlichen Desktop");
+            "App A: no shortcut \"App A.lnk\" to the launcher in the public Start menu or on the public desktop");
     }
 
     [Fact(SkipUnless = nameof(TestPlatform.IsWindows), SkipType = typeof(TestPlatform), Skip = TestPlatform.WindowsOnly)]
@@ -388,9 +388,9 @@ public class VerifierTests
 
         Assert.Equal(
             [
-                @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\App A.lnk: zeigt auf «C:\Program Files\Hersteller\AppA\AppA.exe » statt auf den Launcher mit --app app-a",
-                @"C:\Users\Public\Desktop\App A.lnk: zeigt auf «C:\Program Files\AppStart\current\AppStart.Launcher.exe --app app-b» statt auf den Launcher mit --app app-a",
-                "App A: keine Verknüpfung «App A.lnk» auf den Launcher im öffentlichen Startmenü oder auf dem öffentlichen Desktop",
+                @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\App A.lnk: points to ""C:\Program Files\Hersteller\AppA\AppA.exe "" instead of the launcher with --app app-a",
+                @"C:\Users\Public\Desktop\App A.lnk: points to ""C:\Program Files\AppStart\current\AppStart.Launcher.exe --app app-b"" instead of the launcher with --app app-a",
+                "App A: no shortcut \"App A.lnk\" to the launcher in the public Start menu or on the public desktop",
             ],
             check.Findings);
     }
@@ -402,6 +402,6 @@ public class VerifierTests
         machine.Shortcuts.Direct[Machine.Exe] = [@"C:\Users\anna\Desktop\AppA.lnk"];
 
         AssertDeviation(machine.Run("verknuepfungen"),
-            @"C:\Users\anna\Desktop\AppA.lnk: zeigt direkt auf C:\Program Files\Hersteller\AppA\AppA.exe");
+            @"C:\Users\anna\Desktop\AppA.lnk: points directly to C:\Program Files\Hersteller\AppA\AppA.exe");
     }
 }

@@ -25,7 +25,7 @@ internal static unsafe class ProtectedFolders
     {
         if (!TryCreate(path, out var error) && error != WIN32_ERROR.ERROR_ALREADY_EXISTS)
         {
-            throw new IOException($"Ordner {path} konnte nicht angelegt werden (Fehler {(int)error}).");
+            throw new IOException($"Folder {path} could not be created (error {(int)error}).");
         }
 
         Check(path);
@@ -36,7 +36,7 @@ internal static unsafe class ProtectedFolders
     {
         if (!TryCreate(path, out var error))
         {
-            throw new IOException($"Ordner {path} konnte nicht angelegt werden (Fehler {(int)error}).");
+            throw new IOException($"Folder {path} could not be created (error {(int)error}).");
         }
 
         Check(path);
@@ -47,12 +47,12 @@ internal static unsafe class ProtectedFolders
         var attributes = File.GetAttributes(path);
         if ((attributes & FileAttributes.ReparsePoint) != 0)
         {
-            throw new UnsafeFolderException(path, "Verweis (Junction oder symbolischer Link).");
+            throw new UnsafeFolderException(path, "reparse point (junction or symbolic link).");
         }
 
         if ((attributes & FileAttributes.Directory) == 0)
         {
-            throw new UnsafeFolderException(path, "kein Ordner.");
+            throw new UnsafeFolderException(path, "not a folder.");
         }
 
         var violations = WriteAccessPolicy.FindViolations(path);
@@ -69,7 +69,7 @@ internal static unsafe class ProtectedFolders
         {
             if (!PInvoke.ConvertStringSecurityDescriptorToSecurityDescriptor(sddl, PInvoke.SDDL_REVISION_1, &descriptor, null))
             {
-                throw new IOException($"Sicherheitsbeschreibung ungültig (Fehler {Marshal.GetLastPInvokeError()}).");
+                throw new IOException($"Security descriptor invalid (error {Marshal.GetLastPInvokeError()}).");
             }
         }
 

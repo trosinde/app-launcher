@@ -14,7 +14,7 @@ public static class ConfigStore
 
         if (!File.Exists(path))
         {
-            return ConfigLoadResult.Fail($"{path} fehlt.");
+            return ConfigLoadResult.Fail($"{path} is missing.");
         }
 
         var folder = Path.GetDirectoryName(path)!;
@@ -23,7 +23,7 @@ public static class ConfigStore
             var violations = WriteAccessPolicy.FindViolations(target);
             if (violations.Count > 0)
             {
-                return ConfigLoadResult.Fail($"{target} ist nicht geschützt: {string.Join(" ", violations)}");
+                return ConfigLoadResult.Fail($"{target} is not protected: {string.Join(" ", violations)}");
             }
         }
 
@@ -34,7 +34,7 @@ public static class ConfigStore
         }
         catch (IOException ex)
         {
-            return ConfigLoadResult.Fail($"{path} kann nicht gelesen werden: {ex.Message}");
+            return ConfigLoadResult.Fail($"{path} cannot be read: {ex.Message}");
         }
 
         return AppsConfigSerializer.Parse(json);

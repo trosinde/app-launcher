@@ -59,7 +59,7 @@ public sealed class LaunchRequestHandler(
         if (!PipeProtocol.TryParseRequest(message, out var appId))
         {
             log.LogWarning(EventIds.InvalidRequest,
-                "Ungültige Anfrage verworfen. Benutzer: {User}, Session: {Session}, Länge: {Length} Byte.",
+                "Invalid request discarded. User: {User}, Session: {Session}, Length: {Length} bytes.",
                 ctx.User, ctx.SessionId, message.Length);
             return null;
         }
@@ -67,7 +67,7 @@ public sealed class LaunchRequestHandler(
         using var lease = gate.TryEnter(ctx.SessionId);
         if (lease is null)
         {
-            return Deny(DenyReason.Busy, EventIds.DeniedBusy, ctx, appId, "Session hat bereits eine Anfrage in Arbeit oder ist in der Sperrzeit.");
+            return Deny(DenyReason.Busy, EventIds.DeniedBusy, ctx, appId, "Session already has a request in progress or is in the lockout period.");
         }
 
         var loaded = config.Load();
@@ -79,7 +79,7 @@ public sealed class LaunchRequestHandler(
         var app = loaded.Config!.Find(appId);
         if (app is null)
         {
-            return Deny(DenyReason.UnknownApp, EventIds.DeniedUnknownApp, ctx, appId, "AppId ist nicht in apps.json freigegeben.");
+            return Deny(DenyReason.UnknownApp, EventIds.DeniedUnknownApp, ctx, appId, "AppId is not approved in apps.json.");
         }
 
         var learn = LearnSessionFor(appId, ctx);
@@ -99,9 +99,9 @@ public sealed class LaunchRequestHandler(
         {
             case StartOutcome.Started:
                 log.LogInformation(EventIds.LaunchSucceeded,
-                    "Start ausgeführt. Benutzer: {User}, Session: {Session}, AppId: {AppId}, EXE: {Exe}, Prozess: {ProcessId}, weitere Programme: {Mode}{Learn}. {Detail}",
+                    "Launch succeeded. User: {User}, Session: {Session}, AppId: {AppId}, EXE: {Exe}, Process: {ProcessId}, Other programs: {Mode}{Learn}. {Detail}",
                     ctx.User, ctx.SessionId, appId, app.Exe, result.ProcessId, ModeText(app.ChildProcessMode),
-                    learn is null ? string.Empty : $", Lernmodus bis {learn.ExpiresUtc:u}", result.Detail);
+                    learn is null ? string.Empty : $", learning mode until {learn.ExpiresUtc:u}", result.Detail);
                 return PipeProtocol.FormatOk();
             case StartOutcome.IntegrityFailed:
                 return Deny(DenyReason.Integrity, EventIds.DeniedIntegrity, ctx, appId, $"{app.Exe}: {result.Detail}");
@@ -131,7 +131,7 @@ public sealed class LaunchRequestHandler(
         if (!loaded.IsValid)
         {
             log.LogError(EventIds.LearnStateIgnored,
-                "Lernmodus ignoriert, es gilt die Positivliste. Benutzer: {User}, AppId: {AppId}. {Detail}",
+                "Learning mode ignored, the allowlist applies. User: {User}, AppId: {AppId}. {Detail}",
                 ctx.User, appId, loaded.Error);
             return null;
         }
@@ -141,16 +141,16 @@ public sealed class LaunchRequestHandler(
 
     private static string ModeText(ChildProcessMode mode) => mode switch
     {
-        ChildProcessMode.Allowlist => "nur erlaubte Hilfsprogramme",
-        ChildProcessMode.All => "alle erlaubt",
-        _ => "gesperrt",
+        ChildProcessMode.Allowlist => "allowed helper programs only",
+        ChildProcessMode.All => "all allowed",
+        _ => "blocked",
     };
 
     private byte[] Deny(DenyReason reason, EventId eventId, RequestContext ctx, string appId, string detail)
     {
         var incident = _nextIncidentId();
         log.LogWarning(eventId,
-            "Start verweigert ({Reason}). Vorgang: {Incident}, Benutzer: {User}, Session: {Session}, AppId: {AppId}. {Detail}",
+            "Launch denied ({Reason}). Incident: {Incident}, User: {User}, Session: {Session}, AppId: {AppId}. {Detail}",
             PipeProtocol.ToWire(reason), incident, ctx.User, ctx.SessionId, appId, detail);
         return PipeProtocol.FormatDenied(reason, incident);
     }

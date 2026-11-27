@@ -42,7 +42,7 @@ internal static unsafe class LocalAccountsNative
 
                 if (error != (uint)WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER)
                 {
-                    throw AccountErrors.FromWin32(error, $"Konto «{qualifiedName}» auflösen");
+                    throw AccountErrors.FromWin32(error, $"Resolve account \"{qualifiedName}\"");
                 }
             }
 
@@ -59,7 +59,7 @@ internal static unsafe class LocalAccountsNative
                         return null;
                     }
 
-                    throw AccountErrors.FromWin32(error, $"Konto «{qualifiedName}» auflösen");
+                    throw AccountErrors.FromWin32(error, $"Resolve account \"{qualifiedName}\"");
                 }
 
                 var securityIdentifier = new SecurityIdentifier(sid, 0);
@@ -91,7 +91,7 @@ internal static unsafe class LocalAccountsNative
             var result = PInvoke.NetUserAdd(null, 1, (byte*)&info, &parameterError);
             if (result != 0)
             {
-                throw AccountErrors.FromWin32(result, $"Konto «{name}» anlegen");
+                throw AccountErrors.FromWin32(result, $"Create account \"{name}\"");
             }
         }
     }
@@ -104,7 +104,7 @@ internal static unsafe class LocalAccountsNative
         {
             0 => true,
             (uint)WIN32_ERROR.ERROR_MEMBER_IN_ALIAS => false,
-            _ => throw AccountErrors.FromWin32(result, $"{member} zur Gruppe «{groupName}» hinzufügen"),
+            _ => throw AccountErrors.FromWin32(result, $"Add {member} to group \"{groupName}\""),
         };
     }
 
@@ -117,7 +117,7 @@ internal static unsafe class LocalAccountsNative
             0 => true,
             (uint)WIN32_ERROR.ERROR_MEMBER_NOT_IN_ALIAS or (uint)WIN32_ERROR.ERROR_NO_SUCH_MEMBER
                 or (uint)WIN32_ERROR.ERROR_NO_SUCH_ALIAS or PInvoke.NERR_GroupNotFound => false,
-            _ => throw AccountErrors.FromWin32(result, $"{member} aus der Gruppe «{groupName}» entfernen"),
+            _ => throw AccountErrors.FromWin32(result, $"Remove {member} from group \"{groupName}\""),
         };
     }
 
@@ -151,7 +151,7 @@ internal static unsafe class LocalAccountsNative
 
                 if (result != 0)
                 {
-                    throw AccountErrors.FromWin32(result, $"Mitglieder der Gruppe «{groupName}» lesen");
+                    throw AccountErrors.FromWin32(result, $"Read members of group \"{groupName}\"");
                 }
 
                 var members = new List<GroupMember>((int)read);
@@ -195,7 +195,7 @@ internal static unsafe class LocalAccountsNative
                 return false;
             }
 
-            throw AccountErrors.FromWin32(error, $"Profil von {sid} löschen");
+            throw AccountErrors.FromWin32(error, $"Delete profile of {sid}");
         }
     }
 
@@ -209,7 +209,7 @@ internal static unsafe class LocalAccountsNative
         AUTHZ_RESOURCE_MANAGER_HANDLE manager;
         if (!PInvoke.AuthzInitializeResourceManager(AuthzRmFlagNoAudit, null, null, null, default, &manager))
         {
-            throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), "Authz-Ressourcenmanager initialisieren");
+            throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), "Initialize Authz resource manager");
         }
 
         try
@@ -219,7 +219,7 @@ internal static unsafe class LocalAccountsNative
             {
                 if (!PInvoke.AuthzInitializeContextFromSid(0, (PSID)s, manager, null, default, null, &context))
                 {
-                    throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), $"Gruppen von {account} ermitteln");
+                    throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), $"Determine groups of {account}");
                 }
             }
 
@@ -232,7 +232,7 @@ internal static unsafe class LocalAccountsNative
                 {
                     if (!PInvoke.AuthzGetInformationFromContext(context, AUTHZ_CONTEXT_INFORMATION_CLASS.AuthzContextInfoGroupsSids, size, &size, b))
                     {
-                        throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), $"Gruppen von {account} lesen");
+                        throw AccountErrors.FromWin32((uint)Marshal.GetLastPInvokeError(), $"Read groups of {account}");
                     }
 
                     var groups = (TOKEN_GROUPS*)b;

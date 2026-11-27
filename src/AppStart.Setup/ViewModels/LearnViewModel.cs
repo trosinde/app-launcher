@@ -14,12 +14,12 @@ public enum LearnOutcome
     Finished,
 }
 
-/// <summary>One recorded program in the dialog «Lernmodus läuft».</summary>
+/// <summary>One recorded program in the dialog "Learning mode running".</summary>
 public sealed record LearnProgramRow(string FileName, string Exe, int Starts, string Last);
 
 /// <summary>
-/// Dialog «Lernmodus läuft» (docs/ui-designs/Learn, design D3): writes learn.json, shows remaining time and what
-/// the service records. «Lernmodus beenden» (or the time running out) leads to the proposals, «Abbrechen» discards.
+/// Dialog "Learning mode running" (docs/ui-designs/Learn, design D3): writes learn.json, shows remaining time and what
+/// the service records. "End learning mode" (or the time running out) leads to the proposals, "Cancel" discards.
 /// </summary>
 public sealed partial class LearnViewModel(ISetupEngine engine, string appId, string appName, TimeProvider time) : ObservableObject
 {
@@ -116,7 +116,7 @@ public sealed partial class LearnViewModel(ISetupEngine engine, string appId, st
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>«Abbrechen, nichts übernehmen» (also closing the window): learn mode off, recording deleted.</summary>
+    /// <summary>"Cancel, apply nothing" (also closing the window): learn mode off, recording deleted.</summary>
     [RelayCommand]
     private void Cancel()
     {
