@@ -26,7 +26,7 @@ Exit-Codes des Launchers (für Skripte und Fehlersuche): 0 = gestartet, 1 = ung�
 
 **Ursache:** Der angemeldete Benutzer ist nicht Mitglied der Gruppe `AppStart Users`, oder er wurde erst aufgenommen und hat sich seither nicht neu angemeldet. Der Dienst lehnt die Verbindung schon auf der Pipe ab; im Ereignisprotokoll steht deshalb nichts.
 
-**Massnahme:** Benutzer in die Gruppe aufnehmen ([Konten und Gruppe](05-konten-und-gruppe.md)), abmelden und neu anmelden. Exit-Code 4.
+**Massnahme:** Benutzer in die Gruppe aufnehmen ([Konten und Gruppe](05-accounts-and-group.md)), abmelden und neu anmelden. Exit-Code 4.
 
 ### Ungültige Verknüpfung
 
@@ -42,7 +42,7 @@ Exit-Codes des Launchers (für Skripte und Fehlersuche): 0 = gestartet, 1 = ung�
 
 **Ursache:** Signatur oder SHA-256 der EXE stimmen nicht mit der Freigabe überein (Ereignis 1201). Meist ein Update der Applikation, sonst eine Manipulation.
 
-**Massnahme:** Eintrag zur Vorgangsnummer im Ereignisprotokoll lesen. Bekanntes Update: `AppStart.Setup.exe rehash --app <AppId>` ([Applikationen verwalten](04-applikationen-verwalten.md)). Sonst als Sicherheitsvorfall behandeln: EXE nicht anders starten, Service informieren. Exit-Code 3.
+**Massnahme:** Eintrag zur Vorgangsnummer im Ereignisprotokoll lesen. Bekanntes Update: `AppStart.Setup.exe rehash --app <AppId>` ([Applikationen verwalten](04-managing-applications.md)). Sonst als Sicherheitsvorfall behandeln: EXE nicht anders starten, Service informieren. Exit-Code 3.
 
 ### Start verweigert – nicht freigegeben
 
@@ -50,7 +50,7 @@ Exit-Codes des Launchers (für Skripte und Fehlersuche): 0 = gestartet, 1 = ung�
 
 **Ursache:** Die AppId der Verknüpfung steht nicht in `apps.json` (Ereignis 1200). Die Freigabe wurde entzogen, aber eine Verknüpfung blieb übrig, oder eine Verknüpfung wurde von Hand angelegt.
 
-**Massnahme:** Applikation freigeben ([Applikationen verwalten](04-applikationen-verwalten.md)) oder die übrig gebliebene Verknüpfung löschen. Exit-Code 3.
+**Massnahme:** Applikation freigeben ([Applikationen verwalten](04-managing-applications.md)) oder die übrig gebliebene Verknüpfung löschen. Exit-Code 3.
 
 ### Start verweigert – Einrichtung nicht in Ordnung
 
@@ -58,7 +58,7 @@ Exit-Codes des Launchers (für Skripte und Fehlersuche): 0 = gestartet, 1 = ung�
 
 **Ursache:** `apps.json` fehlt, ist ungültig oder kann von Nicht-Administratoren verändert werden (Ereignis 1202). Der Dienst verweigert dann jeden Start.
 
-**Massnahme:** `AppStart.Setup.exe verify` ausführen und den Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md) beheben. Exit-Code 3.
+**Massnahme:** `AppStart.Setup.exe verify` ausführen und den Prüfpunkt [apps.json](06-verification-after-a-service-visit.md) beheben. Exit-Code 3.
 
 ### Start verweigert – sonstiger Fehler
 
@@ -147,7 +147,7 @@ Jede Startanfrage steht mit Zeit, Benutzer, Sitzung, AppId und Ergebnis im Proto
 
 | ID | Stufe | Bedeutung | Massnahme |
 |---|---|---|---|
-| 1000 | Information | Dienst gestartet, Pipe bereit. Text: «Dienst AppStart gestartet, Pipe bereit. Rechte: \<SDDL>» | Keine. Die SDDL muss der [Referenz](09-referenz.md) entsprechen. |
+| 1000 | Information | Dienst gestartet, Pipe bereit. Text: «Dienst AppStart gestartet, Pipe bereit. Rechte: \<SDDL>» | Keine. Die SDDL muss der [Referenz](09-reference.md) entsprechen. |
 | 1001 | Information | Dienst beendet. Text: «Dienst AppStart beendet.» | Keine, wenn gewollt (Update, Neustart). Sonst prüfen, wer den Dienst gestoppt hat. |
 | 1100 | Information | Applikation gestartet. Text: «Start ausgeführt. Benutzer: …, Session: …, AppId: …, EXE: …, Prozess: \<PID>, weitere Programme: …» mit Modus («gesperrt», «nur erlaubte Hilfsprogramme», «alle erlaubt»), gegebenenfalls «Lernmodus bis …», und Ergebnis der Prüfung | Keine |
 | 1101 | Information | Hilfsprogramm erlaubt: Die Applikation hat ein Programm von ihrer Liste der erlaubten Hilfsprogramme gestartet, oder das Konsolenfenster von Windows (conhost.exe). Text: «Hilfsprogramm erlaubt. Benutzer: …, Session: …, AppId: …, Pfad: …, Prozess: …» | Keine |
@@ -157,7 +157,7 @@ Jede Startanfrage steht mit Zeit, Benutzer, Sitzung, AppId und Ergebnis im Proto
 | 1208 | Fehler | Überwachung gestört: Ein neuer Prozess im Job war nicht prüfbar, eine Aufzeichnung im Lernmodus misslang, oder die Überwachung einer Applikation ist ausgefallen (dann werden alle ihre Prozesse beendet). | Grund im Text an den Service melden. |
 | 1200 | Warnung | Abgelehnt: AppId nicht freigegeben (`unknown-app`). Text: «Start verweigert (unknown-app). Vorgang: \<Nummer>, Benutzer: …, Session: …, AppId: …. AppId ist nicht in apps.json freigegeben.» | Applikation freigeben oder Verknüpfung entfernen |
 | 1201 | Warnung | Abgelehnt: Signatur oder SHA-256 falsch (`integrity`). Grund: «SHA-256 weicht ab: …», «Authenticode-Prüfung fehlgeschlagen (0x…)», «Signaturzertifikat nicht lesbar.» oder «Signatur gültig, aber fremdes Zertifikat: …» | Bekanntes Update: `rehash`. Sonst Sicherheitsvorfall. |
-| 1202 | Warnung | Abgelehnt: Konfiguration fehlt, ungültig oder unsicher (`config`). Grund wie beim Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md) | `verify`, Prüfpunkt «apps.json» beheben |
+| 1202 | Warnung | Abgelehnt: Konfiguration fehlt, ungültig oder unsicher (`config`). Grund wie beim Prüfpunkt [apps.json](06-verification-after-a-service-visit.md) | `verify`, Prüfpunkt «apps.json» beheben |
 | 1203 | Warnung | Abgelehnt: in dieser Sitzung läuft bereits eine Anfrage oder die Sperrzeit von 2 s läuft (`busy`). Grund: «Session hat bereits eine Anfrage in Arbeit oder ist in der Sperrzeit.» | Keine. Häufung: Bediener auf Einfachklick hinweisen. |
 | 1204 | Warnung | Ungültige Anfrage verworfen, ohne Antwort. Text: «Ungültige Anfrage verworfen. Benutzer: …, Session: …, Länge: … Byte.» oder «Keine Anfrage innerhalb von 2 s. Benutzer: …, Session: ….» | Einzeln: harmlos (z.B. abgebrochener Launcher). Gehäuft oder mit fremdem Benutzer: Versuch, den Dienst mit eigenen Programmen anzusprechen. Benutzer ermitteln, Sicherheitsvorfall prüfen. |
 | 1205 | Warnung | Start technisch gescheitert (`error`). Text mit EXE und Fehler, z.B. Anmeldung von `appstart-app` fehlgeschlagen | `verify`, besonders Prüfpunkt «Konten». Grund im Text an den Service melden. |
@@ -180,7 +180,7 @@ Assistent (Schritt 3) und Kommandozeile zeigen je Schritt eine Zeile mit ✓ ode
 | «Konten appstart-app und appstart-user, Gruppe AppStart Users angelegt» / «Konto appstart-app und Gruppe AppStart Users angelegt» | Konten und Gruppe eingerichtet (vorhandene geprüft) | – |
 | «Konten und Gruppe konnten nicht eingerichtet werden» | Konto oder Gruppe konnten nicht angelegt werden; die weiteren Schritte entfallen. Gründe z.B. «Zugriff verweigert. Dafür sind Administratorrechte nötig.», «Das Passwort erfüllt die Kennwortrichtlinie dieses Computers nicht (Länge, Komplexität oder Verlauf).», «Das Konto «…» wurde nicht gefunden.», «… ist kein Benutzerkonto.» | Grund beheben (Admin-Rechte, anderes Passwort, Konto prüfen), Einrichtung wiederholen |
 | «2 Applikationen freigegeben, Konfiguration geschützt» (bei einer: «1 Applikation freigegeben, Konfiguration geschützt») | `apps.json` geschrieben und geschützt | – |
-| «Konfiguration konnte nicht geschrieben werden» | `C:\ProgramData\AppStart` oder `apps.json` lässt sich nicht schützen oder schreiben, oder eine Angabe ist ungültig (Grund wie beim Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md)). Weitere Schritte entfallen. | Grund beheben. Ist `C:\ProgramData\AppStart` ein Verweis (Junction), Ordner als Administrator prüfen und löschen. |
+| «Konfiguration konnte nicht geschrieben werden» | `C:\ProgramData\AppStart` oder `apps.json` lässt sich nicht schützen oder schreiben, oder eine Angabe ist ungültig (Grund wie beim Prüfpunkt [apps.json](06-verification-after-a-service-visit.md)). Weitere Schritte entfallen. | Grund beheben. Ist `C:\ProgramData\AppStart` ein Verweis (Junction), Ordner als Administrator prüfen und löschen. |
 | «apps.json ist ungültig: …» | Die bestehende `apps.json` ist beschädigt; das Setup ändert nichts | Datei korrigieren oder aus Sicherung zurückholen |
 | «Applikation «app-x» ist nicht freigegeben» | `remove` oder `rehash` mit unbekannter AppId | AppId mit `list` prüfen |
 | «Datenordner und Registry-Keys gesperrt» | Rechte gesetzt | – |
@@ -201,7 +201,7 @@ Weitere Gründe beim Zurückstellen: «Die Sicherung «…» der Verknüpfung «
 |---|---|---|
 | «Automatische Prüfung nach der Änderung:» | Nach `add`, `add-user`, `remove` und `rehash` folgt die Ausgabe von `verify` | 0 oder 1 |
 | «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt.» | Keine Abweichung | 0 |
-| «Prüfung nicht bestanden – 2 Abweichung(en). Einsatz nicht abschliessen.» | Abweichungen, siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) | 1 |
+| «Prüfung nicht bestanden – 2 Abweichung(en). Einsatz nicht abschliessen.» | Abweichungen, siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) | 1 |
 | «Prüfbericht: C:\ProgramData\AppStart\Reports\verify-2026-11-15-104212.html» | Pfad des Berichts (mit `--report` der angegebene Pfad) | – |
 | «Bitte genau eine Angabe machen: --name appstart-user oder --member "DOMAIN\User".» | `add-user` ohne oder mit beiden Angaben | 2 |
 | «Mit --name kann nur das Konto appstart-user angelegt werden.» | Anderer Name bei `--name` | 2 |
@@ -225,6 +225,6 @@ Das ist das erwartete Verhalten (Abnahmeschritt 4 im Kapitel [Installation](03-i
 | Nach dem Klick passiert nichts, keine Meldung | Applikation startet, ist aber hinter anderen Fenstern oder braucht lange | Taskleiste prüfen; Ereignis 1100 bestätigt den Start |
 | Applikation startet, meldet aber fehlende Admin-Rechte | `appstart-app` ist nicht mehr Administrator | `verify`, Prüfpunkt «Konten» |
 | Applikation findet Netzlaufwerke oder Datenbank nicht | S4U-Anmeldung ohne Netzwerk-Anmeldedaten | Nicht behebbar über AppStart; Zugriff der Applikation anders lösen (z.B. SQL-Anmeldung) |
-| Drucken, Export oder Hilfe der Applikation funktioniert nicht | Die Funktion startet ein weiteres Programm; das Job-Objekt verhindert das | Abwägen und gegebenenfalls `allowChildProcesses` setzen ([Applikationen verwalten](04-applikationen-verwalten.md)) |
+| Drucken, Export oder Hilfe der Applikation funktioniert nicht | Die Funktion startet ein weiteres Programm; das Job-Objekt verhindert das | Abwägen und gegebenenfalls `allowChildProcesses` setzen ([Applikationen verwalten](04-managing-applications.md)) |
 | Bediener sieht die Verknüpfung nicht | Verknüpfung gelöscht | `verify`, Prüfpunkt «Verknüpfungen» |
 | Nach Update der Applikation «Start verweigert» | Neue EXE, Prüfsumme bzw. Zertifikat geändert | `rehash --app <AppId>` |

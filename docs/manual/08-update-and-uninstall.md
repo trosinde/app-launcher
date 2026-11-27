@@ -31,7 +31,7 @@ Nach dem Update: Prüfbericht ansehen («AppStart – Einrichtung prüfen»), Er
 
 ## Update einer Applikation
 
-Siehe [Applikationen verwalten](04-applikationen-verwalten.md): bei Prüfart «SHA-256» immer, bei «Signatur» nur nach Zertifikatswechsel `AppStart.Setup.exe rehash --app <AppId>`, danach Prüfung. Updates der Applikation können Verknüpfungen und Rechte überschreiben; `verify` zeigt das.
+Siehe [Applikationen verwalten](04-managing-applications.md): bei Prüfart «SHA-256» immer, bei «Signatur» nur nach Zertifikatswechsel `AppStart.Setup.exe rehash --app <AppId>`, danach Prüfung. Updates der Applikation können Verknüpfungen und Rechte überschreiben; `verify` zeigt das.
 
 ## Deinstallation
 

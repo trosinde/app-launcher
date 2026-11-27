@@ -8,7 +8,7 @@
 | .NET | Nicht nötig. Alle Programme bringen ihre Laufzeit mit. |
 | Installationsort | Immer `C:\Program Files\AppStart` (Installation für den ganzen Rechner). Ein Installationsort, den Benutzer beschreiben können, ist nicht zulässig. |
 | Dienste | Der Dienst `AppStart` läuft als LocalSystem und startet automatisch. |
-| Gruppenrichtlinien | Werden die Benutzerrechte «Lokal anmelden verweigern» oder «Anmelden über Remotedesktopdienste verweigern» per Domänen-Richtlinie gesetzt, überschreibt die Richtlinie die Einstellung des Setups. Das Konto `appstart-app` muss dann in der Richtlinie ergänzt werden (siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md)). Das Recht «Als Batchauftrag anmelden» muss den Administratoren erhalten bleiben (Windows-Standard), sonst kann der Dienst `appstart-app` nicht anmelden. |
+| Gruppenrichtlinien | Werden die Benutzerrechte «Lokal anmelden verweigern» oder «Anmelden über Remotedesktopdienste verweigern» per Domänen-Richtlinie gesetzt, überschreibt die Richtlinie die Einstellung des Setups. Das Konto `appstart-app` muss dann in der Richtlinie ergänzt werden (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)). Das Recht «Als Batchauftrag anmelden» muss den Administratoren erhalten bleiben (Windows-Standard), sonst kann der Dienst `appstart-app` nicht anmelden. |
 
 ## Rechte des Installateurs
 
@@ -29,7 +29,7 @@ Vor der Einrichtung je Applikation klären und notieren:
 | Registry-Key | `HKLM\SOFTWARE\Hersteller\AppA` | nein | Key mit Passwörtern der Applikation. Muss mit `HKLM\` beginnen. Wird für Bediener gesperrt. |
 | Signiert? | ja / nein | – | Das Setup erkennt es selbst. Signierte EXE werden über das Zertifikat geprüft (übersteht Updates), unsignierte über SHA-256 (nach jedem Update `rehash`). |
 | Startet die Applikation weitere Programme? | nein | – | Standard: Kindprozesse sind gesperrt. Vorher mit der Applikation testen: Drucken, Export, Hilfe, Dialog «Datei öffnen». |
-| Netzwerkzugriff mit Windows-Anmeldung? | nein | – | Funktioniert über AppStart nicht (siehe [Überblick](01-ueberblick.md)). |
+| Netzwerkzugriff mit Windows-Anmeldung? | nein | – | Funktioniert über AppStart nicht (siehe [Überblick](01-overview.md)). |
 
 ## Angaben zu den Bedienern
 

@@ -32,6 +32,6 @@
 - [x] 7.2 (38 PASS, 0 FAIL, Protokoll tests/e2e/uat/2026-11-16-update-v1) Update von einer Installation mit apps.json Version 1: Schutz unverändert
 
 ## 8. Dokumentation
-- [x] 8.1 (Bilder aus 0.3.0-uat.5 auf der Test-VM, siehe docs/manual/images/README.md; startmenue.png und ereignisanzeige.png gehören zu add-appstart-service 10.2 und brauchen eine VM mit deutscher Oberfläche) Handbuch: 03-installation (Antwortdatei, /config), 04-applikationen-verwalten (Weitere Programme, Lernmodus statt Handbearbeitung), 07-meldungen (neue Ereignisse), 09-referenz (Befehle, apps.json v2, Antwortdatei, Exit-Codes); Bildschirmfotos
+- [x] 8.1 (Bilder aus 0.3.0-uat.5 auf der Test-VM, siehe docs/manual/images/README.md; startmenue.png und ereignisanzeige.png gehören zu add-appstart-service 10.2 und brauchen eine VM mit deutscher Oberfläche) Handbuch: 03-installation (Antwortdatei, /config), 04-managing-applications (Weitere Programme, Lernmodus statt Handbearbeitung), 07-meldungen (neue Ereignisse), 09-reference (Befehle, apps.json v2, Antwortdatei, Exit-Codes); Bildschirmfotos
 - [x] 8.2 sicherheitsmodell.md und funktionsweise.md: Modus allowlist, Restrisiko aus design.md
 - [ ] 8.3 (16.11.2026: 663 von 663 Tests grün; Archiv wartet auf add-appstart-service, dort offen 1.4, 7.2, 7.3, 8.4, 10.2) Alle Tests grün. Erst wenn add-appstart-service archiviert ist (damit «Keine Kindprozesse» in openspec/specs steht): openspec archive add-allowed-child-processes

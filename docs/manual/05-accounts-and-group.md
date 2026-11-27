@@ -62,11 +62,11 @@ Die Kommandozeile hat keinen Befehl zum Entfernen einzelner Mitglieder.
 
 ## Warnung: Administratoren ohne Passwort
 
-Hat ein aktiviertes Konto in der Gruppe Administratoren kein Passwort, zeigt Schritt 2 einen gelben Kasten, z.B. «Administratoren ohne Passwort: PC-014\service. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.» Die Einrichtung ist trotzdem möglich. Passwort setzen: `net user <Konto> *` in einer Eingabeaufforderung «Als Administrator ausführen», oder das Konto deaktivieren. Siehe Prüfpunkt [Administratoren mit Passwort](06-pruefung-nach-serviceeinsatz.md#adminpasswort).
+Hat ein aktiviertes Konto in der Gruppe Administratoren kein Passwort, zeigt Schritt 2 einen gelben Kasten, z.B. «Administratoren ohne Passwort: PC-014\service. Damit kann sich jeder an diesem PC als Administrator anmelden und die Absicherung aufheben. Passwort setzen oder Konto deaktivieren; die Prüfung meldet es sonst als Abweichung.» Die Einrichtung ist trotzdem möglich. Passwort setzen: `net user <Konto> *` in einer Eingabeaufforderung «Als Administrator ausführen», oder das Konto deaktivieren. Siehe Prüfpunkt [Administratoren mit Passwort](06-verification-after-a-service-visit.md#adminpasswort).
 
 ## Regeln für den Betrieb
 
 - **Bediener nie in die Administratoren aufnehmen**, auch nicht vorübergehend für einen Serviceeinsatz, ohne die Mitgliedschaft danach zu entfernen. `verify` meldet jedes Mitglied von `AppStart Users`, das Administrator ist.
 - `appstart-app` nicht umbenennen, deaktivieren oder dessen Passwort setzen. Das Konto wird nur von AppStart genutzt.
 - Die Anmeldesperren von `appstart-app` nicht entfernen. Setzt eine Domänen-Gruppenrichtlinie die Rechte «Lokal anmelden verweigern» oder «Anmelden über Remotedesktopdienste verweigern», muss sie `appstart-app` (bzw. `<PC>\appstart-app`) enthalten.
-- Fehlt ein Konto oder die Gruppe (z.B. versehentlich gelöscht), die Einrichtung erneut ausführen («AppStart – Einrichtung», «Weiter», «Weiter»). Das Setup legt Fehlendes neu an. Nach dem Neuanlegen der Gruppe den Dienst neu starten (siehe Prüfpunkt [Pipe](06-pruefung-nach-serviceeinsatz.md)).
+- Fehlt ein Konto oder die Gruppe (z.B. versehentlich gelöscht), die Einrichtung erneut ausführen («AppStart – Einrichtung», «Weiter», «Weiter»). Das Setup legt Fehlendes neu an. Nach dem Neuanlegen der Gruppe den Dienst neu starten (siehe Prüfpunkt [Pipe](06-verification-after-a-service-visit.md)).

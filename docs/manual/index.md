@@ -8,15 +8,15 @@ Handbuch für Installateure und Servicetechniker. Es beschreibt Installation, Ei
 
 ## Inhalt
 
-1. [Überblick](01-ueberblick.md) – Zweck, Funktionsweise, Begriffe
-2. [Voraussetzungen](02-voraussetzungen.md) – Windows, Rechte, Angaben je Applikation
+1. [Überblick](01-overview.md) – Zweck, Funktionsweise, Begriffe
+2. [Voraussetzungen](02-requirements.md) – Windows, Rechte, Angaben je Applikation
 3. [Installation](03-installation.md) – mit `AppStart-Setup.exe`, Einrichtung in drei Schritten, stille Installation
-4. [Applikationen verwalten](04-applikationen-verwalten.md) – hinzufügen, entfernen, nach Update neu erfassen
-5. [Konten und Gruppe](05-konten-und-gruppe.md) – App-Konto, Bedienerkonto, Gruppe `AppStart Users`
-6. [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) – Prüfbericht, jede Abweichung mit Ursache und Behebung
-7. [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md) – Launcher, Installationsprogramm, Setup, Ereignisprotokoll
-8. [Update und Deinstallation](08-update-und-deinstallation.md) – AppStart und Applikationen aktualisieren, alles zurückstellen
-9. [Referenz](09-referenz.md) – Kommandozeile, Soll-Konfiguration, Pfade, Konten, Pipe
+4. [Applikationen verwalten](04-managing-applications.md) – hinzufügen, entfernen, nach Update neu erfassen
+5. [Konten und Gruppe](05-accounts-and-group.md) – App-Konto, Bedienerkonto, Gruppe `AppStart Users`
+6. [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) – Prüfbericht, jede Abweichung mit Ursache und Behebung
+7. [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md) – Launcher, Installationsprogramm, Setup, Ereignisprotokoll
+8. [Update und Deinstallation](08-update-and-uninstall.md) – AppStart und Applikationen aktualisieren, alles zurückstellen
+9. [Referenz](09-reference.md) – Kommandozeile, Soll-Konfiguration, Pfade, Konten, Pipe
 
 Bildschirmfotos: Die Bilder stammen aus der fertigen Software auf der Test-VM. Wo noch ein Platzhalter steht, listet [images/README.md](images/README.md) das fehlende Bild.
 

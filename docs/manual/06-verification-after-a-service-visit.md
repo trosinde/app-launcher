@@ -156,7 +156,7 @@ Geprüft werden alle aktivierten lokalen Konten, die direkt oder über eine Grup
 
 **Soll:** Rechte gemäss SDDL, keine Fernzugriffe
 
-Die Named Pipe `\\.\pipe\AppStart` muss genau diese Rechte haben (SDDL siehe [Referenz](09-referenz.md)): SYSTEM und Administratoren Vollzugriff, `AppStart Users` nur Verbinden, Netzwerk-Anmeldungen verweigert, Zugriffsliste geschützt.
+Die Named Pipe `\\.\pipe\AppStart` muss genau diese Rechte haben (SDDL siehe [Referenz](09-reference.md)): SYSTEM und Administratoren Vollzugriff, `AppStart Users` nur Verbinden, Netzwerk-Anmeldungen verweigert, Zugriffsliste geschützt.
 
 | Abweichung | Ursache | Behebung |
 |---|---|---|
@@ -225,7 +225,7 @@ Für jede Applikation mit Datenordner. Bediener dürfen den Ordner weder lesen n
 
 **Soll:** vorhanden, Prüfung bestanden, Ordner für Bediener nicht beschreibbar; kein Lernmodus aktiv; «Alle erlaubt» als Hinweis
 
-Für jede Applikation mit «nur erlaubte Hilfsprogramme» jedes Programm der Liste (siehe [Applikationen verwalten → Weitere Programme](04-applikationen-verwalten.md)). Applikationen mit «Alle erlaubt (unsicher)» erscheinen als «Hinweis: Alle weiteren Programme erlaubt (app-a)»; der Prüfpunkt bleibt erfüllt, weil der Modus bewusst gewählt ist.
+Für jede Applikation mit «nur erlaubte Hilfsprogramme» jedes Programm der Liste (siehe [Applikationen verwalten → Weitere Programme](04-managing-applications.md)). Applikationen mit «Alle erlaubt (unsicher)» erscheinen als «Hinweis: Alle weiteren Programme erlaubt (app-a)»; der Prüfpunkt bleibt erfüllt, weil der Modus bewusst gewählt ist.
 
 | Abweichung | Ursache | Behebung |
 |---|---|---|

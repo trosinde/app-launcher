@@ -145,7 +145,7 @@ AppStart.Setup.exe set-children --app <AppId> --mode blocked|allowlist|all
 | `--app <AppId>` | ja | AppId der Applikation (siehe list). |
 | `--mode <Modus>` | ja | blocked, allowlist oder all. allowlist braucht mindestens ein Hilfsprogramm. |
 
-Erklärung der Modi: [Applikationen verwalten → Weitere Programme](04-applikationen-verwalten.md). Mit `blocked` oder `all` wird die Liste der Hilfsprogramme verworfen.
+Erklärung der Modi: [Applikationen verwalten → Weitere Programme](04-managing-applications.md). Mit `blocked` oder `all` wird die Liste der Hilfsprogramme verworfen.
 
 ### `allow-child`
 
@@ -179,7 +179,7 @@ AppStart.Setup.exe deny-child --app <AppId> --exe "<Pfad>"
 
 ### `learn`
 
-Lernmodus: zeichnet auf, welche Programme eine Applikation startet, und übernimmt sie als Hilfsprogramme. Ablauf und Hinweise: [Applikationen verwalten → Lernmodus](04-applikationen-verwalten.md).
+Lernmodus: zeichnet auf, welche Programme eine Applikation startet, und übernimmt sie als Hilfsprogramme. Ablauf und Hinweise: [Applikationen verwalten → Lernmodus](04-managing-applications.md).
 
 ```text
 AppStart.Setup.exe learn start --app <AppId> [--minutes <5–120>]
@@ -290,7 +290,7 @@ Zeigt freigegebene Applikationen, Bediener und Dienststatus.
 AppStart.Setup.exe list
 ```
 
-Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-applikationen-verwalten.md); je Applikation zusätzlich die Zeile «Weitere Programme: …» und darunter die erlaubten Hilfsprogramme mit Prüfung, Shells mit dem Zusatz «– Shell oder Skript-Host». Exit-Code immer 0.
+Keine Optionen. Ausgabe siehe [Applikationen verwalten](04-managing-applications.md); je Applikation zusätzlich die Zeile «Weitere Programme: …» und darunter die erlaubten Hilfsprogramme mit Prüfung, Shells mit dem Zusatz «– Shell oder Skript-Host». Exit-Code immer 0.
 
 ### `verify`
 
@@ -305,7 +305,7 @@ AppStart.Setup.exe verify [--report "<Pfad>"] [--ui]
 | `--report <Pfad>` | Zusätzlicher Speicherort für den Prüfbericht (HTML). |
 | `--ui` | Prüfansicht öffnen (Startmenü-Eintrag «AppStart – Einrichtung prüfen»). |
 
-Der Bericht liegt immer unter `C:\ProgramData\AppStart\Reports\verify-<JJJJ-MM-TT-hhmmss>.html` und `.json`; `--report` kopiert die HTML-Datei zusätzlich. Mit `--ui` wird `--report` nicht beachtet; die Prüfansicht bietet «Bericht speichern unter». Prüfpunkte, Ausgabe und Abweichungen: [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md).
+Der Bericht liegt immer unter `C:\ProgramData\AppStart\Reports\verify-<JJJJ-MM-TT-hhmmss>.html` und `.json`; `--report` kopiert die HTML-Datei zusätzlich. Mit `--ui` wird `--report` nicht beachtet; die Prüfansicht bietet «Bericht speichern unter». Prüfpunkte, Ausgabe und Abweichungen: [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md).
 
 Beispiele:
 
@@ -323,7 +323,7 @@ Stellt alles zurück, was das Setup geändert hat (vor der Deinstallation des MS
 AppStart.Setup.exe uninstall
 ```
 
-Keine Optionen. Ablauf und Ergebnis: [Update und Deinstallation](08-update-und-deinstallation.md).
+Keine Optionen. Ablauf und Ergebnis: [Update und Deinstallation](08-update-and-uninstall.md).
 
 ### `startmenu`
 
@@ -376,7 +376,7 @@ Exit-Codes:
 | 1620 | Kein Installationspaket enthalten (Entwicklungs-Build) |
 | andere | Exit-Code von `msiexec` |
 
-Protokolle: `C:\ProgramData\AppStart\Logs\install-<JJJJMMTT-hhmmss>.log` (Windows Installer) und `bootstrapper-<JJJJMMTT-hhmmss>.log`. Das MSI wird nur nach `C:\ProgramData\AppStart\Installer\<Guid>` entpackt und danach gelöscht. Meldungen: [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md#installationsprogramm).
+Protokolle: `C:\ProgramData\AppStart\Logs\install-<JJJJMMTT-hhmmss>.log` (Windows Installer) und `bootstrapper-<JJJJMMTT-hhmmss>.log`. Das MSI wird nur nach `C:\ProgramData\AppStart\Installer\<Guid>` entpackt und danach gelöscht. Meldungen: [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md#installationsprogramm).
 
 ## Installationspaket (MSI)
 
@@ -393,7 +393,7 @@ Installiert immer für den ganzen Rechner nach `C:\Program Files\AppStart`. Ein 
 "C:\Program Files\AppStart\current\AppStart.Launcher.exe" --app <AppId>
 ```
 
-Akzeptiert genau `--app` und eine gültige AppId, sonst «Ungültige Verknüpfung». Sendet `START <AppId>` an den Dienst, wartet höchstens 3 Sekunden auf die Verbindung und 30 Sekunden auf die Antwort. Exit-Codes: 0 gestartet, 1 ungültige Verknüpfung, 2 Dienst nicht erreichbar, 3 verweigert oder läuft bereits, 4 keine Berechtigung, 5 unerwartete Antwort. Meldungen: [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md).
+Akzeptiert genau `--app` und eine gültige AppId, sonst «Ungültige Verknüpfung». Sendet `START <AppId>` an den Dienst, wartet höchstens 3 Sekunden auf die Verbindung und 30 Sekunden auf die Antwort. Exit-Codes: 0 gestartet, 1 ungültige Verknüpfung, 2 Dienst nicht erreichbar, 3 verweigert oder läuft bereits, 4 keine Berechtigung, 5 unerwartete Antwort. Meldungen: [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md).
 
 ## Soll-Konfiguration apps.json
 
@@ -499,7 +499,7 @@ Unbekannte Felder, Kommentare und Kommas nach dem letzten Element sind nicht erl
 | Konto | LocalSystem |
 | Starttyp | Automatisch |
 | Wiederherstellung | Neustart nach 5 s, 5 s, 30 s; Zähler nach 1 Tag zurückgesetzt |
-| Ereignisprotokoll | Anwendung, Quelle `AppStart`, IDs 1000–1302 ([Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md)) |
+| Ereignisprotokoll | Anwendung, Quelle `AppStart`, IDs 1000–1302 ([Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md)) |
 
 Befehle: `sc query AppStart`, `sc start AppStart`, `sc stop AppStart`.
 

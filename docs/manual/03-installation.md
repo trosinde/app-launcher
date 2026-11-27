@@ -12,12 +12,12 @@ Beide Wege installieren dasselbe MSI nach `C:\Program Files\AppStart`, registrie
 | Eintrag | Öffnet |
 |---|---|
 | «AppStart – Einrichtung» | Den Assistenten (`AppStart.Setup.exe` ohne Argumente) |
-| «AppStart – Einrichtung prüfen» | Die Prüfansicht (`AppStart.Setup.exe verify --ui`), siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) |
+| «AppStart – Einrichtung prüfen» | Die Prüfansicht (`AppStart.Setup.exe verify --ui`), siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) |
 | «AppStart – Handbuch» | Dieses Handbuch als PDF |
 
 ![Startmenü-Ordner AppStart mit den drei Einträgen](images/startmenue.png)
 
-Nach jeder Installation und jedem Update prüft das MSI die Einrichtung automatisch (`verify`) und legt den Bericht unter `C:\ProgramData\AppStart\Reports` ab. Solange die Einrichtung nicht abgeschlossen ist, meldet dieser erste Bericht Abweichungen, und der Dienst läuft zwar, wartet aber auf die Gruppe `AppStart Users` (Ereignis 1301, siehe [Meldungen](07-meldungen-und-fehlerbehebung.md)). Das ist normal.
+Nach jeder Installation und jedem Update prüft das MSI die Einrichtung automatisch (`verify`) und legt den Bericht unter `C:\ProgramData\AppStart\Reports` ab. Solange die Einrichtung nicht abgeschlossen ist, meldet dieser erste Bericht Abweichungen, und der Dienst läuft zwar, wartet aber auf die Gruppe `AppStart Users` (Ereignis 1301, siehe [Meldungen](07-messages-and-troubleshooting.md)). Das ist normal.
 
 ## Interaktive Installation mit AppStart-Setup.exe
 
@@ -35,19 +35,19 @@ Protokolle legt das Installationsprogramm unter `C:\ProgramData\AppStart\Logs` a
 | `install-<JJJJMMTT-hhmmss>.log` | Ausführliches Protokoll von Windows Installer (`msiexec /l*v`) |
 | `bootstrapper-<JJJJMMTT-hhmmss>.log` | Schritte des Installationsprogramms: Version, Modus, Ordnerprüfung, Exit-Code von `msiexec`, Signaturprüfung. Bei unsignierten Entwicklungs-Builds steht hier eine Zeile «WARNUNG», weil die Signaturprüfung übersprungen wurde. |
 
-Fehler- und Hinweismeldungen zeigen eine Überschrift, die Ursache, eine Zeile «Massnahme: …» und, wenn vorhanden, unten «Protokoll: C:\ProgramData\AppStart\Logs\install-20261115-104212.log». Alle Meldungen mit Ursache und Massnahme stehen im Kapitel [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md#installationsprogramm). Bei einem Fehler startet der Assistent nicht.
+Fehler- und Hinweismeldungen zeigen eine Überschrift, die Ursache, eine Zeile «Massnahme: …» und, wenn vorhanden, unten «Protokoll: C:\ProgramData\AppStart\Logs\install-20261115-104212.log». Alle Meldungen mit Ursache und Massnahme stehen im Kapitel [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md#installationsprogramm). Bei einem Fehler startet der Assistent nicht.
 
 **Bereits installiert:** Ist dieselbe oder eine neuere Version von AppStart installiert, überspringt das Installationsprogramm die Installation, meldet «AppStart ist bereits installiert» und öffnet direkt den Assistenten. So lässt sich `AppStart-Setup.exe` auch nur zum Öffnen der Einrichtung verwenden.
 
 **Neustart:** Meldet Windows Installer, dass ein Neustart nötig ist (Code 3010), erscheint «Neustart erforderlich». Zuerst die Einrichtung durchführen, danach den PC neu starten.
 
-**Parameter von AppStart-Setup.exe** (Details in der [Referenz](09-referenz.md#appstart-setup-exe)):
+**Parameter von AppStart-Setup.exe** (Details in der [Referenz](09-reference.md#appstart-setup-exe)):
 
 | Aufruf | Wirkung |
 |---|---|
 | `AppStart-Setup.exe` | Installiert AppStart und startet danach die Einrichtung |
 | `AppStart-Setup.exe /quiet` | Installiert nur, ohne Oberfläche und ohne Einrichtung. Exit-Code = Exit-Code von `msiexec` (0 oder 3010 = erfolgreich). Ist AppStart schon in derselben oder neueren Version installiert: Exit-Code 0. |
-| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installiert und richtet danach in einem Schritt ohne Oberfläche nach der Antwortdatei ein: Applikationen, Schutz, weitere Programme und Bediener (Format: [Referenz → `apply`](09-referenz.md#apply)). Für die Softwareverteilung als SYSTEM. Exit-Code 0 oder 3010 = eingerichtet, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig; Ausgabe in `C:\ProgramData\AppStart\Logs\apply-….log`. Das lokale Konto `appstart-user` legt die Antwortdatei nicht an (kein Passwort in Dateien). |
+| `AppStart-Setup.exe /quiet /config C:\Deploy\appstart.json` | Installiert und richtet danach in einem Schritt ohne Oberfläche nach der Antwortdatei ein: Applikationen, Schutz, weitere Programme und Bediener (Format: [Referenz → `apply`](09-reference.md#apply)). Für die Softwareverteilung als SYSTEM. Exit-Code 0 oder 3010 = eingerichtet, 10 = Einrichtung mit Fehler oder Abweichung, 11 = Antwortdatei ungültig; Ausgabe in `C:\ProgramData\AppStart\Logs\apply-….log`. Das lokale Konto `appstart-user` legt die Antwortdatei nicht an (kein Passwort in Dateien). |
 | `AppStart-Setup.exe /?` | Zeigt die Hilfe |
 
 Ohne Installationsprogramm (nur MSI vorhanden): `AppStart-<Version>.msi` per Doppelklick oder `msiexec /i` installieren und danach im Startmenü «AppStart – Einrichtung» öffnen.
@@ -73,7 +73,7 @@ Knöpfe: «Abbrechen» (Schritte 1 und 2), «Zurück» (Schritt 2), «Weiter», 
    - **Nicht den Programmordner als Datenordner wählen.** Ist der Datenordner der Ordner der EXE, liegt er darin oder enthält er ihn, erscheint ein gelber Kasten: «Achtung: Dieser Datenordner ist der Programmordner der Applikation, liegt darin oder enthält ihn. appstart-app bekäme Schreibrechte auf EXE und DLLs. Eine ausgetauschte EXE erkennt die Prüfung, ausgetauschte DLLs nicht. Empfohlen ist ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`.» «Weiter» bleibt gesperrt, bis der Ordner geändert oder «Risiko verstanden, diesen Ordner trotzdem verwenden» angehakt ist. Die Zusammenfassung in Schritt 3 und die Kommandozeile melden es zusätzlich als «Warnung: Datenordner … von … liegt im Programmordner der Applikation oder enthält ihn. appstart-app kann dann EXE und DLLs ändern; ausgetauschte DLLs erkennt die Hash- und Signaturprüfung nicht. Empfohlen: ein Ordner unter C:\ProgramData, z.B. `C:\ProgramData\<Hersteller>\<App>`».
 5. «Weiter».
 
-Unten links öffnet «Einrichtung prüfen» jederzeit die Prüfansicht mit dem aktuellen Stand, ohne etwas zu ändern (siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md)).
+Unten links öffnet «Einrichtung prüfen» jederzeit die Prüfansicht mit dem aktuellen Stand, ohne etwas zu ändern (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)).
 
 Leere Liste: «Noch keine Applikation. Mit «EXE hinzufügen…» eine Programmdatei wählen.»
 
@@ -86,7 +86,7 @@ Hinweise und Fehler in Schritt 1:
 | «Der Datenordner muss ein vollständiger Pfad sein, z.B. C:\ProgramData\Hersteller\App.» | Relativer Pfad oder Netzwerkpfad | Vollständigen Pfad mit Laufwerksbuchstabe angeben |
 | «Der Registry-Key muss mit HKLM\ beginnen.» | Key unter `HKCU` oder ohne Wurzel | Key unter `HKLM\` angeben. Schlüssel des Benutzers (`HKCU`) kann AppStart nicht schützen. |
 | «AppA.exe kann nicht hinzugefügt werden: …» | Die EXE lässt sich nicht lesen oder ist gerade gesperrt; nach dem Doppelpunkt steht der Grund | Pfad und Rechte prüfen, laufende Applikation beenden, erneut hinzufügen |
-| «Die bestehende Konfiguration konnte nicht gelesen werden: …» | `apps.json` ist ungültig oder nicht lesbar | Siehe Prüfpunkt [apps.json](06-pruefung-nach-serviceeinsatz.md); notfalls `apps.json` aus einer Sicherung zurückholen |
+| «Die bestehende Konfiguration konnte nicht gelesen werden: …» | `apps.json` ist ungültig oder nicht lesbar | Siehe Prüfpunkt [apps.json](06-verification-after-a-service-visit.md); notfalls `apps.json` aus einer Sicherung zurückholen |
 
 ### Schritt 2: Konten und Gruppe
 
@@ -137,8 +137,8 @@ Zum Schluss das Ergebnis der Prüfung und der Pfad des Berichts:
 | Überschrift und Text | Bedeutung |
 |---|---|
 | «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung ist bestanden.» mit «Prüfung bestanden – 10 von 10 Prüfpunkten erfüllt» | Fertig. Mit «Fertig» schliessen (Exit-Code 0). |
-| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 9 von 10 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 8 von 10 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md) beheben, Einrichtung erneut ausführen |
-| «Einrichtung unvollständig» – «Nicht alle Schritte waren erfolgreich. Die Prüfung zeigt, was fehlt.» | Mindestens eine Zeile mit ✗. Grund in der Zeile, Massnahme im Kapitel [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md) |
+| «Einrichtung abgeschlossen» – «Alle Schritte wurden ausgeführt. Die abschliessende Prüfung hat Abweichungen gefunden.» mit «Prüfung nicht bestanden – 1 Abweichung, 9 von 10 Prüfpunkten erfüllt» oder «Prüfung nicht bestanden – 2 Abweichungen, 8 von 10 Prüfpunkten erfüllt» | Bericht öffnen, Abweichungen nach [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md) beheben, Einrichtung erneut ausführen |
+| «Einrichtung unvollständig» – «Nicht alle Schritte waren erfolgreich. Die Prüfung zeigt, was fehlt.» | Mindestens eine Zeile mit ✗. Grund in der Zeile, Massnahme im Kapitel [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md) |
 
 Weitere Zeilen, die erscheinen können:
 
@@ -178,7 +178,7 @@ set SETUP="C:\Program Files\AppStart\current\AppStart.Setup.exe"
 %SETUP% verify --report "C:\Windows\Temp\appstart-pruefung.html"
 ```
 
-Jeder ändernde Befehl (`add`, `add-user`, `remove`, `rehash`) schreibt je Schritt eine Zeile mit ✓ oder ✗, danach «Automatische Prüfung nach der Änderung:» mit dem Ergebnis von `verify`, und endet mit Exit-Code 0 (alles erfolgreich und keine Abweichung), 1 (Fehler oder Abweichung) oder 2 (falsche Angaben bei `add-user`). Massgebend für den Abschluss ist das Ergebnis des abschliessenden `verify`. Alle Befehle und Optionen: [Referenz](09-referenz.md).
+Jeder ändernde Befehl (`add`, `add-user`, `remove`, `rehash`) schreibt je Schritt eine Zeile mit ✓ oder ✗, danach «Automatische Prüfung nach der Änderung:» mit dem Ergebnis von `verify`, und endet mit Exit-Code 0 (alles erfolgreich und keine Abweichung), 1 (Fehler oder Abweichung) oder 2 (falsche Angaben bei `add-user`). Massgebend für den Abschluss ist das Ergebnis des abschliessenden `verify`. Alle Befehle und Optionen: [Referenz](09-reference.md).
 
 **Bedienerkonto `appstart-user` ohne Eingabe:** Das Passwort wird als eine Zeile über die Standardeingabe übergeben und erscheint so in keiner Befehlszeile:
 
@@ -198,7 +198,7 @@ if ($p.ExitCode -ne 0) { throw "AppStart: Prüfung nicht bestanden (Exit-Code $(
 
 ## Nach der Installation
 
-1. Prüfbericht ansehen: Ergebnis «Keine Abweichung» (siehe [Prüfung nach Serviceeinsatz](06-pruefung-nach-serviceeinsatz.md)).
+1. Prüfbericht ansehen: Ergebnis «Keine Abweichung» (siehe [Prüfung nach Serviceeinsatz](06-verification-after-a-service-visit.md)).
 2. Als Bediener (Mitglied von `AppStart Users`) anmelden und die Applikation über ihre Verknüpfung im Startmenü oder auf dem Desktop starten. Sie erscheint ohne UAC-Abfrage.
 3. Für die Abnahme die Testapplikation freigeben und prüfen (nächster Abschnitt).
 
@@ -221,7 +221,7 @@ Fenster «AppStart TestApp», Überschrift «Zustand der Testapplikation», daru
 | «Registry lesen/schreiben» | `HKLM\SOFTWARE\AppStartTest`, «OK» | «Fehler» mit Grund: Key gesperrt ohne `appstart-app` oder Rechte falsch |
 | «Dateien lesen/schreiben» | `C:\ProgramData\AppStartTest`, «OK» | «Fehler» mit Grund |
 | «Kindprozess (cmd.exe)» | nach Klick auf «Eingabeaufforderung starten»: «Start blockiert durch Job-Objekt» (Modus «gesperrt») oder «Von AppStart sofort beendet (nicht erlaubt)» (Modus «nur erlaubte Hilfsprogramme»), jeweils «OK» | «Gestartet – Ausbruch möglich» mit Kennzeichen «Ausbruch»: Modus «alle erlaubt» oder die Eingabeaufforderung steht auf der Liste. «Start fehlgeschlagen: …» mit Kennzeichen «Prüfen»: anderer Fehler, Grund lesen. |
-| «Hilfsprogramm (TestHelper)» | nach Klick auf «Erlaubtes Hilfsprogramm starten», je nach Modus der TestApp (siehe [Weitere Programme](04-applikationen-verwalten.md)): «Gestartet und beendet: AppStart TestHelper läuft als …» mit «Erlaubt», wenn `AppStart.TestHelper.exe` erlaubt ist; «Start blockiert durch Job-Objekt (Modus gesperrt)» oder «Von AppStart sofort beendet (nicht auf der Liste)» mit «Gesperrt» | «Start fehlgeschlagen: …» mit «Prüfen» |
+| «Hilfsprogramm (TestHelper)» | nach Klick auf «Erlaubtes Hilfsprogramm starten», je nach Modus der TestApp (siehe [Weitere Programme](04-managing-applications.md)): «Gestartet und beendet: AppStart TestHelper läuft als …» mit «Erlaubt», wenn `AppStart.TestHelper.exe` erlaubt ist; «Start blockiert durch Job-Objekt (Modus gesperrt)» oder «Von AppStart sofort beendet (nicht auf der Liste)» mit «Gesperrt» | «Start fehlgeschlagen: …» mit «Prüfen» |
 
 Das Hilfsprogramm `AppStart.TestHelper.exe` liegt neben der TestApp. Zum Ausprobieren der Positivliste: `%SETUP% allow-child --app appstart-testapp --exe "C:\Program Files\AppStart\current\TestApp\AppStart.TestHelper.exe"`. Danach startet das Hilfsprogramm, die Eingabeaufforderung dagegen beendet AppStart sofort.
 

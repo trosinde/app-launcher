@@ -12,7 +12,7 @@ Manche Desktop-Applikationen (Fat Clients) verlangen beim Start zwingend Admin-R
 
 Was AppStart nicht leistet:
 
-- Applikationen, die weitere Programme starten müssen, sind nur eingeschränkt geeignet (siehe `allowChildProcesses` in der [Referenz](09-referenz.md)).
+- Applikationen, die weitere Programme starten müssen, sind nur eingeschränkt geeignet (siehe `allowChildProcesses` in der [Referenz](09-reference.md)).
 - Das Konto `appstart-app` hat keine Netzwerk-Anmeldedaten. Applikationen, die mit der Windows-Anmeldung auf Netzlaufwerke oder Datenbanken zugreifen, funktionieren darüber nicht.
 - Administratoren können Datenordner und Registry-Key weiterhin lesen.
 
@@ -27,7 +27,7 @@ Was AppStart nicht leistet:
 3. Der Dienst `AppStart` ermittelt Sitzung und Benutzer des Anfragenden. Je Sitzung bearbeitet er eine Anfrage gleichzeitig; danach gilt eine Sperrzeit von 2 Sekunden.
 4. Der Dienst liest `C:\ProgramData\AppStart\apps.json` bei jeder Anfrage neu. Ist die Datei für Nicht-Administratoren beschreibbar oder ungültig, verweigert er jeden Start.
 5. Der Dienst öffnet die EXE so, dass sie bis zum Start nicht verändert, umbenannt oder gelöscht werden kann, und prüft Signatur oder SHA-256.
-6. Der Dienst meldet `appstart-app` ohne Passwort an (S4U-Anmeldung) und startet die Applikation in der Sitzung des Bedieners, eingeschlossen in ein Job-Objekt. Der Launcher erhält `OK` und beendet sich ohne Fenster. Bei einer Ablehnung zeigt er eine Meldung (siehe [Meldungen und Fehlerbehebung](07-meldungen-und-fehlerbehebung.md)).
+6. Der Dienst meldet `appstart-app` ohne Passwort an (S4U-Anmeldung) und startet die Applikation in der Sitzung des Bedieners, eingeschlossen in ein Job-Objekt. Der Launcher erhält `OK` und beendet sich ohne Fenster. Bei einer Ablehnung zeigt er eine Meldung (siehe [Meldungen und Fehlerbehebung](07-messages-and-troubleshooting.md)).
 
 ## Bestandteile
 
@@ -40,7 +40,7 @@ Was AppStart nicht leistet:
 | Setup | `AppStart.Setup.exe` | Einrichtung (Assistent und Kommandozeile), Prüfung `verify` | Admin-Rechten (UAC) |
 | Testapplikation | `TestApp\AppStart.TestApp.exe` | Verhält sich wie ein betroffener Fat Client, für Abnahme und Fehlersuche | über AppStart |
 
-Programmdateien liegen in `C:\Program Files\AppStart\current\`. Alle Pfade stehen in der [Referenz](09-referenz.md).
+Programmdateien liegen in `C:\Program Files\AppStart\current\`. Alle Pfade stehen in der [Referenz](09-reference.md).
 
 ## Begriffe
 
